@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ "$http_proxy" == "" ]
+then
+	echo "ERROR:: Set http_proxy"
+	exit 1
+else
+	no_prot=${http_proxy#*:}
+#	echo "no_prot=$no_prot"
+	deslashed=${no_prot#*//}
+#	echo "deslashed=$deslashed"
+	PROXY_HOST=${deslashed%%:*}
+#	echo "PROXY_HOST=$PROXY_HOST"
+	PROXY_PORT=${deslashed#*:}
+#	echo "PROXY_PORT=$PROXY_PORT"
+fi
+
+exec corkscrew $PROXY_HOST $PROXY_PORT $*
+

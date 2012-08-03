@@ -1,0 +1,29 @@
+#!/bin/sh
+
+from=$1
+to=$2
+if [ -z "$2" ]; then
+    to=HEAD
+fi
+
+print_usage() {
+        echo "Usage: $(basename $0) <from_commit> [to_commit]"
+}
+
+show_info() {  
+        git shortlog "^"$from $to
+        git diff -M --stat --summary $from..$to
+}
+
+case $# in
+    0)
+        print_usage
+        ;;
+    1|2)
+        show_info
+        ;;
+    *)
+        echo "Too many arguments" >&2
+        print_usage
+        ;;
+esac

@@ -1,0 +1,7 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =5
+let g:netrw_dirhist_1='/home/x0178546/Projects/k3.4/linux_omap4_dev/arch/arm/mach-omap2'
+let g:netrw_dirhist_2='/home/x0178546/Projects/k3.4/linux_omap4_dev/arch/arm'
+let g:netrw_dirhist_3='/home/x0178546/Projects/k3.4/linux_omap4_dev/arch/arm/mach-omap2'
+let g:netrw_dirhist_4='/home/x0178546/android/ics/kernel/android-3.0/arch/arm/mach-omap2'
+let g:netrw_dirhist_5='/home/x0187394/.ssh'

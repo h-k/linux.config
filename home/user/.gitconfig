@@ -1,0 +1,7 @@
+[core]
+	gitproxy = git-proxy
+[color]
+	ui = auto
+[user]
+	name = Alexander Savchenko
+	email = oleksandr.savchenko@globallogic.com
