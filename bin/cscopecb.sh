@@ -24,7 +24,7 @@ echo "Creating cscope DB..."
 
 echo "Moving in right place..."
 rm -f cscope.files
-rm -rf ../cscope
+rm -Rf ../cscope
 mkdir ../cscope
 mv cscope.* ../cscope
 
