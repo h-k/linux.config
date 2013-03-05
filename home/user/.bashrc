@@ -106,13 +106,12 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
-export CROSS_COMPILE=arm-none-linux-gnueabi-
-export MYDROID=${HOME}/work/AFS/
+export CROSS_COMPILE=arm-eabi-
 export JAVA_HOME=/usr/java/default
-export PATH=$PATH:$HOME/bin/:$HOME/opt/arm-2010q1/bin/:$HOME/work/4AI.1.5/u-boot/tools:$JAVA_HOME/bin
+export PATH=$PATH:$HOME/bin/:$JAVA_HOME/bin:$HOME/opt/toolchain
 export MMC_BIN_REL=${HOME}/work/mmc_release/
-export USER_REAL_NAME=Oleksandr Savchenko
-export TI_MAILE=oleksandr.savchenko@ti.com
+export USER_REAL_NAME=Alexander Savchenko
+export TI_MAIL=oleksandr.savchenko@ti.com
 alias gsend='git send-email --smtp-server /usr/bin/msmtp --from "${USER_REAL_NAME} <${TI_MAIL}>" --envelope-sender="${USER_REAL_NAME} <${TI_MAIL}>" --suppress-cc=all'
 alias gsendcompose='git send-email --smtp-server /usr/bin/msmtp --from "${USER_REAL_NAME} <${TI_MAIL}>" --envelope-sender="${USER_REAL_NAME} <${TI_MAIL}>" --suppress-cc=all --compose'
 export EDITOR=vim

@@ -17,9 +17,9 @@ runtime! debian.vim
 
 " Vim5 and later versions support syntax highlighting. Uncommenting the next
 " line enables syntax highlighting by default.
-"if has("syntax")
-"  syntax on
-"endif
+if has("syntax")
+  syntax on
+endif
 
 " If using a dark background within the editing area and syntax highlighting
 " turn on this option as well
@@ -62,11 +62,15 @@ syntax on
 "set expandtab
 "set smartindent
 set list
-set listchars=tab:>-
+set listchars=tab:»·
 set listchars+=trail:·
 set endofline
 set number
 set paste
+
+set hlsearch
+" Press Space to turn off highlighting and clear any message already displayed.
+:nnoremap <silent> <Space> :nohlsearch<Bar>:echo<CR>
 
 " Inserting without indenting
 set noautoindent
