@@ -1,0 +1,48 @@
+#host dirac.dal.design.ti.com
+#user x0187394
+
+host review.omapzoom.org
+user x0187394
+Port 29418
+#ProxyCommand corkscrew emeaucmwebproxy.emeaucm.ext.ti.com 80 %h %p
+ProxyCommand corkscrew 10.167.145.17 80 %h %p
+IdentityFile ~/.ssh/id_rsa
+
+Host git.omapzoom.org
+ProxyCommand corkscrew 10.167.145.17 80 %h %p
+Port 29418
+user x0187394
+
+Host android2.dal.design.ti.com
+user x0187394
+Port 29428
+# !!! There is no need in using proxy for android2 since Jun 11 2012
+#ProxyCommand corkscrew 10.167.145.17 80 %h %p
+IdentityFile ~/.ssh/id_rsa
+
+Host android.dal.design.ti.com
+Port 29418
+user x0187394
+IdentityFile ~/.ssh/id_rsa
+ProxyCommand corkscrew 10.167.145.17 80 %h %p
+
+#Host git.kernel.org
+#ProxyCommand corkscrew 10.167.145.17 80 %h %p
+
+#host github.com
+#user joe-skb7
+#Port 29418
+#ProxyCommand corkscrew 10.167.145.17 80 %h %p
+#IdentityFile ~/.ssh/gihub.pub
+
+Host *gitorious.org
+hostname ssh.gitorious.org
+User joeskb7
+Port 443
+ProxyCommand corkscrew 10.167.145.17 80 %h %p
+IdentityFile ~/.ssh/id_rsa
+
+#host uglx0170753
+#User joe
+#IdentityFIle ~/.ssh/id_rsa_taras.pub
+

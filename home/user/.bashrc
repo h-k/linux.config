@@ -108,8 +108,9 @@ fi
 
 export CROSS_COMPILE=arm-eabi-
 export JAVA_HOME=/usr/java/default
-export PATH=$PATH:$HOME/bin/:$JAVA_HOME/bin:$HOME/opt/toolchain
-export MMC_BIN_REL=${HOME}/work/mmc_release/
+export PATH=$PATH:$HOME/bin/:$JAVA_HOME/bin:$HOME/opt/arm-eabi-4.6/bin
+export MMC_BIN_REL_TABLET=${HOME}/work/mmc_release_tablet
+export MMC_BIN_REL_BLAZE=${HOME}/work/mmc_release_blaze
 export USER_REAL_NAME=Alexander Savchenko
 export TI_MAIL=oleksandr.savchenko@ti.com
 alias gsend='git send-email --smtp-server /usr/bin/msmtp --from "${USER_REAL_NAME} <${TI_MAIL}>" --envelope-sender="${USER_REAL_NAME} <${TI_MAIL}>" --suppress-cc=all'
