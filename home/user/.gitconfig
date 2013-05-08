@@ -1,7 +1,8 @@
 [core]
-	gitproxy = git-proxy
+	gitproxy = /home/x0187394/bin/git-proxy.sh
+	editor = vim
 [color]
 	ui = auto
 [user]
 	name = Alexander Savchenko
-	email = oleksandr.savchenko@globallogic.com
+	email = oleksandr.savchenko@ti.com
