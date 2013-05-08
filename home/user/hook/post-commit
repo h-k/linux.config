@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+# A hook script that is called after a successful
+# commit is made.
+#
+
+git show --format=email | ./scripts/checkpatch.pl --strict --show-types -
