@@ -14,7 +14,7 @@ my_user=x0187394
 simg=./simg2img
 makeext4fs=./make_ext4fs
 mnt_point=${cur_dir}/system
-ddk_dir=$MMC_BIN_REL_TABLET/.ddk
+ddk_dir=.ddk
 ddk_files=()
 files_owners=()
 
