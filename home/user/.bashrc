@@ -116,6 +116,7 @@ export USER_REAL_NAME=Alexander Savchenko
 export TI_MAIL=oleksandr.savchenko@ti.com
 export DISCIMAGE=$MMC_BIN_REL_TABLET/.ddk
 export KERNELDIR=$HOME/work/k34/p-android-omap-3.4
+export ARCH=arm
 alias gsend='git send-email --smtp-server /usr/bin/msmtp --from "${USER_REAL_NAME} <${TI_MAIL}>" --envelope-sender="${USER_REAL_NAME} <${TI_MAIL}>" --suppress-cc=all'
 alias gsendcompose='git send-email --smtp-server /usr/bin/msmtp --from "${USER_REAL_NAME} <${TI_MAIL}>" --envelope-sender="${USER_REAL_NAME} <${TI_MAIL}>" --suppress-cc=all --compose'
 export EDITOR=vim
