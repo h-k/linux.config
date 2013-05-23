@@ -1,0 +1,27 @@
+
+
+To add some changes in the Android system.img:
+
+    Create folder for mounting system
+
+mkdir system
+
+    Unpack system.img
+
+./simg2img system.img system.img.raw
+
+    Mount system.img.raw
+
+sudo mount -oloop system.img.raw system
+
+    Then make any necessary changes in system folder and pack system.img
+
+sudo rm system.img
+sudo ./make_ext4fs -s -l 512M -a system system.img system
+
+    Now unmount systen.img.raw
+
+sudo umount system
+
+That's all.
+

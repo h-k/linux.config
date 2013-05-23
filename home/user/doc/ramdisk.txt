@@ -1,0 +1,21 @@
+To unpack ramdisk.img
+
+This will extract all files from ramdisk.img to tmp_rootfs dir in DB dir:
+
+cd $DB
+#DB - daily build dir
+mkdir tmp_rootfs
+cd tmp_rootfs
+gunzip -c ../ramdisk.img | cpio -i
+
+To repack ramdisk.img
+
+This will pack all files from tmp_rootfs sub dir to ramdisk.img:
+
+cd $DB
+#DB - daily build dir
+mv ramdisk.img ramdisk.img.bak
+#backup old ramdisk.img
+cd tmp_rootfs/ 
+find . | cpio -o -H newc | gzip > ../ramdisk.img
+
