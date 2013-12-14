@@ -13,8 +13,8 @@ HISTCONTROL=ignoreboth
 shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
+HISTSIZE=100000
+HISTFILESIZE=1000000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -108,15 +108,12 @@ fi
 
 export CROSS_COMPILE=arm-eabi-
 export JAVA_HOME=/usr/java/default
-#export PATH=$PATH:$HOME/bin/:$JAVA_HOME/bin:$HOME/opt/arm-eabi-4.6/bin:$HOME/opt/arm-2010q1/bin
-export PATH=$PATH:$HOME/bin/:$JAVA_HOME/bin:$HOME/opt/arm-eabi-4.6/bin:$HOME/opt/arm-2012.09/bin
+export PATH=$PATH:$HOME/bin/:$JAVA_HOME/bin:$HOME/opt/arm-eabi/bin:$HOME/opt/arm-2010q1/bin
 export MMC_BIN_REL_TABLET=${HOME}/work/mmc_release_tablet
 export MMC_BIN_REL_BLAZE=${HOME}/work/mmc_release_blaze
+export MMC_BIN_REL_OMAP5=${HOME}/work/mmc_omap5
+export MMC_BIN_REL_DRA7=${HOME}/work/mmc_dra7
 export USER_REAL_NAME=Alexander Savchenko
 export TI_MAIL=oleksandr.savchenko@ti.com
-export DISCIMAGE=$MMC_BIN_REL_TABLET/.ddk
-export KERNELDIR=$HOME/work/k34/p-android-omap-3.4
-export ARCH=arm
-alias gsend='git send-email --smtp-server /usr/bin/msmtp --from "${USER_REAL_NAME} <${TI_MAIL}>" --envelope-sender="${USER_REAL_NAME} <${TI_MAIL}>" --suppress-cc=all'
-alias gsendcompose='git send-email --smtp-server /usr/bin/msmtp --from "${USER_REAL_NAME} <${TI_MAIL}>" --envelope-sender="${USER_REAL_NAME} <${TI_MAIL}>" --suppress-cc=all --compose'
+export TARGET_ARCH=arm
 export EDITOR=vim

@@ -1,8 +1,22 @@
 [core]
-	gitproxy = /home/x0187394/bin/git-proxy.sh
 	editor = vim
 [color]
 	ui = auto
 [user]
 	name = Alexander Savchenko
-	email = oleksandr.savchenko@ti.com
+	email = oleksandr.savchenko@globallogic.com
+[sendemail]
+# smtpserver = smtp.mail.ti.com
+ smtpuser = oleksandr.savchenko@globallogic.com
+ smtpserver = smtp.gmail.com
+ from = "Alexander Savchenko <oleksandr.savchenko@globallogic.com>"
+# smtpserverport = 25 
+ smtpserverport = 587 
+ smtpencryption = tls
+ smtppass       = "Tiger17*"
+ chainreplyto = false
+ thread = true
+[alias]
+	last = log -1 HEAD
+	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+	lgr = log --color --reverse --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
