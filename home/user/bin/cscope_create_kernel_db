@@ -21,6 +21,9 @@ find "$PWD/arch/arm/include/"			\
 "$PWD/arch/arm/mm/"				\
 "$PWD/arch/arm/mach-omap2/"			\
 "$PWD/arch/arm/plat-omap/"			\
+"$PWD/arch/arm/xen/"				\
+"$PWD/arch/arm/net/"				\
+"$PWD/arch/arm/configs/"			\
 -name "*.[chxsS]" -print >> cscope.files
 
 echo "Creating cscope DB..."
