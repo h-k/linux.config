@@ -1,3 +1,4 @@
+syntax on
 colorscheme mrkn256 " wombat256mod
 set colorcolumn=81
 highlight ColorColumn ctermbg=blue
