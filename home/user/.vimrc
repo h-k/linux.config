@@ -1,7 +1,9 @@
 syntax on
+set number
 colorscheme mrkn256 " wombat256mod
 set colorcolumn=81
 highlight ColorColumn ctermbg=blue
+highlight LineNr ctermfg=red
 
 " Omni Completion
 filetype plugin on

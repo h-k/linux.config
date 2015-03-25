@@ -13,6 +13,10 @@ alias blame='git blame'
 alias br='git branch -a'
 alias checkout='git checkout'
 alias one='git log --oneline'
+alias am='git am'
+alias amend='git commit --amend'
+alias format='git format-patch -1'
+alias add='git add'
 alias lg="git log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
 alias lgr="git log --color --reverse --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
 alias gsend='git send-email --smtp-server /usr/bin/msmtp --from "${USER_REAL_NAME} <${TI_MAIL}>" --envelope-sender="${USER_REAL_NAME} <${TI_MAIL}>" --suppress-cc=all'
