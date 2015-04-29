@@ -2,8 +2,10 @@ syntax on
 set number
 colorscheme mrkn256 " wombat256mod
 set colorcolumn=81
-" set list
+set list
 " set listchars=eol:↲,tab:→→,trail:·,nbsp:↔
+set listchars=tab:>.,trail:.,extends:#,nbsp:.
+
 highlight ColorColumn ctermbg=blue
 highlight LineNr ctermfg=red
 
@@ -87,7 +89,7 @@ endif
 
 
 " This tests to see if vim was configured with the '--enable-cscope' option
-" when it was compiled.  If it wasn't, time to recompile vim... 
+" when it was compiled.  If it wasn't, time to recompile vim...
 if has("cscope")
 
     """"""""""""" Standard cscope/vim boilerplate
@@ -102,13 +104,13 @@ if has("cscope")
     " add any cscope database in current directory
     if filereadable(".cscope/cscope.out")
         cs add .cscope/cscope.out
-    " else add the database pointed to by environment variable 
+    " else add the database pointed to by environment variable
     elseif $CSCOPE_DB != ""
         cs add $CSCOPE_DB
     endif
 
     " show msg when any other cscope db added
-    set cscopeverbose  
+    set cscopeverbose
 
 
     """"""""""""" My cscope/vim key mappings
@@ -147,7 +149,7 @@ if has("cscope")
     " To do the first type of search, hit 'CTRL-\', followed by one of the
     " cscope search types above (s,g,c,t,e,f,i,d).  The result of your cscope
     " search will be displayed in the current window.  You can use CTRL-T to
-    " go back to where you were before the search.  
+    " go back to where you were before the search.
     "
 
     nmap <C-\>s :cs find s <C-R>=expand("<cword>")<CR><CR>	
@@ -200,7 +202,7 @@ if has("cscope")
     " You may find that too short with the above typemaps.  If so, you should
     " either turn off mapping timeouts via 'notimeout'.
     "
-    "set notimeout 
+    "set notimeout
     "
     " Or, you can keep timeouts, by uncommenting the timeoutlen line below,
     " with your own personal favorite value (in milliseconds):
@@ -213,7 +215,7 @@ if has("cscope")
     " delays as vim waits for a keystroke after you hit ESC (it will be
     " waiting to see if the ESC is actually part of a key code like <F1>).
     "
-    "set ttimeout 
+    "set ttimeout
     "
     " personally, I find a tenth of a second to work well for key code
     " timeouts. If you experience problems and have a slow terminal or network
