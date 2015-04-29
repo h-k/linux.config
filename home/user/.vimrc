@@ -2,8 +2,27 @@ syntax on
 set number
 colorscheme mrkn256 " wombat256mod
 set colorcolumn=81
+" set list
+" set listchars=eol:↲,tab:→→,trail:·,nbsp:↔
 highlight ColorColumn ctermbg=blue
 highlight LineNr ctermfg=red
+
+" Highligt trailing spaces
+highlight ExtraWhitespace ctermbg=red guibg=red
+match ExtraWhitespace /\s\+$/
+autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
+autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
+autocmd InsertLeave * match ExtraWhitespace /\s\+$/
+autocmd BufWinLeave * call clearmatches()
+
+" Remove trailing spaces when saving file
+" function! TrimWhiteSpace()
+" %s/\s\+$//e
+" endfunction
+" autocmd BufWritePre     *.c,*.h,Makefile* :call TrimWhiteSpace()
+
+set mouse=a
+set guiheadroom=0
 
 " Omni Completion
 filetype plugin on
@@ -42,13 +61,13 @@ endif
 " http://cscope.sourceforge.net/cscope_maps.vim
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" CSCOPE settings for vim           
+" CSCOPE settings for vim
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "
 " This file contains some boilerplate settings for vim's cscope interface,
 " plus some keyboard mappings that I've found useful.
 "
-" USAGE: 
+" USAGE:
 " -- vim 6:     Stick this file in your ~/.vim/plugin directory (or in a
 "               'plugin' directory in some other directory that is in your
 "               'runtimepath'.
@@ -56,7 +75,7 @@ endif
 " -- vim 5:     Stick this file somewhere and 'source cscope.vim' it from
 "               your ~/.vimrc file (or cut and paste it into your .vimrc).
 "
-" NOTE: 
+" NOTE:
 " These key maps use multiple keystrokes (2 or 3 keys).  If you find that vim
 " keeps timing you out before you can complete them, try changing your timeout
 " settings, as explained below.
