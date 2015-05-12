@@ -6,6 +6,7 @@ set list
 " set listchars=eol:↲,tab:→→,trail:·,nbsp:↔
 set listchars=tab:>.,trail:.,extends:#,nbsp:.
 
+:set directory=$HOME/.vim/swap/
 highlight ColorColumn ctermbg=blue
 highlight LineNr ctermfg=red
 
@@ -23,7 +24,7 @@ autocmd BufWinLeave * call clearmatches()
 " endfunction
 " autocmd BufWritePre     *.c,*.h,Makefile* :call TrimWhiteSpace()
 
-set mouse=a
+" set mouse=a
 set guiheadroom=0
 
 " Omni Completion
