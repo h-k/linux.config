@@ -6,15 +6,7 @@
 	name = Alexander Savchenko
 	email = oleksandr.savchenko@globallogic.com
 [sendemail]
-# smtpserver = smtp.mail.ti.com
- smtpuser = oleksandr.savchenko@globallogic.com
- smtpserver = smtp.gmail.com
  from = "Alexander Savchenko <oleksandr.savchenko@globallogic.com>"
-# smtpserverport = 25 
- smtpserverport = 587 
- smtpencryption = tls
- smtppass       = "Tiger17*"
- chainreplyto = false
  thread = true
 [alias]
 	last = log -1 HEAD

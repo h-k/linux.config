@@ -3,6 +3,7 @@ set number
 colorscheme mrkn256 " wombat256mod
 set colorcolumn=81
 set list
+set nowrap
 " set listchars=eol:↲,tab:→→,trail:·,nbsp:↔
 set listchars=tab:>.,trail:.,extends:#,nbsp:.
 
