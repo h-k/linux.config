@@ -1,1 +1,6 @@
 sudo usermod -a -G dialout $USER
+
+Change timeout for entering password for sudo:
+Open /etc/sudoers
+Add next line for set timeout in 120 min
+Defaults	timestamp_timeout=120
