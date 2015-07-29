@@ -3,26 +3,9 @@ How to set Monday as the first day of the week in GNOME Calendar applet?
 Change to the locale directory and copy the current locale file
 to create a new custom file. Adjust the for your locale.
 
-cd /usr/share/i18n/locales
-sudo cp en_US en_US_custom
+sudo vim /usr/share/i18n/locales/en_US
 
-Now edit the new custom file.
+Change 'first_weekday 1' to 'first_weekday 2'
 
-sudo gedit en_US_custom
-
-And change
-
-first_weekday 1
-
-to
-
-first_weekday 2
-
-Then make the change in /etc/environment to point to your new custom file.
-
-sudo gedit /etc/environment
-
-Add a line like this to the bottom of the file making sure to adjust
-it for the custom locale file you want to use.
-
-LC_TIME="en_US_custom.UTF-8"
+sudo locale-gen
+sudo reboot
