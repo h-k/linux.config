@@ -6,7 +6,7 @@ cscope_db_dir=.cscope
 
 echo "Listing files..."
 
-find $PWD -name "*.[chxsS]" > cscope.files
+find $PWD -name "*akefile" -o -name "*.[chxsS]" -o -name "*.sh"
 
 echo "Creating cscope DB..."
 /usr/bin/cscope -b -q -k
