@@ -1,0 +1,17 @@
+WIFNAME="$1"
+CHANNEL="$2"
+BW="$3"
+BW="${BW:=HT20}"
+#sudo iwconfig "$WIFNAME" mode Monitor
+#sudo ifconfig "$WIFNAME" up
+#sudo iwconfig "$WIFNAME" channel "$CHANNEL"
+#sudo ifconfig "$WIFNAME" up
+
+# If you need to catch data enter in wireshark filter field:  wlan.fc.type == 2
+ifconfig "$WIFNAME" down
+ifconfig "$WIFNAME" up
+iw dev "$WIFNAME" set monitor fcsfail control otherbss 
+ifconfig "$WIFNAME" up
+iw dev "$WIFNAME" set channel "$CHANNEL" "$BW"
+
+wireshark -ki "$WIFNAME" &

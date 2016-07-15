@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Author: Sam Protsenko (x0178546)
+
+cscope_db_dir=.cscope
+
+echo "Listing Kernel files..."
+
+find $PWD					\
+-path "$PWD/arch/*" -prune -o			\
+-path "$PWD/tmp*" -prune -o			\
+-path "$PWD/Documentation*" -prune -o		\
+-path "$PWD/scripts*" -prune -o			\
+-name "*.[chxsS]" -print > cscope.files
+
+find "$PWD/arch/arm/include/"			\
+"$PWD/arch/arm/kernel/"				\
+"$PWD/arch/arm/common/"				\
+"$PWD/arch/arm/boot/"				\
+"$PWD/arch/arm/lib/"				\
+"$PWD/arch/arm/mm/"				\
+"$PWD/arch/arm/mach-omap2/"			\
+"$PWD/arch/arm/plat-omap/"			\
+"$PWD/arch/arm/xen/"				\
+"$PWD/arch/arm/net/"				\
+"$PWD/arch/arm/configs/"			\
+-name "*.[chxsS]" -print >> cscope.files
+
+echo "Creating cscope DB..."
+/usr/bin/cscope -b -q -k
+
+echo "Moving in right place..."
+rm -f cscope.files
+rm -rf $cscope_db_dir
+mkdir $cscope_db_dir
+mv cscope.* $cscope_db_dir
+
+echo "Done"
+
+exit 0
+

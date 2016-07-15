@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Author: Sam Protsenko (x0178546)
+
+cscope_db_dir=.cscope
+
+echo "Listing Kernel files..."
+
+DIR=.
+find $DIR					\
+-path "$DIR/arch/*" -prune -o			\
+-path "$DIR/tmp*" -prune -o			\
+-path "$DIR/Documentation*" -prune -o		\
+-path "$DIR/scripts*" -prune -o			\
+-name "*.[chxsS]" -print > cscope.files
+
+find "$DIR/arch/mips/kernel/"			\
+"$DIR/arch/mips/boot/"				\
+"$DIR/arch/mips/lib/"				\
+"$DIR/arch/mips/lib-32/"			\
+"$DIR/arch/mips/mm/"				\
+"$DIR/arch/mips/configs/"			\
+-name "*.[chxsS]" -print >> cscope.files
+
+echo "Creating cscope DB..."
+/usr/bin/cscope -b -q -k
+
+echo "Moving in right place..."
+rm -f cscope.files
+rm -rf $cscope_db_dir
+mkdir $cscope_db_dir
+mv cscope.* $cscope_db_dir
+
+echo "Done"
+
+exit 0
+

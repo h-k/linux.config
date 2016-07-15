@@ -1,0 +1,848 @@
+From 7bc0ae6de5035174f36188f477d85021a9aaac7f Mon Sep 17 00:00:00 2001
+From: Alexander Savchenko <oleksandr.savchenko@celeno.com>
+Date: Fri, 15 Jul 2016 12:56:23 +0300
+Subject: [PATCH] cscope update
+
+---
+ home/user/.bashrc                          |  14 +-
+ home/user/bin/cscope_create_db             |   8 +-
+ home/user/bin/cscope_create_kernel_arm_db  |  41 ++++
+ home/user/bin/cscope_create_kernel_db      |  23 +--
+ home/user/bin/cscope_create_kernel_mips_db |  37 ++++
+ home/user/bin/update_new_p6_atom.tcl       | 318 +++++++++++++++++++++++++++++
+ home/user/bin/update_p6.tcl                | 318 +++++++++++++++++++++++++++++
+ 7 files changed, 727 insertions(+), 32 deletions(-)
+ create mode 100755 home/user/bin/cscope_create_kernel_arm_db
+ create mode 100755 home/user/bin/cscope_create_kernel_mips_db
+ create mode 100755 home/user/bin/update_new_p6_atom.tcl
+ create mode 100755 home/user/bin/update_p6.tcl
+
+diff --git a/home/user/.bashrc b/home/user/.bashrc
+index 65c7f2d..870dcc3 100644
+--- a/home/user/.bashrc
++++ b/home/user/.bashrc
+@@ -13,8 +13,8 @@ HISTCONTROL=ignoreboth
+ shopt -s histappend
+ 
+ # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+-HISTSIZE=100000
+-HISTFILESIZE=1000000
++HISTSIZE=1000000
++HISTFILESIZE=10000000
+ 
+ # check the window size after each command and, if necessary,
+ # update the values of LINES and COLUMNS.
+@@ -106,14 +106,8 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+     . /etc/bash_completion
+ fi
+ 
+-export CROSS_COMPILE=arm-eabi-
+ export JAVA_HOME=/usr/java/default
+-export PATH=$PATH:$HOME/bin/:$JAVA_HOME/bin:$HOME/opt/arm-eabi/bin:$HOME/opt/arm-2010q1/bin
+-export MMC_BIN_REL_TABLET=${HOME}/work/mmc_release_tablet
+-export MMC_BIN_REL_BLAZE=${HOME}/work/mmc_release_blaze
+-export MMC_BIN_REL_OMAP5=${HOME}/work/mmc_omap5
+-export MMC_BIN_REL_DRA7=${HOME}/work/mmc_dra7
+ export USER_REAL_NAME=Alexander Savchenko
+-export TI_MAIL=oleksandr.savchenko@ti.com
+-export TARGET_ARCH=arm
+ export EDITOR=vim
++
++color() { "$@" 2>&1>&3|sed 's,.*,\x1B[1;31m&\x1B[0m,'>&2; return ${PIPESTATUS[0]}; } 3>&1
+diff --git a/home/user/bin/cscope_create_db b/home/user/bin/cscope_create_db
+index a39aabd..dbc7470 100755
+--- a/home/user/bin/cscope_create_db
++++ b/home/user/bin/cscope_create_db
+@@ -6,12 +6,14 @@ cscope_db_dir=.cscope
+ 
+ echo "Listing files..."
+ 
+-find $PWD -name "*.[chxsS]" > cscope.files
++#find $PWD -name "*.[chxsS]" > cscope.files
++find . -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" -o -name "*.x" -o -name "*.s" -o -name "*.S" -o -name "Makefile" -o -name "makefile" -o -name "*.mk" -o -name "*.sh"  > cscope.files
+ 
+ echo "Creating cscope DB..."
+-/usr/bin/cscope -b -q -k
++#/usr/bin/cscope -b -q -k
++/usr/bin/cscope -q -R -b -i cscope.files
+ 
+-echo "Moving in right place..."
++echo "Moving in $cscope_db_dir ..."
+ rm -f cscope.files
+ rm -rf $cscope_db_dir
+ mkdir $cscope_db_dir
+diff --git a/home/user/bin/cscope_create_kernel_arm_db b/home/user/bin/cscope_create_kernel_arm_db
+new file mode 100755
+index 0000000..e83ac45
+--- /dev/null
++++ b/home/user/bin/cscope_create_kernel_arm_db
+@@ -0,0 +1,41 @@
++#!/bin/bash
++
++# Author: Sam Protsenko (x0178546)
++
++cscope_db_dir=.cscope
++
++echo "Listing Kernel files..."
++
++find $PWD					\
++-path "$PWD/arch/*" -prune -o			\
++-path "$PWD/tmp*" -prune -o			\
++-path "$PWD/Documentation*" -prune -o		\
++-path "$PWD/scripts*" -prune -o			\
++-name "*.[chxsS]" -print > cscope.files
++
++find "$PWD/arch/arm/include/"			\
++"$PWD/arch/arm/kernel/"				\
++"$PWD/arch/arm/common/"				\
++"$PWD/arch/arm/boot/"				\
++"$PWD/arch/arm/lib/"				\
++"$PWD/arch/arm/mm/"				\
++"$PWD/arch/arm/mach-omap2/"			\
++"$PWD/arch/arm/plat-omap/"			\
++"$PWD/arch/arm/xen/"				\
++"$PWD/arch/arm/net/"				\
++"$PWD/arch/arm/configs/"			\
++-name "*.[chxsS]" -print >> cscope.files
++
++echo "Creating cscope DB..."
++/usr/bin/cscope -b -q -k
++
++echo "Moving in right place..."
++rm -f cscope.files
++rm -rf $cscope_db_dir
++mkdir $cscope_db_dir
++mv cscope.* $cscope_db_dir
++
++echo "Done"
++
++exit 0
++
+diff --git a/home/user/bin/cscope_create_kernel_db b/home/user/bin/cscope_create_kernel_db
+index e83ac45..777baca 100755
+--- a/home/user/bin/cscope_create_kernel_db
++++ b/home/user/bin/cscope_create_kernel_db
+@@ -6,25 +6,10 @@ cscope_db_dir=.cscope
+ 
+ echo "Listing Kernel files..."
+ 
+-find $PWD					\
+--path "$PWD/arch/*" -prune -o			\
+--path "$PWD/tmp*" -prune -o			\
+--path "$PWD/Documentation*" -prune -o		\
+--path "$PWD/scripts*" -prune -o			\
+--name "*.[chxsS]" -print > cscope.files
+-
+-find "$PWD/arch/arm/include/"			\
+-"$PWD/arch/arm/kernel/"				\
+-"$PWD/arch/arm/common/"				\
+-"$PWD/arch/arm/boot/"				\
+-"$PWD/arch/arm/lib/"				\
+-"$PWD/arch/arm/mm/"				\
+-"$PWD/arch/arm/mach-omap2/"			\
+-"$PWD/arch/arm/plat-omap/"			\
+-"$PWD/arch/arm/xen/"				\
+-"$PWD/arch/arm/net/"				\
+-"$PWD/arch/arm/configs/"			\
+--name "*.[chxsS]" -print >> cscope.files
++DIR=.
++
++find $DIR -name "*.[chxsS]" -print > cscope.files
++
+ 
+ echo "Creating cscope DB..."
+ /usr/bin/cscope -b -q -k
+diff --git a/home/user/bin/cscope_create_kernel_mips_db b/home/user/bin/cscope_create_kernel_mips_db
+new file mode 100755
+index 0000000..68d99af
+--- /dev/null
++++ b/home/user/bin/cscope_create_kernel_mips_db
+@@ -0,0 +1,37 @@
++#!/bin/bash
++
++# Author: Sam Protsenko (x0178546)
++
++cscope_db_dir=.cscope
++
++echo "Listing Kernel files..."
++
++DIR=.
++find $DIR					\
++-path "$DIR/arch/*" -prune -o			\
++-path "$DIR/tmp*" -prune -o			\
++-path "$DIR/Documentation*" -prune -o		\
++-path "$DIR/scripts*" -prune -o			\
++-name "*.[chxsS]" -print > cscope.files
++
++find "$DIR/arch/mips/kernel/"			\
++"$DIR/arch/mips/boot/"				\
++"$DIR/arch/mips/lib/"				\
++"$DIR/arch/mips/lib-32/"			\
++"$DIR/arch/mips/mm/"				\
++"$DIR/arch/mips/configs/"			\
++-name "*.[chxsS]" -print >> cscope.files
++
++echo "Creating cscope DB..."
++/usr/bin/cscope -b -q -k
++
++echo "Moving in right place..."
++rm -f cscope.files
++rm -rf $cscope_db_dir
++mkdir $cscope_db_dir
++mv cscope.* $cscope_db_dir
++
++echo "Done"
++
++exit 0
++
+diff --git a/home/user/bin/update_new_p6_atom.tcl b/home/user/bin/update_new_p6_atom.tcl
+new file mode 100755
+index 0000000..4647df7
+--- /dev/null
++++ b/home/user/bin/update_new_p6_atom.tcl
+@@ -0,0 +1,318 @@
++#!/usr/bin/env tclsh
++package require Expect
++package require cmdline
++
++set parameters {
++	{atom.arg	"ttyUSB2"	"ATOM port"}
++	{arm.arg	"ttyUSB3"	"ARM port"}
++	{server.arg	"192.168.100.80"	"Server IP"}
++	{filename.arg	"appcpuImage"	"Image filename"}
++}
++
++array set arg [cmdline::getoptions argv $parameters]
++
++# set console devices
++
++set port_ATOM $arg(atom)
++set port_ARM $arg(arm)
++
++# TFTP server address
++set server_ip $arg(server)
++# attach mode: raw / screen
++# Screen example:
++# screen -mS ttyUSB0 minicom -w -c on -C /tmp/minicom_ttyUSB0_$(date +%F).log ttyUSB0
++set spawn_mode "raw"
++# old / new
++set p6_version "new"
++
++set baud_rate 115200
++set filename $arg(filename)
++
++set KEY_Esc		"\033"
++set KEY_Up		"\033\[A"
++set KEY_Down	"\033\[B"
++set KEY_Left	"\033\[D"
++set KEY_Right	"\033\[C"
++
++proc init_tty {baud_rate port} {
++	stty ispeed $baud_rate ospeed $baud_rate raw -echo cs8 -parenb -cstopb onlcr < /dev/$port
++	# Time to wait for physical UART adjustment
++	sleep 1
++}
++
++proc send_atom {text} {
++	global spw_id_ATOM
++	global port_ATOM
++	global spawn_mode
++	global baud_rate
++	set try 0
++	#sleep 1
++	while {$try < 3} {
++		if { [ catch { send -i $spw_id_ATOM $text } e ] } {
++			catch { close -i $spw_id_ATOM } e
++			init_tty $baud_rate $port_ATOM
++			if { $spawn_mode == "raw" } {
++				spawn -open [open /dev/$port_ATOM w+]
++				set spw_id_ATOM $spawn_id
++			} elseif { $spawn_mode == "screen" } {
++				spawn screen -x $port_ATOM
++				set spw_id_ATOM $spawn_id
++			} else {
++				exit 1
++			}
++			incr try
++		} else {
++			return
++		}
++	}
++}
++proc send_arm {text} {
++	global spw_id_ARM
++	global port_ARM
++	global spawn_mode
++	global baud_rate
++	set try 0
++    #sleep 1
++	while {$try < 3} {
++		if { [ catch { send -i $spw_id_ARM $text } e ] } {
++			catch { close -i $spw_id_ARM } e
++			init_tty $baud_rate $port_ARM
++			if { $spawn_mode == "raw" } {
++				spawn -open [open /dev/$port_ARM w+]
++				set spw_id_ARM $spawn_id
++			} elseif { $spawn_mode == "screen" } {
++				spawn screen -x $port_ARM
++				set spw_id_ARM $spawn_id
++			} else {
++				exit 1
++			}
++			incr try
++		} else {
++			return
++		}
++	}
++}
++
++proc change_settings {GbE_GMUX_Mode Boot_Type} {
++	global spw_id_ATOM
++	global KEY_Esc
++	global KEY_Up
++	global KEY_Down
++	global KEY_Left
++	global KEY_Right
++	global p6_version
++
++	set is_GbE_GMUX_Mode 0
++	set is_Boot_Type 0
++	set try_count 0
++	set RED_BG "\u001b\\\[0;41;37m"
++	set RED_BG_RE "\u001b\\\[0;41;37m"
++
++	if { $p6_version == "new" } {
++		set menu_stopper_RE "\u001b\\\[12;34H" 
++		set GbE_GMUX_Mode_RE "${RED_BG_RE}\u001b\\\[07;34H(L2SW Mode|Pad0 Only|Pad0 and Pad1-L2-Moca|Pad1 and Pad0-L2-Moca|MoCA and Pad0-L2-Pad1)"
++		set Boot_Type_RE "${RED_BG_RE}\u001b\\\[09;34H(No DOCSIS Boot|Normal)" 
++		set skip_other_RE "${RED_BG_RE}\u001b(\\\[0\[3-68\]|\\\[1\[0-4\]);34H|\u001b\\\[\[01\]\[0-9\];34H${RED_BG_RE}" 
++	} elseif { $p6_version == "old" } {
++		set menu_stopper_RE "\u001b\\\[13;34H"
++		set GbE_GMUX_Mode_RE "${RED_BG_RE}\u001b\\\[08;34H(L2SW Mode|Pad0 Only|Pad0 and Pad1-L2-Moca|Pad1 and Pad0-L2-Moca|MoCA and Pad0-L2-Pad1)"
++		set Boot_Type_RE "${RED_BG_RE}\u001b\\\[10;34H(No DOCSIS Boot|Normal)" 
++		set skip_other_RE "${RED_BG_RE}\u001b(\\\[0\[3-79\]|\\\[1\[1-4\]);34H|\u001b\\\[\[01\]\[0-9\];34H${RED_BG_RE}" 
++	}
++	send_atom "settings\r"
++	set timeout 3
++	expect {
++		-i $spw_id_ATOM
++		{F1: Save & Exit Setup (or F3, shift-S)} { ; }
++		timeout { return 1 }
++	}
++	# Jump to Advanced Features
++	set try_count 0
++	while {$try_count < 10} {
++		send_atom $KEY_Down
++		expect {
++			-i $spw_id_ATOM
++			$RED_BG {
++				expect {
++					-i $spw_id_ATOM
++					"About CEFDK" { ; }
++					"Standard Features" { ; }
++					"Advanced Features" {
++						send_atom "\r"
++						set try_count 100
++						break
++					}
++					timeout { return 1 }
++				}
++			}
++			timeout { return 1 }
++		}
++		incr try_count
++	}
++	if { $try_count < 100} {
++		return 1
++	}
++	# Scan screen and wait for last lines
++	expect {
++		-i $spw_id_ATOM
++		{F1: Save & Exit Setup (or F3, shift-S)} { ; }
++		timeout { return 1 }
++	}
++	set try_count 0
++	while {$try_count < 1} {
++		expect {
++			-i $spw_id_ATOM
++			$GbE_GMUX_Mode { set is_GbE_GMUX_Mode 1 }
++			$Boot_Type { set is_Boot_Type 1 }
++			-re $menu_stopper_RE { incr try_count }
++			timeout { incr try_count }
++		}
++	}
++
++	if {$is_GbE_GMUX_Mode == 1 && $is_Boot_Type == 1} {
++		# All is set alredy
++		send_atom $KEY_Esc
++		expect {
++			-i $spw_id_ATOM
++			{F1: Save & Exit Setup (or F3, shift-S)} {
++				send_atom $KEY_Esc
++				return 0
++			}
++			timeout { return 1 }
++		}
++		return 1
++	}
++	set try_count 0
++	while {$try_count < 10 && ($is_GbE_GMUX_Mode == 0 || $is_Boot_Type == 0)} {
++		send_atom $KEY_Down
++		set timeout 1
++		expect {
++			-i $spw_id_ATOM
++			-re $GbE_GMUX_Mode_RE {
++				set try_count2 0
++				while {$is_GbE_GMUX_Mode == 0 && $try_count2 < 20} {
++					send_atom $KEY_Right
++					expect {
++						-i $spw_id_ATOM
++						$GbE_GMUX_Mode {
++							set is_GbE_GMUX_Mode 1
++							set try_count2 100
++							break
++						}
++						"L2SW Mode" { ; }
++						"Pad0 Only" { ; }
++						"Pad0 and Pad1-L2-Moca" { ; }
++						"Pad1 and Pad0-L2-Moca" { ; }
++						"MoCA and Pad0-L2-Pad1" { ; }
++						timeout { return 1 }
++					}
++					incr try_count2
++				}
++				if { $try_count2 < 100} {
++					return 1
++				}
++			}
++			-re $Boot_Type_RE {
++				set try_count2 0
++				while {$is_Boot_Type == 0 && $try_count2 < 10} {
++					send_atom $KEY_Right
++					expect {
++						-i $spw_id_ATOM
++						$Boot_Type {
++							set is_Boot_Type 1
++							set try_count2 100
++							break
++						}
++						"No DOCSIS Boot" { ; }
++						"Normal" { ; }
++						timeout { return 1 }
++					}
++					incr try_count2
++				}
++				if { $try_count2 < 100} {
++					return 1
++				}
++			}
++			-re $skip_other_RE { ; }
++			timeout { ; }
++		}
++		incr try_count
++	}
++	send_atom "S"
++	expect -i $spw_id_ATOM "shell>"
++	send_atom "reset\r"
++	set timeout 60
++	expect -i $spw_id_ATOM "Hit a key to start the shell..."
++	send_atom "\r"
++	return 0
++}
++
++init_tty $baud_rate $port_ATOM
++
++if { $spawn_mode == "raw" } {
++	spawn -open [open /dev/$port_ATOM w+]
++	set spw_id_ATOM $spawn_id
++} elseif { $spawn_mode == "screen" } {
++	spawn screen -x $port_ATOM
++	set spw_id_ATOM $spawn_id
++} else {
++	exit 1
++}
++
++set timeout 60
++
++send_user "\n\nStarted\n\n"
++expect -i $spw_id_ATOM "Hit a key to start the shell..." {
++	send_user "\n\n!!!!!!!! UBoot mode detected\n\n"
++	send_atom "\r"
++	set timeout 10
++	expect -i $spw_id_ATOM "shell>"
++	
++	if [ change_settings "Pad0 and Pad1-L2-Moca" "No DOCSIS Boot" ] { exit 1 }
++	expect -i $spw_id_ATOM "shell>"
++	send_user  "\u001b\[0m\u001b\[2J"
++	send_user "\n\nChanged settings\n\n"
++	set timeout 60
++
++	send_atom "tftp get $server_ip 0x900000 $filename\r"
++	expect -i $spw_id_ATOM "done!"
++	expect -i $spw_id_ATOM "shell>"
++
++	send_user "\n\nLoaded\n\n"
++
++	send_atom "cache flush\r"
++	expect -i $spw_id_ATOM "shell>"
++
++	# Set the serial port baud_raterate
++
++    init_tty $baud_rate $port_ARM
++
++	if { $spawn_mode == "raw" } {
++		spawn -open [open /dev/$port_ARM w+]
++		set spw_id_ARM $spawn_id
++	} elseif { $spawn_mode == "screen" } {
++		spawn screen -x $port_ARM
++		set spw_id_ARM $spawn_id
++	} else {
++		exit 1
++	}
++
++	send_atom "ord4 0xC80D0000 0x03000000\r"
++	expect -i $spw_id_ATOM "shell>"
++	expect -i $spw_id_ARM "Press SPACE to abort autoboot"
++	send_arm " "
++	send_user "\n\nARM commands\n\n"
++	expect -i $spw_id_ARM "=>"
++	send_arm "update -t atom 1\r"
++	expect -i $spw_id_ARM "=>"
++	send_arm "update -t atom 2\r"
++	expect -i $spw_id_ARM "=>"
++
++	if [ change_settings "L2SW Mode" "Normal" ] { exit 1 }
++	expect -i $spw_id_ATOM "shell>"
++	send_user  "\u001b\[0m\u001b\[2J"
++
++	send_atom "reset\r"
++	send_user "\n\nDone!\n\n"
++}
++
+diff --git a/home/user/bin/update_p6.tcl b/home/user/bin/update_p6.tcl
+new file mode 100755
+index 0000000..4647df7
+--- /dev/null
++++ b/home/user/bin/update_p6.tcl
+@@ -0,0 +1,318 @@
++#!/usr/bin/env tclsh
++package require Expect
++package require cmdline
++
++set parameters {
++	{atom.arg	"ttyUSB2"	"ATOM port"}
++	{arm.arg	"ttyUSB3"	"ARM port"}
++	{server.arg	"192.168.100.80"	"Server IP"}
++	{filename.arg	"appcpuImage"	"Image filename"}
++}
++
++array set arg [cmdline::getoptions argv $parameters]
++
++# set console devices
++
++set port_ATOM $arg(atom)
++set port_ARM $arg(arm)
++
++# TFTP server address
++set server_ip $arg(server)
++# attach mode: raw / screen
++# Screen example:
++# screen -mS ttyUSB0 minicom -w -c on -C /tmp/minicom_ttyUSB0_$(date +%F).log ttyUSB0
++set spawn_mode "raw"
++# old / new
++set p6_version "new"
++
++set baud_rate 115200
++set filename $arg(filename)
++
++set KEY_Esc		"\033"
++set KEY_Up		"\033\[A"
++set KEY_Down	"\033\[B"
++set KEY_Left	"\033\[D"
++set KEY_Right	"\033\[C"
++
++proc init_tty {baud_rate port} {
++	stty ispeed $baud_rate ospeed $baud_rate raw -echo cs8 -parenb -cstopb onlcr < /dev/$port
++	# Time to wait for physical UART adjustment
++	sleep 1
++}
++
++proc send_atom {text} {
++	global spw_id_ATOM
++	global port_ATOM
++	global spawn_mode
++	global baud_rate
++	set try 0
++	#sleep 1
++	while {$try < 3} {
++		if { [ catch { send -i $spw_id_ATOM $text } e ] } {
++			catch { close -i $spw_id_ATOM } e
++			init_tty $baud_rate $port_ATOM
++			if { $spawn_mode == "raw" } {
++				spawn -open [open /dev/$port_ATOM w+]
++				set spw_id_ATOM $spawn_id
++			} elseif { $spawn_mode == "screen" } {
++				spawn screen -x $port_ATOM
++				set spw_id_ATOM $spawn_id
++			} else {
++				exit 1
++			}
++			incr try
++		} else {
++			return
++		}
++	}
++}
++proc send_arm {text} {
++	global spw_id_ARM
++	global port_ARM
++	global spawn_mode
++	global baud_rate
++	set try 0
++    #sleep 1
++	while {$try < 3} {
++		if { [ catch { send -i $spw_id_ARM $text } e ] } {
++			catch { close -i $spw_id_ARM } e
++			init_tty $baud_rate $port_ARM
++			if { $spawn_mode == "raw" } {
++				spawn -open [open /dev/$port_ARM w+]
++				set spw_id_ARM $spawn_id
++			} elseif { $spawn_mode == "screen" } {
++				spawn screen -x $port_ARM
++				set spw_id_ARM $spawn_id
++			} else {
++				exit 1
++			}
++			incr try
++		} else {
++			return
++		}
++	}
++}
++
++proc change_settings {GbE_GMUX_Mode Boot_Type} {
++	global spw_id_ATOM
++	global KEY_Esc
++	global KEY_Up
++	global KEY_Down
++	global KEY_Left
++	global KEY_Right
++	global p6_version
++
++	set is_GbE_GMUX_Mode 0
++	set is_Boot_Type 0
++	set try_count 0
++	set RED_BG "\u001b\\\[0;41;37m"
++	set RED_BG_RE "\u001b\\\[0;41;37m"
++
++	if { $p6_version == "new" } {
++		set menu_stopper_RE "\u001b\\\[12;34H" 
++		set GbE_GMUX_Mode_RE "${RED_BG_RE}\u001b\\\[07;34H(L2SW Mode|Pad0 Only|Pad0 and Pad1-L2-Moca|Pad1 and Pad0-L2-Moca|MoCA and Pad0-L2-Pad1)"
++		set Boot_Type_RE "${RED_BG_RE}\u001b\\\[09;34H(No DOCSIS Boot|Normal)" 
++		set skip_other_RE "${RED_BG_RE}\u001b(\\\[0\[3-68\]|\\\[1\[0-4\]);34H|\u001b\\\[\[01\]\[0-9\];34H${RED_BG_RE}" 
++	} elseif { $p6_version == "old" } {
++		set menu_stopper_RE "\u001b\\\[13;34H"
++		set GbE_GMUX_Mode_RE "${RED_BG_RE}\u001b\\\[08;34H(L2SW Mode|Pad0 Only|Pad0 and Pad1-L2-Moca|Pad1 and Pad0-L2-Moca|MoCA and Pad0-L2-Pad1)"
++		set Boot_Type_RE "${RED_BG_RE}\u001b\\\[10;34H(No DOCSIS Boot|Normal)" 
++		set skip_other_RE "${RED_BG_RE}\u001b(\\\[0\[3-79\]|\\\[1\[1-4\]);34H|\u001b\\\[\[01\]\[0-9\];34H${RED_BG_RE}" 
++	}
++	send_atom "settings\r"
++	set timeout 3
++	expect {
++		-i $spw_id_ATOM
++		{F1: Save & Exit Setup (or F3, shift-S)} { ; }
++		timeout { return 1 }
++	}
++	# Jump to Advanced Features
++	set try_count 0
++	while {$try_count < 10} {
++		send_atom $KEY_Down
++		expect {
++			-i $spw_id_ATOM
++			$RED_BG {
++				expect {
++					-i $spw_id_ATOM
++					"About CEFDK" { ; }
++					"Standard Features" { ; }
++					"Advanced Features" {
++						send_atom "\r"
++						set try_count 100
++						break
++					}
++					timeout { return 1 }
++				}
++			}
++			timeout { return 1 }
++		}
++		incr try_count
++	}
++	if { $try_count < 100} {
++		return 1
++	}
++	# Scan screen and wait for last lines
++	expect {
++		-i $spw_id_ATOM
++		{F1: Save & Exit Setup (or F3, shift-S)} { ; }
++		timeout { return 1 }
++	}
++	set try_count 0
++	while {$try_count < 1} {
++		expect {
++			-i $spw_id_ATOM
++			$GbE_GMUX_Mode { set is_GbE_GMUX_Mode 1 }
++			$Boot_Type { set is_Boot_Type 1 }
++			-re $menu_stopper_RE { incr try_count }
++			timeout { incr try_count }
++		}
++	}
++
++	if {$is_GbE_GMUX_Mode == 1 && $is_Boot_Type == 1} {
++		# All is set alredy
++		send_atom $KEY_Esc
++		expect {
++			-i $spw_id_ATOM
++			{F1: Save & Exit Setup (or F3, shift-S)} {
++				send_atom $KEY_Esc
++				return 0
++			}
++			timeout { return 1 }
++		}
++		return 1
++	}
++	set try_count 0
++	while {$try_count < 10 && ($is_GbE_GMUX_Mode == 0 || $is_Boot_Type == 0)} {
++		send_atom $KEY_Down
++		set timeout 1
++		expect {
++			-i $spw_id_ATOM
++			-re $GbE_GMUX_Mode_RE {
++				set try_count2 0
++				while {$is_GbE_GMUX_Mode == 0 && $try_count2 < 20} {
++					send_atom $KEY_Right
++					expect {
++						-i $spw_id_ATOM
++						$GbE_GMUX_Mode {
++							set is_GbE_GMUX_Mode 1
++							set try_count2 100
++							break
++						}
++						"L2SW Mode" { ; }
++						"Pad0 Only" { ; }
++						"Pad0 and Pad1-L2-Moca" { ; }
++						"Pad1 and Pad0-L2-Moca" { ; }
++						"MoCA and Pad0-L2-Pad1" { ; }
++						timeout { return 1 }
++					}
++					incr try_count2
++				}
++				if { $try_count2 < 100} {
++					return 1
++				}
++			}
++			-re $Boot_Type_RE {
++				set try_count2 0
++				while {$is_Boot_Type == 0 && $try_count2 < 10} {
++					send_atom $KEY_Right
++					expect {
++						-i $spw_id_ATOM
++						$Boot_Type {
++							set is_Boot_Type 1
++							set try_count2 100
++							break
++						}
++						"No DOCSIS Boot" { ; }
++						"Normal" { ; }
++						timeout { return 1 }
++					}
++					incr try_count2
++				}
++				if { $try_count2 < 100} {
++					return 1
++				}
++			}
++			-re $skip_other_RE { ; }
++			timeout { ; }
++		}
++		incr try_count
++	}
++	send_atom "S"
++	expect -i $spw_id_ATOM "shell>"
++	send_atom "reset\r"
++	set timeout 60
++	expect -i $spw_id_ATOM "Hit a key to start the shell..."
++	send_atom "\r"
++	return 0
++}
++
++init_tty $baud_rate $port_ATOM
++
++if { $spawn_mode == "raw" } {
++	spawn -open [open /dev/$port_ATOM w+]
++	set spw_id_ATOM $spawn_id
++} elseif { $spawn_mode == "screen" } {
++	spawn screen -x $port_ATOM
++	set spw_id_ATOM $spawn_id
++} else {
++	exit 1
++}
++
++set timeout 60
++
++send_user "\n\nStarted\n\n"
++expect -i $spw_id_ATOM "Hit a key to start the shell..." {
++	send_user "\n\n!!!!!!!! UBoot mode detected\n\n"
++	send_atom "\r"
++	set timeout 10
++	expect -i $spw_id_ATOM "shell>"
++	
++	if [ change_settings "Pad0 and Pad1-L2-Moca" "No DOCSIS Boot" ] { exit 1 }
++	expect -i $spw_id_ATOM "shell>"
++	send_user  "\u001b\[0m\u001b\[2J"
++	send_user "\n\nChanged settings\n\n"
++	set timeout 60
++
++	send_atom "tftp get $server_ip 0x900000 $filename\r"
++	expect -i $spw_id_ATOM "done!"
++	expect -i $spw_id_ATOM "shell>"
++
++	send_user "\n\nLoaded\n\n"
++
++	send_atom "cache flush\r"
++	expect -i $spw_id_ATOM "shell>"
++
++	# Set the serial port baud_raterate
++
++    init_tty $baud_rate $port_ARM
++
++	if { $spawn_mode == "raw" } {
++		spawn -open [open /dev/$port_ARM w+]
++		set spw_id_ARM $spawn_id
++	} elseif { $spawn_mode == "screen" } {
++		spawn screen -x $port_ARM
++		set spw_id_ARM $spawn_id
++	} else {
++		exit 1
++	}
++
++	send_atom "ord4 0xC80D0000 0x03000000\r"
++	expect -i $spw_id_ATOM "shell>"
++	expect -i $spw_id_ARM "Press SPACE to abort autoboot"
++	send_arm " "
++	send_user "\n\nARM commands\n\n"
++	expect -i $spw_id_ARM "=>"
++	send_arm "update -t atom 1\r"
++	expect -i $spw_id_ARM "=>"
++	send_arm "update -t atom 2\r"
++	expect -i $spw_id_ARM "=>"
++
++	if [ change_settings "L2SW Mode" "Normal" ] { exit 1 }
++	expect -i $spw_id_ATOM "shell>"
++	send_user  "\u001b\[0m\u001b\[2J"
++
++	send_atom "reset\r"
++	send_user "\n\nDone!\n\n"
++}
++
+-- 
+1.9.1
+
