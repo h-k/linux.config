@@ -19,3 +19,5 @@ mv ramdisk.img ramdisk.img.bak
 cd tmp_rootfs/ 
 find . | cpio -o -H newc | gzip > ../ramdisk.img
 
+#remount for rw
+mount -o remount, rw /dev/sdb3
