@@ -1,0 +1,1843 @@
+flash puma6:
+Enter to U=Boot:
+shell> settings
+choose "Advanced Settings"
+GbE GMUX Mode: change L2SW Mode to "Pad0 and Pad1-L2-Moca"
+Boot Type: change "Normal" to "No DOCSIS Boot"
+Type Shift+S for saving configuration and exit from menu
+shell> reset
+
+tftp get 192.168.100.102 0x900000 bzImage
+emmc wr_up 0x240000 0x900000 0x400000
+tftp get 192.168.100.102 0x900000 appcpuRootfs.img
+emmc wr_up 0xa40000 0x900000 0x1100000
+settings
+
+##########change mac address on PUMA6:#################
+mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xCE 0xAB nand
+
+change Advanced Settings back:
+GbE GMUX Mode:              L2SW Mode
+Boot Type:                  NormalG
+
+
+After end of Normal boot:
+
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR240
+$clr_install_dir/ce_host.sh start
+
+ifconfig eth0 0
+ifconfig br0 192.168.100.2
+brctl delif br0 eth0.2
+brctl addif br0 eth0
+brctl addif br0 wdev0ap0
+
+
+### Add wdev0ap0 to bridge br0
+brctl addif br0 wdev0ap0
+####
+cd /etc/Wireless/CLR240/
+
+./inic_cmdr.sh
+
+
+
+
+CL2330
+INTEL../
+make clr240 platform=SAMSUNG_PUMA6
+5.2.x/CL2330/
+./make_CL2330_release.sh SAMSUNG_PUMA6
+
+how to run:
+echo 1 > /nvram/wlandbg
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR240
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+wlan_api
+
+load dual
+
+
+
+How to change mac address on PAPUA (EEPROM)
+
+
+1. Set 'CE_ProductionMode' (or it's analogue, which depends on platform) to 1
+2. Reboot the board
+3. Export all needing paths and switch to CL2330 direcrory in /etc/Wireless
+4. Run ./ce_host.sh start production
+5. Run ./ce_prod set ATE=ATEINIT
+6. Run ./ce_prod set mac_addr=xx:xx:xx:xx:xx:xx
+7. Software reboot
+8. Don't forget to change 'CE_ProductionMode' to 0.
+
+PAY AN ATTENTION:
+
+Do NOT use ./ce_prod set write_e2p=1, it will break the callibration settings!!!
+
+
+Channel=44
+AutoChannelSelect=0
+
+00:1c:51:07:7f:a8
+00:11:99:00:13:18
+40:0e:85:61:60:43
+
+
+
+Amazon
+Turn off Celeno Mode
+echo 0 > /sys/module/rt2860v2_sta/parameters/g_iIsCelenoSta
+
+
+wlan.sa == 00:11:99:00:13:18
+
+
+wlan.sa == 00:1c:02:ca:22:a8 || wlan.sa == 00:11:99:00:13:18 || wlan.da == 00:1c:02:ca:22:a8 || wlan.da == 00:11:99:00:13:18
+################### category WNM, BSS Transition Request, 11v###################################
+wlan_mgt.fixed.category_code == 10
+################### category WNM, Radio Measurement Request, 11k###################################
+wlan_mgt.fixed.category_code == 5
+####################################
+
+CL242
+
+#ARRIS
+
+tftp get 192.168.100.102 0x900000 appcpuImage
+cache flush
+ord4 0xC80D0000 0x03000000
+settings
+
+#ARM console
+update -t atom 1
+update -t atom 2
+
+#FALCON
+tftp get 192.168.100.102 0x900000 bzImage
+emmc wr_up 0x240000 0x900000 0x400000
+tftp get 192.168.100.102 0x900000 appcpuRootfs.img
+emmc wr_up 0xa40000 0x900000 0x1100000
+
+#KDG
+tftp get 192.168.100.88 0x900000 bzImage
+emmc wr_up 0x240000 0x900000 0x400000
+tftp get 192.168.100.88 0x900000 appcpuRootfs.img
+emmc wr_up 0xa40000 0x900000 0x1100000
+settings
+
+echo 1 > /nvram/wlandbg
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+$clr_install_dir/ce_host.sh start
+
+###################SAMSUNG_PUMA6######################
+brctl addbr br0
+ifconfig br0 192.168.100.2
+vconfig add eth0 2
+ifconfig eth0.2 up
+ifconfig eth0 0.0.0.0
+ifconfig eth0.4093 down
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+brctl addif br0 cei00
+route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
+
+########## CL242+CL2330 #######################
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+$clr_install_dir_cl2330/ce_host.sh start
+
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+$clr_install_dir/ce_host.sh start
+
+./nvram_set cl2330 CeCmAutoRestart 0
+export clr_cfg_dir=/nvram
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+export LD_LIBRARY_PATH=/etc/Wireless/CL2330/
+/etc/Wireless/CL2330/clusterd -f /nvram/CL2330.dat -b
+./clusterd -f /nvram/CL2330.dat -b
+####################OFFCHANNEL#########################
+iwpriv wdev0 setcmd "offchannel 64 4 0 1 0 1"
+iwpriv wdev0 setcmd "offchannel 36 4 0 1 0 1"
+##########CBN & FALCON###########
+brctl addbr br0
+ifconfig br0 192.168.100.3
+vconfig add eth0 0
+ifconfig eth0 up
+ifconfig eth0 0
+brctl delif br0 eth0.2
+brctl addif br0 eth0
+brctl addif br0 cei00
+brctl addif br0 cei01
+brctl addif br0 cei02
+brctl addif br0 cei03
+brctl addif br0 wdev0ap0
+brctl addif br0 wdev0ap1
+brctl addif br0 wdev0ap2
+brctl addif br0 wdev0ap3
+brctl addif br0 wdev0ap4
+
+
+##########FALCON 2330#############
+
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+$clr_install_dir_cl2330/ce_host.sh start
+
+##########FALCON 2330#############
+brctl addbr br0
+ifconfig br0 192.168.100.5
+vconfig add eth0 0
+ifconfig eth0 up
+ifconfig eth0 0
+brctl delif br0 eth0.2
+brctl addif br0 eth0
+brctl addif br0 wdev0ap0
+brctl addif br0 wdev0ap1
+brctl addif br0 wdev0ap2
+brctl addif br0 wdev0ap3
+brctl addif br0 wdev0ap4
+
+brctl addif br0 cei00
+brctl addif br0 cei01
+
+####################  HOTSPOT   ##############################
+hs -d 1 -v 2 -f hotspot_ap_cei00.conf -I cei00 -i RA_NETLINK
+hs -d 1 -v 2 -f hotspot_ap_cei00.conf -I cei00 -i RA_WEXT
+
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR260
+$clr_install_dir/ce_host.sh start 24g
+
+WPS start:
+iwpriv cei00 set WscConfMode=7
+iwpriv cei00 set WscMode=2
+iwpriv cei00 set WscGetConf=1
+
+WPS start disable:
+iwpriv cei00 set WscConfMode=0
+iwpriv cei00 set WscStop=1
+
+
+Bahamas 2.4G:
+iwpriv ra0 set WscConfMode=7
+iwpriv ra0 set WscMode=2
+iwpriv ra0 set WscGetConf=1
+
+#FALCON
+tftp get 192.168.100.102 0x900000 bzImage
+emmc wr_up 0x240000 0x900000 0x400000
+tftp get 192.168.100.102 0x900000 appcpuRootfs.img
+emmc wr_up 0xa40000 0x900000 0x1100000
+settings
+
+#########HAIER CL2200################
+export clr_install_dir_cl2200=/etc/Wireless/CL2200
+$clr_install_dir_cl2200/ce_host.sh start
+$clr_install_dir_cl2200/ce_host.sh addvlans
+
+#######CL2200 restore defaults################
+export clr_cfg_dir_cl2200=/nvram
+export clr_install_dir_cl2200=/etc/Wireless/CL2200
+$clr_install_dir_cl2200/restore_defaults.sh CL2200
+
+#######CL2200 restart on################
+export clr_cfg_dir_cl2200=/nvram
+export clr_install_dir_cl2200=/etc/Wireless/CL2200
+$clr_install_dir_cl2200/ce_host.sh restart
+
+#######classifier debug on################
+iwpriv atmcls5g cecli cmtcp.-e.3
+iwpriv atmcls5g cecli classifier.-g.1
+iwpriv atmcls5g cecli cm.-E - statistics
+iwpriv atmcls5g cecli cm.-B - print cache decision
+iwpriv atmcls5g cecli cm.-s.EC1F72F2A3CE steer EC1F72F2A3CE to any
+#########HAIER CL242################
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+$clr_install_dir/ce_host.sh start
+$clr_install_dir/ce_host.sh stop 24g
+
+##############exports###############
+
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+export clr_cfg_dir_cl2200=/nvram
+export clr_install_dir_cl2200=/etc/Wireless/CL2200
+
+#######CL242 restart on################
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+$clr_install_dir/ce_host.sh restart
+
+$clr_install_dir/ce_host.sh stop
+
+##################CL242 vlans ##################
+$clr_install_dir/ce_host.sh addvlans
+$clr_install_dir_cl2200/ce_host.sh addvlans
+
+########## Cluster manager ###############################
+iwpriv atmcls5g cecli cm.?
+iwpriv atmcls5g cecli cm.-e
+
+#################enable time in printk######################
+echo 1 > /sys/module/printk/parameters/time
+
+#############steer sony phone###############
+iwpriv atmcls5g cecli cm.-s.40B837F7243A
+#############steer samsung Galaxy phone###############
+iwpriv atmcls5g cecli cm.-s.EC1F72F2A3CE
+iwpriv atmcls5g cecli cm.-s.40B837F7243A
+iwpriv atmcls5g cecli cm.-F show sta RSSI
+################## print error DBG_STA #######################
+iwpriv atmcls5g cecli cmtcp.-e.2
+################## print error DBG_OTHER #######################
+iwpriv atmcls5g cecli cmtcp.-e.4
+iwpriv atmcls5g cecli cmtcp.-e.1
+
+##########  HAIER bridge ##############
+brctl addbr br0
+ifconfig br0 192.168.100.2
+vconfig add eth0 0
+ifconfig eth0 up
+ifconfig eth0 0
+brctl delif br0 eth0.2
+brctl addif br0 eth0
+brctl addif br0 ce00
+brctl addif br0 ce01
+brctl addif br0 ce02
+brctl addif br0 ce03
+
+##########rtdot1xd#################
+first configure the bridge
+
+rtdto1xd -d 4 -i 1
+
+#########################################
+
+ifconfig eth0 0
+ifconfig br0 192.168.100.2
+brctl delif br0 eth0.2
+brctl addif br0 eth0
+brctl addif br0 ce00
+
+WPS Start
+iwpriv ce00 set WscConfMode=7
+iwpriv ce00 set WscMode=2
+iwpriv ce00 set WscGetConf=1
+
+WPS disable
+iwpriv ce00 set WscConfMode=0
+iwpriv ce00 set WscStop=1
+
+
+##iwpriv wdev0 11hspecmgt 1
+
+
+Салатовая board SAMSUNG_PUMA6
+#ARRIS
+
+tftp get 192.168.100.102 0x900000 appcpuImage
+cache flush
+ord4 0xC80D0000 0x03000000
+settings
+
+#ARM console
+update -t atom 1
+update -t atom 2
+
+export clr_cfg_dir=/nvram
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+
+
+$clr_install_dir_cl2330/ce_host.sh start
+$clr_install_dir/ce_host.sh start
+
+$clr_install_dir_cl2330/ce_host.sh stop
+
+$clr_install_dir_cl2330/ce_host.sh restart
+
+echo 1 > /nvram/wlandbg
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+$clr_install_dir/ce_host.sh start
+
+ifconfig eth0 0
+vconfig add eth0 2
+ifconfig eth0.2 up
+brctl addbr br0
+brctl addif br0 eth0.2
+brctl addif br0 wdev0ap0
+brctl addif br0 wdev0ap1
+brctl addif br0 wdev0ap2
+ifconfig br0 192.168.100.2 up
+
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+export clr_install_dir=/etc/Wireless/CL242
+
+#ARM stop log
+logger
+disable
+
+#CLR260
+
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR260
+$clr_install_dir/ce_host.sh start 24g
+
+
+cd /etc/Wireless/CLR260/
+./restore_defaults.sh CLR260
+./ce_host.sh version
+
+PciDeviceID=0x3592 этот параметр добавить в /nvram/CLR26024g.dat
+
+echo 1 > /nvram/wlandbg
+export clr_rev_rpc_server_ip_address=192.168.254.253
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR260
+$clr_install_dir/ce_host.sh start 24g
+touch /tmp/wlandbg
+
+$clr_install_dir/ce_host.sh start 5g
+
+echo 1 > /nvram/wlandbg
+export clr_rev_rpc_server_ip_address=192.168.254.253
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR260
+$clr_install_dir/ce_host.sh start dual
+touch /tmp/wlandbg
+
+#RPC start#
+
+ifconfig eth0.4093 192.168.254.253
+killall portmap rpc_management_server clr_rpc_wlan_config_server
+portmap -l -i 192.168.254.253
+
+###########
+clr_rev_rpc_wlan_config_server 192.168.254.253 &
+
+iwpriv cei00 set ACLAddEntry="98:0c:82:e3:3f:35"
+
+#Example RPC client command
+clr_rev_rpc_wlan_config_client setAssociationEvent 0 1 0 98:0c:82:e3:3f:35
+clr_rev_rpc_wlan_config_client setDisassociationEvent 0 1 0 98:0c:82:e3:3f:35
+clr_rev_rpc_wlan_config_client setAssociationBlkMacEvent 0 1 0 98:0c:82:e3:3f:35
+
+clr_rpc_wlan_config_server 192.168.254.254 &
+clr_rpc_wlan_config_client load 24
+clr_rpc_wlan_config_client init 24
+clr_rpc_wlan_config_server 192.168.254.254 &
+clr_rpc_wlan_config_client load 5
+clr_rpc_wlan_config_client init 5
+
+clr_rpc_wlan_config_server 192.168.254.254 &
+clr_rpc_wlan_config_client load 245
+clr_rpc_wlan_config_client init 245
+
+
+clr_rpc_wlan_config_client setInterworkIeEnable 1 1
+clr_rpc_wlan_config_client getInterworkIeEnable 1
+clr_rpc_wlan_config_client setInterworkIeAccessNetType 3 1
+clr_rpc_wlan_config_client getInterworkIeAccessNetType 3
+clr_rpc_wlan_config_client getAssocDevice 1
+
+#Arris, ARM side
+Press 'Enter'
+arristi
+rf
+scan stop
+co
+ga
+wifirpc
+wlan_getAssocDevicesInfo 1
+#####################
+
+#ARRIS
+
+tftp get 192.168.100.102 0x900000 appcpuImage
+cache flush
+ord4 0xC80D0000 0x03000000
+settings
+
+#ARM console
+update -t atom 1
+update -t atom 2
+###########################
+
+Up bridge
+
+brctl addbr br0
+ifconfig br0 192.168.100.2
+vconfig add eth0 2
+ifconfig eth0.2 up
+ifconfig eth0 0.0.0.0
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+route del -net 239.0.0.0 netmask 255.0.0.0
+route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
+brctl addif br0 cei00
+brctl addif br0 cei01
+brctl addif br0 cei02
+brctl addif br0 cei03
+brctl addif br0 wdev0ap0
+brctl addif br0 wdev0ap1
+brctl addif br0 wdev0ap2
+
+
+turn on WPS
+
+cd /tmp
+tftp -gr check_signal.sh 192.168.100.10
+chmod +x check_signal.sh
+./check_signal.sh &
+
+iwpriv cei00 set WscConfMode=7
+iwpriv cei00 set WscMode=2
+iwpriv cei00 set WscGetConf=1
+
+iwpriv cei00 show stainfo
+
+cd /etc/Wireless/CLR260/
+./ce_host restart 24g
+
+
+CISCO
+
+
+echo 1 > /nvram/wlandbg
+export clr_cfg_dir=/nvram
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir=/etc/Wireless/CLR240
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+wlan_api
+init
+
+WPS:
+hostapd_cli
+help
+wps_pbc
+wps_cancel
+
+
+
+#eMta CL2330 CL242
+
+tftp get 192.168.100.102 0x900000 appcpuImage
+cache flush
+ord4 0xC80D0000 0x03000000
+settings
+
+#ARM console
+update -t atom 1
+update -t atom 2
+
+#############################################
+
+tftp get 192.168.100.102 0x900000 bzImage
+emmc wr_up 0x240000 0x900000 0x400000
+tftp get 192.168.100.102 0x900000 appcpuRootfs.img
+emmc wr_up 0xa40000 0x900000 0x1100000
+settings
+
+ifconfig eth0 192.168.100.8
+export clr_cfg_dir=/nvram
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+$clr_install_dir_cl2330/ce_host.sh start
+$clr_install_dir/ce_host.sh start
+
+ifconfig eth0 192.168.100.8
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+$clr_install_dir/ce_host.sh start
+
+/nvram/clusterd -f /nvram/CL2330.dat -b
+
+##############CL2330 Only######################
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+$clr_install_dir_cl2330/ce_host.sh start
+####################OFFCHANNEL#########################
+iwpriv wdev0 setcmd "offchannel 64 4 0 1 0 1"
+iwpriv wdev0 setcmd "offchannel 36 4 0 1 0 2"
+
+##################### CL2330 ACS #########################
+start      : iwpriv wdev0 setcmd "acs -e 0"
+get status : iwpriv wdev0 getcmd CeAcsCfg
+set channel: iwconfig wdev0 channel 100
+             iwconfig wdev0 commit
+
+struct wlprivate *priv = NETDEV_PRIV_P(struct wlprivate, dev);
+vmacApInfo_t *vmacSta_p = priv->vmacSta_p;
+MIB_802DOT11 *mib = vmacSta_p->ShadowMib802dot11;
+MIB_PHY_DSSS_TABLE *PhyDSSSTable=mib->PhyDSSSTable;
+channel: PhyDSSSTable->CurrChan
+
+######################CL2200 ACS##########################
+nvram_set 2860 dhcpClientEnabled 1
+nvram_set rtdev SSID1 cl
+
+iwpriv rai0 cecli acs.-e.0
+########################################################
+
+cd /nvram
+./clusterd -f CL2330.dat -b
+########################################################
+
+############restart###########
+$clr_install_dir/ce_host.sh restart
+$clr_install_dir_cl2330/ce_host.sh restart
+
+#### ONLY CL242  #####
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+$clr_install_dir/ce_host.sh start
+
+#########  ONLY CL2330  ##################
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+export LD_LIBRARY_PATH=/etc/Wireless/CL2330
+$clr_install_dir_cl2330/ce_host.sh start
+
+
+##################YOCTO SDK CL2330+CL242###########################
+brctl addbr br0
+ifconfig br0 192.168.100.8
+vconfig add eth0 2
+ifconfig eth0.2 up
+ifconfig eth0 0.0.0.0
+ifconfig eth0.4093 down
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+export PATH=$clr_install_dir/wireless_tools/usr/sbin${PATH+:}${PATH}:$clr_install_dir_cl2330
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib:$clr_install_dir_cl2330
+
+$clr_install_dir_cl2330/ce_host.sh start
+$clr_install_dir/ce_host.sh start
+##################YOCTO SDK CL2400+CL242#############################################
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_install_dir_cl2400=/cl2400
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts:$clr_install_dir/wireless_tools/usr/sbin${PATH+:}${PATH}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib:$clr_install_dir_cl2400/lib​
+iw dev wlan1_0 cecli cls bs.-h
+##################YOCTO SDK gdb####################################################
+cd ~/gitsvn/CE_CM$
+/home/alexander/gitsvn/SDK/0.35.cgiweb/IntelCE-0.35.14073.342867/build_i686/i686-linux-elf/bin/i686-cm-linux-gdb
+file clusterd
+target remote 192.168.100.8:4444
+handle SIG34 nostop noprint pass
+handle SIG32 nostop noprint pass
+handle SIGUSR2 nostop noprint pass
+c
+
+#####################################################################
+#############GDB ###############
+########server on board#########
+gdbserver :3333 ./rtdot1xd -d4 -i 2
+########HOT#############
+remote target 192.168.100.102:3333
+load rtdot1xd
+###breakpoint#####
+b main
+b Handle_reload_config
+continue
+#### 1 command#####
+step
+
+
+#WPS
+SSID=Celeno_AP2_5G_rem
+key=12345678
+auth=WPA2PSK
+encr=CCMP
+hostapd_cli -i wdev0ap1 wps_config "Celeno_AP2_5G_rem" WPA2PSK CCMP "12345678"
+
+####################GDB####################
+#################server#############
+tftp -gl clusterd 192.168.100.102
+chmod +x ./clusterd
+gdbserver :4444 ./clusterd -f /nvram/CL2330.dat &
+#################pc###################
+cd ~/gitsvn/CE_CM$
+/home/alexander/gitsvn/SDK/0.35.cgiweb/IntelCE-0.35.14073.342867/build_i686/i686-linux-elf/bin/i686-cm-linux-gdb
+file clusterd
+target remote 192.168.100.8:4444
+handle SIG34 nostop noprint pass
+handle SIG32 nostop noprint pass
+handle SIGUSR2 nostop noprint pass
+c
+################Monitor on current channel##########################
+echo 0 > /sys/module/CL2200_ap/parameters/g_bCmMonitorEn
+echo 1000 > /sys/module/MT7620_ap/parameters/g_iCmDebug
+#######################################
+
+####################OFFCHANNEL#########################
+iwpriv wdev0 setcmd "offchannel 64 4 0 1 0 1"
+iwpriv wdev0 setcmd "offchannel 36 4 0 1 0 1"
+##########  CBN, CBN_KDG   ##################
+#######CL2330##################
+brctl addbr br0
+ifconfig br0 192.168.100.8
+vconfig add eth0 2
+ifconfig eth0.2 up
+ifconfig eth0 0.0.0.0
+ifconfig eth0.4093 down
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+brctl addif br0 wdev0ap0
+brctl addif br0 wdev0ap1
+brctl addif br0 wdev0ap2
+brctl addif br0 wdev0ap3
+route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
+
+############## CL242 + CL2330 ######################################
+brctl addbr br0
+ifconfig br0 192.168.100.2
+vconfig add eth0 2
+ifconfig eth0.2 up
+ifconfig eth0 0.0.0.0
+ifconfig eth0.4093 down
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+brctl addif br0 cei00
+brctl addif br0 cei01
+brctl addif br0 cei02
+brctl addif br0 cei03
+brctl addif br0 wdev0ap0
+brctl addif br0 wdev0ap1
+brctl addif br0 wdev0ap2
+brctl addif br0 wdev0ap3
+route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
+##########change mac addr #####################
+shell> mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xCD 0xD7 nand
+#################
+
+ifconfig eth0 0.0.0.0
+brctl addbr br0
+ifconfig br0 192.168.100.5
+vconfig add eth0 2
+ifconfig eth0.2 up
+brctl addif br0 eth0.2
+brctl addif br0 cei00
+brctl addif br0 wdev0ap0
+
+rpc_wlan_config_server 192.168.254.254 &
+#####################  CL2330  ########################################
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+$clr_install_dir_cl2330/ce_host.sh start
+
+
+$clr_install_dir_cl2330/nvram_set cl2330 CeDriverAutoStart 0
+
+#####################  CL242  ########################################
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+$clr_install_dir/ce_host.sh start
+#####################  CLR260  ########################################
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR260
+$clr_install_dir/ce_host.sh start 24g
+
+$clr_install_dir/nvram_set rtdev CeDriverAutoStart 0
+###################tcp_test##################################
+echo 1 > /sys/module/atmcls5g/parameters/g_bDebugCmEn
+iwpriv wdev0ap0 setcmd "tcp_init 1"
+iwpriv wdev0ap0 setcmd "tcp_init 0"
+
+iwpriv wdev0ap0 setcmd "tcp_init 1"
+echo 0 > /sys/module/atmcls5g/parameters/g_bDebugCmEn
+####################  HOTSPOT   ##############################
+export PATH=$PATH:/etc/Wireless/CL242/
+hs -d 1 -v 2 -f /nvram/hotspot_ap_cei00.conf -I cei00 -i RA_WEXT
+
+#Set BS Enable
+iwpriv atmcls5g cecli bs.-n.0
+#Set BS Algo
+iwpriv atmcls5g cecli bs.-m.2
+
+#CBN KDG
+export clr_cfg_dir=/nvram
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir=/etc/Wireless/CLR260
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+
+$clr_install_dir_cl2330/ce_host.sh start
+$clr_install_dir/ce_host.sh start 24g
+
+#PMF CL242
+iwpriv cei00 set PMFMFPC=1
+iwpriv cei00 set PMFMFPR=0
+iwpriv cei00 set PMFSHA256=0
+iwpriv cei00 set DisConnectAllSta=2
+
+
+#PMF testing
+cat /etc/wpa_supplicant.conf
+ctrl_interface=/var/run/wpa_supplicant_wlan
+ctrl_interface_group=netdev
+update_config=1
+
+network={
+        ssid="cl242"
+        psk="12345678"
+        proto=RSN
+        key_mgmt=WPA-PSK WPA-PSK-SHA256
+        pairwise=CCMP
+        auth_alg=OPEN
+        ieee80211w=2
+}
+
+sudo /sbin/wpa_supplicant -d -i wlan0 -c /etc/wpa_supplicant.conf
+
+sudo ./wlantest_cli
+#inject disassoc Unprotected STA <BSSID> <STA MAC>
+inject disassoc Unprotected STA 00:1C:54:0F:46:00 20:aa:4b:f8:6e:cc
+
+
+################  CBN  CLR260 Alternate network  #############################
+tftp get 192.168.100.102 0x900000 bzImage
+emmc wr_up 0x240000 0x900000 0x400000
+tftp get 192.168.100.102 0x900000 appcpuRootfs.img
+emmc wr_up 0xa40000 0x900000 0x1100000
+settings
+
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR260
+$clr_install_dir/ce_host.sh start 24g
+
+
+
+brctl addbr br0
+ifconfig br0 192.168.101.2
+vconfig add eth0 2
+ifconfig eth0.2 up
+ifconfig eth0 0.0.0.0
+ifconfig eth0.4093 down
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+brctl addif br0 cei00
+brctl addif br0 cei01
+brctl addif br0 cei02
+brctl addif br0 cei03
+brctl addif br0 wdev0ap0
+brctl addif br0 wdev0ap1
+brctl addif br0 wdev0ap2
+brctl addif br0 wdev0ap3
+route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
+
+################# CL2400 + inic_cmdr ########################
+
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_install_dir_cl2400=/cl2400
+export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts:$clr_install_dir_cl2400/scripts/inic_cmdr:$PATH
+$clr_install_dir_cl2400/scripts/ce_host.sh start
+
+############ CL2400 ################
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_install_dir_cl2400=/cl2400
+export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts:$PATH
+$clr_install_dir_cl2400/scripts/ce_host.sh start
+
+echo 0 > /sys/module/printk/parameters/time
+echo 11 > /sys/module/CL2400_5g/parameters/g_iCmDebug
+echo 0 > /sys/module/CL2400_5g/parameters/g_iCmDebug
+
+############# Bahamas ######################
+g_bBsDbgAtmActualDur
+############################################
+
+##############lmac_fw##########################
+Firmware source code is in http://moon/svn/celeno-swdb/target/branches/CL2400/hp/lmac_4_5_26/firmware
+
+svn co http://moon/svn/celeno-swdb/target/branches/CL2400/hp/lmac_4_5_26/
+
+cd ./firmware
+make lmac-asic
+sudo cp lmac/bin/lmacfw.bin.asic.A0 out/firmware/lmacfw.bin
+
+
+#############GDB ###############
+server gdbserver :3333 ./rtdto1xd -d4 -i 2
+########HOT#############
+remote target 192.168.100.102:3333
+load rtdot1xd
+###breakpoint#####
+b main
+b Handle_reload_config
+continue
+#### 1 command#####
+step
+
+
+####################GDB####################
+#################server#############
+export clr_cfg_dir=/nvram
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+export LD_LIBRARY_PATH=/etc/Wireless/CL2330
+gdbserver :4444 ./clusterd -f /nvram/CL2330.dat &
+#################pc###################
+cd ~/gitsvn/CE_CM$
+/home/alexander/gitsvn/SDK/0.35.cgiweb/IntelCE-0.35.14073.342867/build_i686/i686-linux-elf/bin/i686-cm-linux-gdb
+file clusterd
+target remote 192.168.100.8:4444
+handle SIG34 nostop noprint pass
+handle SIG32 nostop noprint pass
+handle SIGUSR2 nostop noprint pass
+c
+
+####################### ddd ###########################
+cd celeno_clr_package_cl2330_CBN_MERCURY/src/utils/clusterd​
+cp -fv ../openssl-1.0.2h/*.so* .
+cp -fv ../mosquitto/lib/*.so* .
+ddd --debugger /home/alexander/gitsvn/SDK/0.35.cgiweb/IntelCE-0.35.14073.342867/build_i686/i686-linux-elf/bin/i686-cm-linux-gdb
+In ddd UI console:
+set solib-search-path /home/alexander/gitsvn/SDK/0.35.cgiweb/IntelCE-0.35.14073.342867/build_i686/staging_dir/lib
+file clusterd
+core-file /tftpboot/core
+
+#### click Menu 'Status->Backtrace' ##################
+
+######################################
+export clr_cfg_dir=/nvram
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+export LD_LIBRARY_PATH=/etc/Wireless/CL2330
+####################GDB####################
+#################server Comtrend#############
+tftp -gl clusterd 192.168.100.102
+chmod +x ./clusterd
+tftp -gl gdbserver 192.168.100.102
+chmod +x ./gdbserver
+tftp -gl libthread_db-0.9.28.so 192.168.100.102
+chmod +x ./libthread_db-0.9.28.so
+ln -s libthread_db-0.9.28.so libthread_db.so.1
+export LD_LIBRARY_PATH=/
+gdbserver :4444 ./clusterd -f /etc/Wireless/CL2200/CL2200.dat &
+#################pc###################
+cd ~/gitsvn/CE_CM$
+/home/alexander/opt/buildroot-gdb/mipsel-linux-uclibc/bin/gdb
+set solib-absolute-prefix /home/alexander/gitsvn/6.85.0xx_comtrend_CM/lib
+set solib-absolute-prefix /home/alexander/gitsvn/6.85.0xx_comtrend_CM/user
+set solib-absolute-prefix /home/alexander/gitsvn/6.85.0xx_comtrend_CM/aux/bahamas/__common__/filesystem
+file clusterd
+target remote 192.168.100.135:4444
+handle SIG34 nostop noprint pass
+handle SIG32 nostop noprint pass
+handle SIGUSR2 nostop noprint pass
+handle SIGUSR1 nostop noprint pass
+c
+#######################################
+
+
+###STRG
+#########FLASH###########
+flashcp boot.img /dev/mtd0 -v
+
+###########TEST###############################
+iwpriv wdev0 setcmd "qstats txrate_histogram"
+iwpriv wdev0 setcmd "qstats reset"
+################RUN#########
+cp /mnt/fs/A/CL2330.dat /nvram/
+/etc/Wireless/CL2330/ce_host.sh restart
+
+
+######################Petya####################
+172.22.190.9
+
+##########scripts############
+tftp -gl inic_cmdr_ap_wireless_advanced.sh 192.168.100.102
+tftp -gl inic_cmdr_ap_wireless.sh 192.168.100.102
+tftp -gl inic_cmdr_lan.sh 192.168.100.102
+tftp -gl inic_cmdr.sh 192.168.100.102
+tftp -gl inic_cmdr_ap_wireless_misc.sh 192.168.100.102
+tftp -gl inic_cmdr_ap_wireless_wpsinfo.sh 192.168.100.102
+tftp -gl inic_cmdr_main.sh 192.168.100.102
+tftp -gl inic_cmdr_sta_wireless.sh 192.168.100.102
+
+###################################
+cat /sys/module/ce_nx_drv/parameters/ce_fw_poll_time
+cat /sys/module/ce_nx_drv/parameters/ce_fw_failure_limit
+cat /sys/module/ce_nx_drv/parameters/ce_fw_enable
+
+echo 0 > /sys/module/ce_nx_drv/parameters/ce_fw_enable
+echo 15000 > /sys/module/ce_nx_drv/parameters/ce_fw_poll_time
+echo 1 > /sys/module/ce_nx_drv/parameters/ce_fw_enable
+
+echo 1 > /sys/module/ce_nx_drv/parameters/ce_fw_error_enable
+echo 0 > /sys/module/ce_nx_drv/parameters/ce_fw_error_enable
+
+################ CBN_KDG #######################
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CLR260
+$clr_install_dir/ce_host.sh start 24g
+
+echo 1 > /sys/module/printk/parameters/time
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+$clr_install_dir_cl2330/ce_host.sh start
+
+$clr_install_dir_cl2330/ce_host.sh stop
+$clr_install_dir_cl2330/nvram_set cl2330 CeCmAutoRestart 0
+
+###############Bahamas clusterd, etc. ##################
+/etc/Wireless/CL2200/cmcli set acs_scan
+CwAcsChannelScanPeriod
+nvram_set rtdev CeCmAutoRestart 0
+
+#######################  SVN tricks   ##################################
+#######################  show svn commit log message   ##################################
+svn propget svn:log --revprop -r30199 http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx/sdk
+svn propget svn:log --revprop -r30295 http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
+svn propget svn:log --revprop -r40022 http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
+#######################  edit svn commit log message   ##################################
+svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
+svn propedit svn:log --revprop -r41859 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
+svn propedit svn:log --revprop -r41650 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_Comtrend_CM
+###########################Comtrend##############################################################
+svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
+###########################clusterd###############################################
+svn propedit svn:log --revprop -r40022 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
+svn propedit svn:log --revprop -r39537 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_4.6.x
+svn propedit svn:log --revprop -r38768 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_mercury_23_freeze_CM
+svn propedit svn:log --revprop -r40258 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_comtrend_CM
+svn propedit svn:log --revprop -r39539 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_CM
+svn propedit svn:log --revprop -r40307 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x
+######################Edit externals###################################
+
+svn propedit svn:externals .
+
+################################################################################
+################################################################################
+Please see NXP LS1043-ARDB frescale SDK useful commands
+################################################################################
+################################################################################
+
+Change user on yocto-server
+sudo -u efalex -i
+
+# Clusterd sources
+cd ~/targetfs/cm-www-0.X
+
+# To prepare new version
+cp -a ~/targetfs/cm-www-0.X_old ~/targetfs/cm-www-0.X_new
+
+# Change files and set new version number:
+env.sh
+www/cfg_cluster.html
+
+# Update cm-www clusterd source code:
+cd ~/svn/6.84.0xx
+svn up
+
+# Copy all *.[hc] files and subfolders from ~/svn/6.84.0xx/user/celeno/clusterd to ~/targetfs/cm-www-0.X/src/
+
+# Commit changes to cm-www:
+cd ~/targetfs/cm-www-0.X
+git add -u
+git status
+git commit
+########## Auto fix whitespaces ###################
+git rebase --whitespace=fix
+
+# Create yocto source code archive
+(cd .. && tar czf cm-www-0.13.tar.gz --exclude-vcs cm-www-0.13  && cp -fv cm-www-0.13.tar.gz ~/QorIQ-SDK-V2.0-20160527-yocto/sources/meta-celeno/recipes-celeno/celeno/)
+# Clean old version archive and rename *.bb file (optional)
+cd ~/QorIQ-SDK-V2.0-20160527-yocto/sources/meta-celeno/recipes-celeno/celeno/
+rm cm-www-0.X_old.tar.gz
+mv cm-www_0.X_old.bb cm-www_0.X_new.bb
+
+# Create meta archive for release
+cd ~/QorIQ-SDK-V2.0-20160527-yocto
+tar czf meta-celeno-0.13.tar.gz sources/meta-celeno/
+
+# Yocto image compilation
+cd ~/QorIQ-SDK-V2.0-20160527-yocto
+. ./fsl-setup-env -m ls1043ardb-32b
+# Remove old files and recompile the image and scp to remote host
+rm -fv tmp/deploy/images/ls1043ardb-32b/fsl-image-core-ls1043ardb-32b-*.rootfs.tar.gz ; bitbake fsl-image-kernelitb -c cleanall -f ; bitbake cm-www -c cleanall -f ; time bitbake fsl-image-kernelitb ; scp ./tmp/deploy/images/ls1043ardb-32b/*.{itb,tar.gz} fimsky-u:/tftpboot/
+###########my tftp##############
+rm -fv tmp/deploy/images/ls1043ardb-32b/fsl-image-core-ls1043ardb-32b-*.rootfs.tar.gz ; bitbake fsl-image-kernelitb -c cleanall -f ; bitbake cm-www -c cleanall -f ; time bitbake fsl-image-kernelitb ; scp ./tmp/deploy/images/ls1043ardb-32b/*.{itb,tar.gz} alexander@alexander-desktop:/tftpboot/
+scp meta-celeno-0.13.tar.gz  alexander@alexander-desktop:/tftpboot/
+scp sources/meta-celeno/recipes-celeno/celeno/cm-www-0.13.tar.gz alexander@alexander-desktop:/tftpboot/
+
+# SW update of LS1043 board
+# Sample commands below. Set you IPs if required.
+# Double check *.itb filesize. It must be < 40Mb
+# Copy *.itb file to TFTP server. kernel.itb is symlink to kernel-fsl-ls1043a-rdb.itb
+# Press "Enter" after power on to break auto load and enter to bootloader
+# Enter commands one by one:
+### Write to flash ####
+setenv bootargs console=ttyS0,115200 root=/dev/ram0 earlycon=uart8250,0x21c0500,115200
+setenv ipaddr 192.168.100.10
+setenv serverip 192.168.100.88
+setenv ethact FM1@DTSEC5
+saveenv
+tftp 90000000 kernel-fsl-ls1043a-rdb.itb
+erase 61100000 +$filesize
+cp.b 90000000 61100000 $filesize
+reset
+
+#### TFTP load to memory #####
+setenv bootargs console=ttyS0,115200 root=/dev/ram0 earlycon=uart8250,0x21c0500,115200
+setenv ipaddr 192.168.100.10
+setenv serverip 192.168.100.102
+setenv ethact FM1@DTSEC5
+tftp a0000000 kernel.itb ; bootm a0000000
+
+### NFS mode. Load to memory and mount NFS rottfs ###
+setenv ipaddr 192.168.100.10
+setenv serverip 192.168.100.88
+setenv ethact FM1@DTSEC5
+setenv bootargs root=/dev/nfs rw nfsroot=192.168.100.88:/home/efalex/nfs/nxp ip=192.168.100.10:192.168.100.88:192.168.100.88:255.255.255.0:ls1043:eth4:off console=ttyS0,115200 earlycon=uart8250,mmio,0x21c0500
+tftp a0000000 kernel.itb; bootm a0000000:kernel@1 - a0000000:fdt@1
+
+(Optional) Initial Yocto compilation
+
+1) Install the SDK on Ubuntu 14.04 32bit machine:
+sudo mount -o loop QorIQ\ Linux\ SDK\ v2.0\ SOURCE.iso /mnt/cdrom/
+cd /mnt/cdrom
+./install
+# Install to home folder ~/QorIQ-SDK-V2.0-20160527-yocto
+
+2) Apply the 32bit patch for SDK2.0:
+Untar the patch directory outside the SDK install directory and run:
+../LS1043ARDB-32B-V0.1-20160628/./install
+cd <ISO_INSTALL_PATH>/QorIQ-SDK-V2.0-20160527-yocto
+. ./fsl-setup-env -m ls1043ardb-32b
+bitbake fsl-image-core
+# Wait 30-60 mins for compilation
+
+3) Add cm-www sources to SDK:
+tar xvf meta-celeno-0.X.tar.gz
+
+export QorIQ_SDK_path=~/QorIQ-SDK-V2.0-20160527-yocto
+rm -rf  $QorIQ_SDK_path/sources/meta-freescale/recipes-extended/merge-files/merge-files/merge/*
+Edit file $QorIQ_SDK_path/build_ls1043ardb-32b/conf/bblayers.conf
+Add path to meta-celeno sources identically to other paths
+Edit file $QorIQ_SDK_path/build_ls1043ardb-32b/conf/local.conf
+Add line at the end of file
+IMAGE_INSTALL_append = " cm-www"
+
+############ ftp with teleases ##################
+############CL2200 + LS1012 integration as agent#################
+http://files.celeno.com/WebInterface/login.html
+Login: CelenoNA
+Password: Hakol#Tov
+
+#########################Agent CL2200 release##############################
+
+1. cl2200_package/src/celeno.mk
+   Change export CONFIG_HOST_CL_VER = 8.9.31 to export CONFIG_HOST_CL_VER = 8.9.31CM11
+2 . build cl2200 Celeno_demo
+
+
+############http://files.ce$clr_install_dir/ce_host.sh startleno.com/WebInterface/login.html##################
+############CL2200 + LS1012 integration as agent#################
+Login: CelenoNA
+Password: Hakol#Tov
+
+
+###################clusterd###############
+cmcli set sta_dbg 1 40B837F7243A
+cmcli set sta_dbg 0 40B837F7243A
+
+################# CL2330 DSCP feature #################
+iwpriv wdev0 setcmd "CE_SET_CE_WMM_ETHR_TYPE_DEBUG 1"
+iwpriv wdev0 setcmd CE_ETHR_TYPE_PRINT
+echo 1 > /sys/module/printk/parameters/time
+
+##############CL2330 Only###############################
+export clr_cfg_dir_cl2330=/nvram
+export clr_install_dir_cl2330=/etc/Wireless/CL2330
+export LD_LIBRARY_PATH=$clr_install_dir_cl2330
+$clr_install_dir_cl2330/ce_host.sh start
+####################OFFCHANNEL#########################
+iwpriv wdev0 setcmd "offchannel 64 4 0 1 0 100"
+iwpriv wdev0 setcmd "offchannel 36 4 0 1 0 1"
+iwpriv wdev0 setcmd "offchannel 100 4 0 1 0 1000"
+
+#############Comtrend build####################################
+make bahamas platform=<Platform> --check-symlink-times
+make bahamas platform=Comtrend --check-symlink-times
+make bahamas platform=CTL --check-symlink-times
+###############################################################
+
+##########################Comtrend Debug#######################
+echo 500 > /sys/module/MT7620_ap/parameters/g_iCmNetlinkPrint
+echo 15000 > /sys/module/MT7620_ap/parameters/g_iCmSpinDebug
+
+######################Comprend PLC Paring####################
+http://172.22.190.16/mediawiki/index.php/CM_Comtrend_PLC
+CM Comtrend PLC
+1) Start utility (on MyPet 172.22.190.9) for pairing Powerline-adapter and Comtrend PLC:
+cd C:\Program Files (x86)\Java\jre1.8.0_91\bin
+java -jar 1.jar
+2) Go to field "My Network"/Basic Configuration/ and set "Paring all"
+3) After message "Pairing was successful", should be verify TPT through PLC (between PCes after those devices)
+4) Configured Comtrend.
+сві три сєтьовки повині бути в одній сетєвій мережі
+для адаптера треба по DHCP роздати IP
+
+
+############################mtrace#################################
+http://man7.org/linux/man-pages/man3/mtrace.3.html
+export MALLOC_TRACE=/tmp/t
+
+#########################bahamas ccache#############################
+#Initial set up (once)
+
+mkdir -p ~/ccache_buildroot-gcc463 ; ( cd /opt/buildroot-gcc463/usr/bin ;for f in mipsel-buildroot-linux-uclibc-* ; do echo $f; ln -s /usr/bin/ccache ~/ccache_buildroot-gcc463/$f ; done )
+
+#In 6.84.0xx replace and commit changes to satelite branch
+grep -rl /opt/buildroot-gcc463/usr/bin | xargs sed -i 's#/opt/buildroot-gcc463/usr/bin#'${HOME}'/ccache_buildroot-gcc463#g' .
+
+#set before compilation
+export CCACHE_PATH=/opt/buildroot-gcc463/usr/bin:/opt/buildroot-gcc342/bin:$PATH
+######################################################################
+
+####################core dump##############################
+ulimit -c unlimited
+echo 1 > /proc/sys/kernel/core_uses_pid
+echo "/tmp/core-%e-%s-%p" > /proc/sys/kernel/core_pattern
+###########################################################
+
+iwpriv ra0 set Debug=3
+
+#########################ce_atm help#############################
+ iwpriv atm24g cecli help
+atm24g    cecli:help
+#
+General:
+      help             Display command set
+
+Gateway:
+      pps              access to PPS (Packet Per Second)
+
+Platform:
+      plt              access to platform
+
+Scheduler:
+      airload          access to air load
+      fairness         access to fairness
+      group            access to group
+      logger           access to logger
+      sched            access to scheduler
+      sm               access to the scheduler SM
+      traffic          access to traffic
+      monitor          access to monitor
+      queue            access to queue
+      ps               access to ps
+########################pps help############################
+access to PPS (Packet Per Second)
+Usage: pps -{abcdefgh} [options]
+-a - [0/1]            Disable/Enable set
+-b - [Threshold-Mbps] Above threshold set
+-c - [Threshold-Mbps] Below threshold set
+-d - [TriggerPacket]  Trigger packet above set
+-e - [TriggerPacket]  Trigger packet below set
+-f -                  Configuration print
+-g -                  Logger print
+-h -                  Logger reset
+##############################plt help############################
+ iwpriv atm24g cecli plt.?
+atm24g    cecli:plt.?
+# access to platform
+Usage: plt -{abnst}
+-a - Add station [MacAddress: i.e. 010203040506][Wcid][BssIdx][Tx mode: 0-CCK,1-OFDM,2-HT MM,3-HT GF,4-VHT]
+-b - Remove station [StaIdx]
+-n - Set station name [StaIdx][Name max_len=10]
+-s - Display stations table
+-t - Display chip type
+
+#########################ce_atm fairness#############################
+iwpriv atm24g cecli fairness.?
+ access to fairness
+Usage: fairness -{abcdefghijklmnopqrstuvwxyz} [options]
+-a [Algorithm]     - Set scheduler algorithm (0-RoundRobin, 1-Fairness, 2-WeightedFairness)
+-b [Interval ms]   - Maintenance interval set
+-c [Threshold ms]  - Domination threshold out set
+-d [Type][Delta]   - Domination delta set (Type: 0-above,1-below][Delta: Thr/128[%])
+-e [Interval ms]   - Domination max time to starve a queue
+-f [Option]        - Print weight configuration (1-groups L0, 2-groups L1, 4-groups L2, 8-queues, 15-all)
+-g                 - Display configuration
+-h [Option]        - Display duration statistics (1-groups L0, 2-groups L1, 4-groups L2, 8-queues, 15-all)
+-i [Option]        - Display/Reset retry-penalty stats (1-Display, 2-Reset, 3-Disaply & Reset)
+-j [Policy]        - Set retry-penalty policy (0-off, 1-sync, 2-async)
+-k [Interval ms]   - Set retry-penalty interval
+-l [0-100]         - Set maximum air capacity percent
+-m [level]         - Set fairness state debug level (0-off, 1-low, 2-high)
+-n                 - Print fairness state statistics
+-o                 - Reset fairness state statistics
+-p [type][time us] - Set max tx/rx time (Type: 0-queue equal, 1-queue below, 2-queue above)
+-q [0/1]           - Fairness state force IN
+-r [option]        - Reset duration statistics (1-Total, 2-Current, 3-All)
+-s [factor]        - Set duration refresh factor
+-t [Interval sec]  - Set duration refresh interval
+-u [Period ms]     - Set period for transmitting/receiving 1 frame in case of queue with weight of 0
+-v [Cntr]          - Set MCS fallback counter for retry penalty calculation
+-w [Interval sec]  - Set group weight fix interval
+-x [Time sec]      - Set active history time
+-y                 - Print current TX/RX parameters for all stations
+-z [Type][Param]   - Air free configuration set (Type: 0-StateStabilizeTimeShort,1-StateStabilizeTimeLong,
+                     2-AirFreeTrialTimeMax,3-AirFreeTrialTimeMin,4-AirFreeTrialTimeStep,5-AirFreeMaxTrialsWeightSmall,
+                     5-AirFreeMaxTrialsWeightSmall,6-AirFreeMaxTrialsWeightBig,7-AirFreeMaxTrialsWeightThreshold,
+                     8-AirFreeNotUsedThr
+#########################ce_atm airload#############################
+iwpriv atm24g cecli airload.?
+atm24g    cecli:airload.?
+# access to air load
+Usage: airload -{abcdefgh} [options]
+-a - Print data base
+-b - Print channel state
+-c - Reset channel state
+-d - Print busy time history
+-e - [prints] Set number of debug prints
+-f - [coefficient] Set filter coefficient
+-g - [interval] Set maintenance interval [m-sec]
+-h - [threshold] Set threshold busy (0%-100%)
+#########################ce_atm group#############################
+iwpriv atm24g cecli group.?
+atm24g    cecli:group.?
+# access to group
+Usage: group -{abcdefg} [options]
+-a [level]                     - Print single group list
+-b                             - Print all group lists
+-c [level][id][weight][strict] - Set group weight
+-d [0/1]                       - Set group debug
+-e [level][id]                 - Display info of single group
+-f [level]                     - Display info of all groups in specific level
+-g                             - Display info of all groups
+#########################ce_atm logger#############################
+iwpriv atm24g cecli logger.?
+atm24g    cecli:logger.?
+# access to logger
+Usage: logger -{abcdefg} [options]
+-a [Size]    - Set logger size (0 to free)
+-b           - Start logger
+-c           - Stop logger
+-d           - Print logger
+-e [QueueId] - Enable queue logger
+-f [QueueId] - Disable queue logger
+-g           - Show list of enabled queues
+#########################ce_atm sched#############################
+ iwpriv atm24g cecli sched.?
+atm24g    cecli:sched.?
+# access to scheduler
+Usage: sched -{abcdefghi}
+-a [mode]                    - Display configuration (mode: 0-cck,1-ofdm,2-htmm,3-htgf,4-vht)
+-b                           - Display statistics
+-c [mcs][direction][mode][us]- Set frame duration compensation (direction: 0-tx,1-rx)(mode: 0-cck,1-ofdm,2-htmm,3-htgf,4-vht)
+-d [mode][mcs][factor]       - Set frame duration factor (mode: 0-cck,1-ofdm,2-htmm,3-htgf,4-vht)(factor: 0-100)
+-e [m-sec]                   - Set SchSchedNormalTxRx() delay trigger
+-f [frames]                  - Set SchSchedNormalTxRx() frame en-queue trigger
+-g [0/1]                     - Set TxRxEnable
+-h [0/1]                     - Schedule list set debug
+-i                           - Schedule list print state
+###############################################################
+iwpriv atm5g cecli sched.-b
+#########################ce_atm sm#############################
+iwpriv atm24g cecli sm.?
+atm24g    cecli:sm.?
+# access to the scheduler SM
+Usage: sm -{delmn}
+-d - Disable state machine
+-e - Enable state machine
+-l - Display configuration
+-m - [m-sec] Set maintenance timer duration (0 - off)
+-n - [m-sec] Set tx-rx timer duration (0 - off)
+#########################ce_atm traffic#############################
+ iwpriv atm24g cecli traffic.?
+atm24g    cecli:traffic.?
+# access to traffic
+Usage: traffic -{abcdefghijklmnopqrstuv} [options]
+-a -              Print configuration
+-b - [Q-ID]       Print logger
+-c - [Q-ID][Size] Set logger size
+-d -              Print state
+-e -              Print active/non-active statisitcs
+-f -              Reset active/non-active statisitcs
+-g - [0/1]        Disable/Enable debug
+-h - [m-sec]      Set interval
+-i - [threshold]  Set threshold bytes - heavy immediate
+-j - [threshold]  Set threshold bytes - heavy upper
+-k - [threshold]  Set threshold bytes - heavy lower
+-l - [threshold]  Set threshold bytes - heavy idle
+-m - [threshold]  Set threshold state - idle->heavy
+-n - [threshold]  Set threshold state - light->idle
+-o - [threshold]  Set threshold state - heavy->light
+-p - [threshold]  Set threshold state - heavy->idle
+-q - [threshold]  Set monitor threshold - jump
+-r - [threshold]  Set monitor threshold - drop
+-s - [window]     Set monitor window - jump
+-t - [window]     Set monitor window - drop
+-u - [threshold]  Set immediate drop threshold - busy
+-v - [threshold]  Set immediate drop threshold - idle
+#########################ce_atm monitor#############################
+ iwpriv atm24g cecli monitor.?
+atm24g    cecli:monitor.?
+# access to monitor
+Usage: monitor -{mrt} [options]
+-m - Set mode [0-Forward/1-Bypass/2-Monitor]
+-r - Reset monitor counters
+-t - Print monitor counters
+#########################ce_atm queue#############################
+iwpriv atm5g cecli queue.?
+iwpriv atm24g cecli queue.?
+atm24g    cecli:queue.?
+# access to queue
+Usage: queue -{abcdefghijklmno} [options]
+-a              - Print queue list
+-b              - Print global configuration
+-c [id][weight] - Set queue weight
+-d [0/1]        - Set queue debug
+-e [queue_id]   - Display info of single queue
+-f [sta_idx]    - Display info of specific station queues
+-g [group_id]   - Display info of specific group queues
+-h              - Display info of all queues
+-i              - Display queue stats
+-j              - Reset queue stats
+-k [m-sec]      - Set expirt time
+-l [size]       - Set size
+-m [threshold]  - Set full threshold
+-n [m-sec]      - Set full timeout
+-o [max_frames] - Set global max frmaes
+###############################################################
+iwpriv atm5g cecli queue.-a
+#########################ce_atm ps#############################
+iwpriv atm24g cecli ps.?
+atm24g    cecli:ps.?
+# access to ps
+Usage: ps -{abcdef} [options]
+-a         - Print power save database
+-b         - Display power save statistics
+-c         - Reset power save statistics
+-d [0/1]   - Enable/disable PS debug
+-e [0/1]   - Enable/disable PS feature
+-f [m-sec] - Set timer interval
+#####################set airload 40% for atm24g#############
+iwpriv atm24g cecli fairness.-l.40
+############################################################
+
+########################ps####################################
+PROCESS STATE CODES
+       Here are the different values that the s, stat and state output specifiers (header "STAT" or "S") will display to describe the state of a process:
+       D    uninterruptible sleep (usually IO)
+       R    running or runnable (on run queue)
+       S    interruptible sleep (waiting for an event to complete)
+       T    stopped, either by a job control signal or because it is being traced.
+       W    paging (not valid since the 2.6.xx kernel)
+       X    dead (should never be seen)
+       Z    defunct ("zombie") process, terminated but not reaped by its parent.
+
+       For BSD formats and when the stat keyword is used, additional characters may be displayed:
+       <    high-priority (not nice to other users)
+       N    low-priority (nice to other users)
+       L    has pages locked into memory (for real-time and custom IO)
+       s    is a session leader
+       l    is multi-threaded (using CLONE_THREAD, like NPTL pthreads do)
+       +    is in the foreground process group.
+
+####################classifier.?########################################
+iwpriv atmcls5g cecli classifier.?
+atmcls5g  cecli:classifier.?
+# print info about the classifier
+Usage: classifier -{abcdefghijklmpqrtuvwxyzBS} [options]
+-a print all classifier groups
+-b print all classifier queues
+-c print all classifier stations
+-d print classifier Configuration
+-e print classifier statistics
+-f print classifier stations statistics
+-g set debug [1-on, 0-off]
+-h set queue aging time [Time in sec]
+-i set bss minimum weight [Weight 0-100]
+-j set station minimum weight [Weight 0-100]
+-k set downlink/uplink weights for single BSS [BSS,DlWeight,UlWeight]
+-l set strict value for BSS [BSS0,BSS1,BSS2 ...]
+-m set bypass single queue [0-False/1-True]
+-p set expiration timeout for station weight by MAC [MAC,Weight,TimeoutSec;MAC,Weight,TimeoutSec ...]
+-q set expiration timeout for station weight by index [Idx,Weight,TimeoutSec;Idx,Weight,TimeoutSec ...]
+-r reset statistics
+-s reset weight of all stations
+-t set weights for downlink per BSS [BSS0,BSS1,BSS2 ...]
+-u set weights for uplink per BSS [BSS0,BSS1,BSS2 ...]
+-v set weights for BSS [BSS0,BSS1,BSS2 ...]
+-w set weights for WMM [BE0,BK1,BK2,BE3,VI4,VI5,VO6,VO7]
+-x set weights for station by MAC [MAC,Weight;MAC,Weight ...]
+-y set weights for station by index [Idx,Weight;Idx,Weight ...]
+-z set bypass mode [0-None/1-Tx/2-Rx/3-Both]
+-B Show per BSS statisitics
+-S Show per client statisitics
+####################classifier.?########################################
+
+####################wrs.?########################################
+iwpriv rai0 cecli wrs.-?
+rai0      cecli:wrs.-?
+# Driver specific options
+-A  - Display driver-specific station data.
+
+Weighted Rate Selection mechanism: {abcbdefghilmnopqrstuvwxyzG}
+-a  - Display PER Floor data per station [Wcid]
+-b  - Change PER Floor settings [Setting (0 - Enable or disable)/(1 - Cycl. Buf. Size)/
+                                         (2 - Activation Thr.)/(3 - Deact. Thr.)/(4 - Lim. Up)/
+                                         (5 - Lim. Down)/(6 - Step)/(7 - Activation time Thr.)/
+                                         (8 - Deactivation time Thr.)/(9 - Packet Thr.)/(10 - Reset)][Value]
+-c  - Display WRS configuration
+-d  - Display station list
+-e  - Enable/Disable WRS [(0)Disable WRS /(1)Enable WRS]
+-f  - set station WRS mode [Wcid].[Mode Fix(0)/Auto(1)].[MCS].[BW].[NSS].[GI]
+-g  - set converge parameter [param 0-IntervalIdle, 1-IntervalTrfc, 2-PacketTh, 3-ResetTableTime].[value]
+-h  - Print rssi protect debug [Wcid]
+-i  - set WRS interval [Interval(msec)]
+-j  - set threshold mode [(0 - Conservative)/(1 - Normal)/(2 - Ambitious)]
+-k  - Enable/Disable Logger [Wcid].[Disable(0)/Enable(1)].[Logger Size (Power of 2)]
+-l  - set STBC mode [Wcid].[Disable(0)/Enable(1)]
+-m  - Print station GI weights table [Wcid]
+-n  - Set low throughput packets threshold [NumOfPackets]
+-o  - Set Immediate Drop [Disable(0)/Enable(1)].[PerFactor].[WeightStep(msec)]
+-p  - Enable/Disable Rssi protect [Disable(0)/Enable(1)]
+-q  - Set Rssi protect Threshold [RssiUpTh][RssiDnTh]
+-r  - Reset station WRS data [Wcid]
+      [type : (1 - Weights table)/(2 - WRS counters)/(4 - PER statistics)/(8 - PF statistics)/(15 - All)]
+-s  - Show station WRS data [Wcid]
+      [type : (1 - Weights table)/(2 - WRS counters)/(4 - PER statistics)/(8 - PF statistics)/(15 - All)]
+-t  - Set debug level [(0 - Off)/(1 - Error)/(2 - Warn)/(3 - Trace)/(4 - Info)]
+-u  - Set steps, max and min thresholds [StepDn].[StepSameUp].[TimeThMin].[TimeThMaxUp].[TimeThMaxDown]
+-v  - Set down and up init thresholds [Wcid].[TimeThDn].[TimeThUpMcs].[TimeThUpNSS].[TimeThUpBW].[TimeThUpBF]
+-w  - Set PER init thresholds [Wcid].[RateIdx].[PerUpTh].[PerDnTh]
+-x  - Print WRS buffer log for station [Wcid]
+-y  - Reset WRS buffer log for station [Wcid]
+-z  - Reset WRS weights table [Wcid]
+-A  - Show and Reset station WRS data [Wcid]
+      [type : (1 - Weights table)/(2 - WRS counters)/(4 - PER statistics)/(8 - PF statistics)/(15 - All)]
+-G  - Send generated packets to a connected station [Wcid][Bursts Number][Period(msec)][Packets Number][Packets Lenght]
+-M  - Change LUTAmsdu table[Enable/Disable][mcs][ss]
+-P  - print lut amsdu table
+####################wrs.?########################################
+iwpriv rai0 cecli wrs.-f.1.0.8.2.1.1
+# [WRS] Station [1] was set to fixed mode - MCS[8], BW[2], NSS[1], GI[1]
+iwpriv rai0 cecli wrs.-f.1.0.7.2.1.0
+####################wrs.?########################################
+############################Magic SysRq####################################
+echo "1" > /proc/sys/kernel/sysrq
+CTRL+A+F+'key'
+CTRL+A+F+H(help)
+SysRq : HELP : loglevel(0-9) reBoot Crash terminate-all-tasks(E) memory-full-oom-kill(F) kill-all-tasks(I) thaw-filesystems(J) show-memory-usage(M) nice-all-RT-tasks(N) show-registers
+(P) show-all-timers(Q) Sync show-task-states(T) Unmount show-blocked-tasks(W)
+#############################################################################
+
+
+#############################################################################
+# brctl showstp br0
+br0
+ bridge id              8000.001c5104265a
+ designated root        8000.001c5104265a
+ root port                 0                    path cost                  0
+ max age                  20.00                 bridge max age            50.00
+ hello time                2.00                 bridge hello time          5.00
+ forward delay             0.00                 bridge forward delay       0.00
+ ageing time               3.00
+ hello timer               0.96                 tcn timer                  0.00
+ topology change timer     0.00                 gc timer                   3.96
+ flags
+
+
+ra0 (1)
+ port id                8001                    state                forwarding
+ designated root        8000.001c5104265a       path cost                100
+ designated bridge      8000.001c5104265a       message age timer          0.00
+ designated port        8001                    forward delay timer        0.00
+ designated cost           0                    hold timer                 0.00
+ flags
+
+eth2 (2)
+ port id                8002                    state                forwarding
+ designated root        8000.001c5104265a       path cost                100
+ designated bridge      8000.001c5104265a       message age timer          0.00
+ designated port        8002                    forward delay timer        0.00
+ designated cost           0                    hold timer                 0.00
+ flags
+
+rai0 (3)
+ port id                8003                    state                forwarding
+ designated root        8000.001c5104265a       path cost                100
+ designated bridge      8000.001c5104265a       message age timer          0.00
+ designated port        8003                    forward delay timer        0.00
+ designated cost           0                    hold timer                 0.00
+ flags
+
+cecl (4)
+ port id                8004                    state                forwarding
+ designated root        8000.001c5104265a       path cost                100
+ designated bridge      8000.001c5104265a       message age timer          0.00
+ designated port        8004                    forward delay timer        0.00
+ designated cost           0                    hold timer                 0.00
+ flags
+
+###############################################################################
+
+echo 1 > /sys/module/printk/parameters/time
+brctl setageing br0 300
+
+
+####################Cl2200: AC Debug ##########################################
+echo 00:09:b5:c7:aa:26.0 > /sys/module/CL2200_ap/parameters/PrintQueueAcByMac
+echo 40:B8:37:F7:24:3A.0 > /sys/module/CL2200_ap/parameters/PrintQueueAcByMac
+echo 08:21:EF:70:2F:B7.0 > /sys/module/CL2200_ap/parameters/PrintQueueAcByMac
+
+echo 1.0 > /sys/module/CL2200_ap/parameters/PrintQueueAcByWcid
+echo 2.0 > /sys/module/CL2200_ap/parameters/PrintQueueAcByWcid
+echo 3.0 > /sys/module/CL2200_ap/parameters/PrintQueueAcByWcid
+
+########################## Compile bahamas Comtrend with last changes in code #####################################################
+make bahamas platform=Comtrend --check-symlink-times
+
+###################################################################
+
+date -s '2017-05-24 13:20:00'
+
+#################atm cmd#######################################################
+iwpriv atm5g cecli queue.-a
+iwpriv atm5g cecli sched.-b
+iwpriv atm5g cecli monitor.-t
+iwpriv atm5g cecli group.-g
+iwpriv atm24g cecli queue.-a
+iwpriv atm24g cecli sched.-b
+##################### chrt ####################################################
+chrt -rr 99 clusterd -f /etc/Wireless/CL2200/CL2200.dat -b
+chrt -p 2929 - get prio of 2929
+chrt -rr -p 99 12414
+############################################################
+CeCmDebugMsgTimeEn
+CeCmDebugTimeThr
+############################################################
+cegpio
+Celeno Gpio Driver version 1.0.0
+Usage: cegpio <command> <params...>
+commands:
+    lldirread
+        - Low level direction read.
+    lldirset <value>
+        - Low level direction set.
+    llpolread  <DB name>
+        - Low level polarity read.
+    llpolwrite <value>
+        - Low level polarity write.
+    llwrite <value>
+        - Low level data write.
+    llset <value - bitmap>
+        - Low level set(using set register).
+    llclear <value - bitmap>
+        - Low level clear - using clear register.
+    llread
+        - Low level read.
+    clear <bit index>
+        - clears a  bit(using clear register).
+    set <bit index>
+        - sets a bit(using set register).
+    get <bit index>
+        - gets a bit(using set register).
+    write <bit index> <value>
+        - writes a bit(using data register).
+    led  <bitmap> <command index> <duration> | args
+        - Execute led commmand on given gpio bitmap.
+          commands:
+         0 - ON     >
+         1 - OFF
+         2 - BLINK - additional arguments - time on, time off
+         3-  RUN - additional arguments - time on
+         4-  RUN ORDERED: cegpio led  <indexes seperated by dashes> 4 <duration> <time on>
+    buttonset <button> <gpio index>
+         - set button gpio index, buttons:
+         0 - RESET     >
+         1 - WPS
+    buttonget <button> <gpio index>
+         - get button's value by the indexes above.:
+    interval <periodic execution interval>
+         - changes the driver's periodic execution interval
+    status
+         - 0: status ok
+         - 1: GCP conflict, i.e. same GPIO is defined as input and output
+         - 2: Driver tried to change GPIO used by external device
+         - 3: GPIO was changed by an external device
+    buttonrst <button index>
+         - resets button's current/last press duration
+    timeronoff <1/0>
+         - enable/disable periodic gpio writes
+Ex.
+cegpio led 0x4000 1 -1 2.4G led off
+cegpio led 0x1000 1 -1 Ethernet led off
+cegpio led 0x0200 1 -1 Power led off
+cegpio led 0x7A80 0 -1
+cegpio led 0x800  0 -1 all leds power off
+cegpio led 0xffffffff 1 -1
+echo 0 > /sys/module/kernel/parameters/mod_timer_print
+echo 1 > /sys/module/kernel/parameters/mod_timer_print
+###############################################################################
+
+Run a ext4 file system check and badblocks scan with progress info
+Terminal - Run a ext4 file system check and badblocks scan with progress info
+fsck.ext4 -cDfty -C 0 /dev/sdxx
+-c ? check for bad sectors with badblocks program
+-D ? optimize directories if possible
+-f ? force check, even if filesystem seems clean
+-t ? print timing stats (use -tt for more)
+-y ? assume answer ?yes? to all questions
+-C 0 ? print progress info to stdout
+/dev/sdxx ? the partition to check, (e.g. /dev/sda1 for first partition on first hard disk)
+NOTE: Never run fsck on a mounted partition!
+#################################################################################
+
+############################4.6.x_CM/4.7.x compilation, in my PC #################################
+sudo apt-get install nfs-kernel-server nfs-common
+sudo vi /etc/exports
+edit add:
+/home/alexander/gitsvn/gitsvn/4.6.x_CM 172.22.190.0/24(rw,no_root_squash,async)
+/home/alexander/gitsvn/gitsvn/4.7.x 172.22.190.0/24(rw,no_root_squash,async)
+############# check of exports##############
+exportfs -r
+############################################
+
+########################nmapm show hosname on local net ###################################
+nmap -sP 172.22.190.0/24
+######################yocto server build system ##################
+name of PC: f47474
+ssh oleksandry@172.22.190.43
+ssh oleksandry@172.22.190.18
+Abc123
+sudo mount -t nfs 172.22.190.38:/home/alexander/gitsvn/4.6.x /home/oleksandry/savchenko/4.6.x
+sudo mount -t nfs 172.22.190.38:/home/alexander/gitsvn/4.6.x_CM /home/oleksandry/savchenko/4.6.x
+or
+sudo mount -t nfs 172.22.190.38:/home/alexander/gitsvn/4.7.x /home/oleksandry/savchenko/4.7.x
+sudo mount -t nfs 172.22.190.38:/home/alexander/gitsvn/6.70.0xx_mercury_23_freeze_CM /home/oleksandry/savchenko/6.70.0xx_mercury_23_freeze_CM
+####172.22.190.30, my PC(alexander)####
+
+########build yocto########################################################################
+time ssh oleksandry@172.22.190.43 '~/bin/build_CBN_P6_YOCTO_savchenko.sh' && cp -fv bzImage appcpuImage appcpuRootfs.img /tftpboot
+or for 4.7.x
+time ssh oleksandry@172.22.190.43 '~/bin/build_CBN_P6_YOCTO_savchenko_4.7.x.sh' && cp -fv bzImage appcpuImage appcpuRootfs.img /tftpboot
+time ssh oleksandry@172.22.190.43 '~/bin/build_CBN_P6_YOCTO_CL2400_CL242.sh' && cp -fv bzImage appcpuImage appcpuRootfs.img /tftpboot
+time ssh oleksandry@172.22.190.43 '~/bin/build_CBN_P6_YOCTO_CL2400_CL242_4.7.x.sh' && cp -fv bzImage appcpuImage appcpuRootfs.img /tftpboot
+
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_install_dir_cl2400=/cl2400
+export PATH=$PATH:$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts
+################################################################################################################
+scp Intel-6.1.1.21_cl2400_fully_configured.tar.gz stanislav@192.168.88.178:~
+##################### SSH Port 3333 ############################################################################
+scp Intel-6.1.1.21_cl2400_fully_configured.tar.gz -P 3333 stanislav@192.168.88.178:~
+#################################ccache for yocto################################################################
+mkdir -p ${HOME}/work/yocto_p6_cache ; \
+cd ${HOME}/work/yocto_p6_ccache ; \
+for i in $( (cd /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/ ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+###################################ADD cgiweb to Yocto####################################
+###Copy folder
+platformdb/CBN_P6_YOCTO_CL2330_CL242/__common__/Yocto/* to
+
+/home/developer/Intel-6.1.1.21/r6.1.1-ga/yocto
+
+##Edit
+/home/developer/Intel-6.1.1.21/r6.1.1-ga/build/conf/local.conf
+##Add lines
+CELENO_CGIWEB_PATH="/home/alexander/gitsvn/cgiweb"
+IMAGE_INSTALL_append = " cgiweb"
+
+################If ImageSize exceed MAX size#############################
+/home/developer/Intel-6.1.1.21/r6.1.1-ga/yocto/meta-intelce/recipes-core/packagegroups/packagegroup-intelce-gateway.bb
+# samba
+/home/developer/Intel-6.1.1.21/r6.1.1-ga/yocto/meta-intelce/recipes-core/packagegroups/packagegroup-intelce-gpl.bb
+# ntfs-3g
+# dhcp-client
+# dhcpv6
+#########################################################################
+##Set CELENO_CGIWEB_PATH to your cgiweb checkout
+##Inside of CELENO_CGIWEB_PATH prepare package :
+./make_cgiweb_release.sh -p CBN_P6_YOCTO_CL2330_CL242
+or
+./make_cgiweb_release.sh -p CBN_P6_YOCTO_CL2400_CL242
+tar xf SOURCE_CODE_celeno_package_cgiweb_CBN_P6_YOCTO_CL2330_CL242.tar.bz2
+###################################
+Edit /home/alexander/gitsvn/SDK/Intel-6.1.1.21/r6.1.1-ga/build/conf/bblayers.conf
+Add lines:
+BBLAYERS += " /home/developer/Intel-6.1.1.21/r6.1.1-ga/yocto/meta-celeno"
+##Please clean uimage files and apply changes inside Yocto:
+
+rm -rf /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/tmp/work/core2-32-poky-linux/uimage/
+cd /home/developer/Intel-6.1.1.21/r6.1.1-ga
+rm -rf build/tmp
+source yocto/oe-init-build-env
+bitbake core-image-gateway
+######################hotplug modules ######################################################################
+###оключить автостарт
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_install_dir_cl2400=/cl2400
+export PATH=$PATH:$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts
+export LD_LIBRARY_PATH=$clr_install_dir_cl2400/lib/
+nvram_set cl2400 ce_driver_auto_start 0
+
+##########################
+запуск через NFSroot
+ifconfig eth0 0
+brctl addbr br0
+vconfig add eth0 2
+ifconfig eth0.2 up
+brctl addif br0 eth0.2
+brctl delif br0 eth0
+ifconfig br0 192.168.100.2 up
+mount -t nfs -o nolock 192.168.100.88:/home/efalex/gitsvn/4.6.x_CM/cl2400 /cl2400
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_install_dir_cl2400=/cl2400
+export PATH=$PATH:$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts
+ce_host.sh start
+
+##########################CTL####################################################
+cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:0C:43:76:52:58
+cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:05:9E:2F:88:9E
+cmcli set steer_dot11v D0:C5:F3:E3:80:91 D8:B6:B7:2A:EC:44
+#################################################################################
+
+
+####################celeno skype##################################################
+gl.celeno.team@gmail.com
+pass GlobalLogic86
+
+First name : Celeno
+Second name: Celeno
+
+pass GlobalLogic86
+#########################Apple ID###################################################
+AppleID: gl.celeno.team@gmail.com
+Pass : GlobalLogic86
+########################tips########################################################
+recuresive chmod for read/write for all in directory
+sudo chmod -R ugo+rw foldername
+###########indent##########################
+kernel
+indent -linux -l160 filename
+userspace
+indent -kr -ut -ts4 -l160 filename
+#########################Band Steering############################################################
+echo 0 > /sys/module/ap8x/parameters/g_iBsDebug
+######################################################################################
