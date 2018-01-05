@@ -4,4 +4,4 @@ flex zlib1g:i386 gettext gperf libncurses5 texinfo fakeroot build-essential \
 zlib1g-dev libncurses5-dev lib32ncurses5-dev doxygen mc \
 libpam0g:i386 libstdc++5 libstdc++5:i386 libstdc++6 libstdc++6:i386 wget diffstat unzip gcc-multilib   \
 chrpath socat libsdl1.2-dev curl unifdef iperf nfs-kernel-server nfs-common isc-dhcp-server atftpd \
-vim exuberant-ctags automake libnl1 libnl-dev cscope openssh-server ccache minicom
+vim exuberant-ctags automake libnl1 libnl-dev cscope openssh-server ccache minicom iotop

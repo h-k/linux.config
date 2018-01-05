@@ -27,11 +27,11 @@ cgiweb_pre() {
 	fi
 
 	cd celeno_package_cgiweb_$PLATFORM
-	make $PLATFORM
 
 	if [ "$sdktype" = "YOCTO" ] ; then
-		cp platformdb/__common__/Yocto/meta-celeno/recipes-cgiweb/cgiweb/cgiweb.bb $SDK/yocto/meta-celeno/recipes-cgiweb/cgiweb/cgiweb.bb
+		cp -Rf platformdb/__common__/Yocto/meta-celeno $SDK/yocto
 	else
+		make $PLATFORM
 		tar xf cgiweb_pkg_$PLATFORM.*.*.*.tar.bz2 -C $SDK
 		cd $SDK
 		add_packages "package/cgiweb"
@@ -421,6 +421,9 @@ usage()
 {
 	echo "Possible values: SAMSUNG_PUMA6 CBN_MERCURY ATM2 CELENO CELENO_DEMO Celeno_demo CISCO_PUMA6 HAIER ARRIS CBN CBN_INTELP6 CBN_KDG ST_NOS CCN_2"
 	echo "Possible to choose short names: eMTA HAIER"
+	echo "Ex.: ./p6-pro.sh cl2400_4.7.x CBN_P6_YOCTO cl242_25_new CBN_INTELP6_YOCTO cgiweb CBN_P6_YOCTO_CL2400_CL242"
+	echo "Ex.: ./p6-pro.sh cl2400 CBN_P6_YOCTO_CM cl242_25_new CBN_INTELP6_YOCTO cgiweb CBN_P6_YOCTO_CL2400_CL242"
+	echo "Ex.: ./p6-pro.sh cl2330_25_new CBN_MERCURY_YOCTO cl242_25_new CBN_INTELP6_YOCTO cgiweb CBN_P6_YOCTO_CL2330_CL242"
 	echo "Ex.: ./p6-pro.sh cl242 HAIER cl2200 HAIER"
 	echo "Ex.: ./p6-pro.sh HAIER"
 	echo "Ex.: ./p6-pro.sh cl2330 CBN_MERCURY cl242 CBN_INTELP6"
@@ -466,6 +469,14 @@ proc_platform()
 		export sdk=6.1.1.21.yocto
 		export SDK=$SDKDIR/Intel-6.1.1.21/r6.1.1-ga
 		export PLATFORM=CBN_P6_YOCTO
+		export platform=cbn_p6_yocto
+		sdktype=YOCTO
+	;;
+
+	CBN_P6_YOCTO_CM) echo "Choosen platform $1: SDK Intel-6.1.1.21 yocto"
+		export sdk=6.1.1.21.yocto
+		export SDK=$SDKDIR/Intel-6.1.1.21/r6.1.1-ga
+		export PLATFORM=CBN_P6_YOCTO_CM
 		export platform=cbn_p6_yocto
 		sdktype=YOCTO
 	;;
@@ -779,7 +790,7 @@ proc_package()
 
 	cl2330)
 		echo "Choosen module $PACKAGE"
-		export BRANCH=5.2.x_23617
+		export BRANCH=5.2.x
 		export CLR=$SRCDIR/$BRANCH/CL2330
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL2330
@@ -1225,18 +1236,22 @@ main() {
 	check_env
 	numargs=$#
 
-	if [[ $numargs == 1 ]] ; then
-		echo "BUILD $1"
-		proc_short $1
-	else
-		for ((i = 1 ; i <= numargs ; i += 2))
-		{
-			if [[ -n $1 && -n $2 ]] ; then
-				echo "BUILD $1 $2"
-				pre $1 $2
-			fi
-			shift 2
-		}
+	if [[ $numargs == 0 ]] ; then
+		usage
+		exit
+	else if [[ $numargs == 1 ]] ; then
+			echo "BUILD $1"
+			proc_short $1
+		else
+			for ((i = 1 ; i <= numargs ; i += 2))
+			{
+				if [[ -n $1 && -n $2 ]] ; then
+					echo "BUILD $1 $2"
+						pre $1 $2
+						fi
+						shift 2
+			}
+		fi
 	fi
 
 	echo "PLATFORM=$PLATFORM PACKAGE=$PACKAGE"
