@@ -342,7 +342,10 @@ cl2330_pre() {
 		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
 		export CCACHE_PATH=${SDK}/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux:$PATH
 	else
-		export CCACHE_PATH=$IntelCE_path/build_i686/i686-linux-elf/bin:/opt/buildroot-gcc342/bin:$PATH
+		export CCACHE_PATH=$SDK/build_i686/i686-linux-elf/bin:/opt/buildroot-gcc342/bin:$PATH
+		sed -i -e 's#^\s*DEF_INTEL_SDK_PATH.*$#DEF_INTEL_SDK_PATH = $(SDK)#' -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/0.35_ccache/i686-cm-linux-#' src/celeno.mk
+		#sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/0.35_ccache/i686-cm-linux-#' src/celeno.mk
+		#export CCACHE_PATH=$IntelCE_path/build_i686/i686-linux-elf/bin:/opt/buildroot-gcc342/bin:$PATH
 	fi
 
 	make
@@ -1179,6 +1182,11 @@ post() {
 	fi
 
 	cp $BINARIES/{bzImage,appcpuImage,appcpuRootfs.img} /tftpboot/
+	cd /tftpboot/
+	atftp -pl bzImage 172.168.110.108
+	atftp -pl appcpuRootfs.img 172.168.110.108
+	atftp -pl appcpuImage 172.168.110.108
+	cd -
 	date
 	ls -l /tftpboot/{bzImage,appcpuImage,appcpuRootfs.img}
 

@@ -631,6 +631,9 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wi
 
 $clr_install_dir_cl2330/ce_host.sh start
 $clr_install_dir/ce_host.sh start
+
+iwpriv atmcls5g cecli bs.-h
+iwscan wdev0ap0 start 4 500 1 36
 ##################YOCTO SDK CL2400+CL242#############################################
 export clr_cfg_dir_cl2400=/nvram/cl2400
 export clr_install_dir_cl2400=/cl2400
@@ -1004,6 +1007,13 @@ $clr_install_dir_cl2330/nvram_set cl2330 CeCmAutoRestart 0
 CwAcsChannelScanPeriod
 nvram_set rtdev CeCmAutoRestart 0
 
+######################### svn repos 5.01.2018 #####################################
+http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_25_new/CL2330
+http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_25_new/sdk
+http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x
+http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
+http://moon/svn/celeno-swdb/target/branches/CE_P6/1.0.0/cgiweb
+http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 #######################  SVN tricks   ##################################
 #######################  show svn commit log message   ##################################
 svn propget svn:log --revprop -r30199 http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx/sdk
@@ -1720,6 +1730,7 @@ exportfs -r
 
 ########################nmapm show hosname on local net ###################################
 nmap -sP 172.22.190.0/24
+ssh alexander@172.168.110.108
 ######################yocto server build system ##################
 name of PC: f47474
 ssh oleksandry@172.22.190.43
@@ -1746,6 +1757,31 @@ export PATH=$PATH:$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts
 scp Intel-6.1.1.21_cl2400_fully_configured.tar.gz stanislav@192.168.88.178:~
 ##################### SSH Port 3333 ############################################################################
 scp Intel-6.1.1.21_cl2400_fully_configured.tar.gz -P 3333 stanislav@192.168.88.178:~
+#################################ccache for 0.35################################################################
+mkdir -p ${HOME}/work/0.35_ccache ; \
+cd ${HOME}/work/0.35_ccache ; \
+for i in $( (cd /mnt/cernd/sw/clr240_kernels/SAMSUNG_PUMA6/SDK_4.3.0.37/IntelCE-0.35.14073.342867/build_i686/i686-linux-elf/bin/ ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+
+###########Alternate ccache for 0.35#####################
+Initial set up
+export IntelCE_path=/path/to/SDK
+mkdir -p $IntelCE_path/../ccache_sdk ; cd $IntelCE_path/../ccache_sdk ; \
+for i in $( (cd $IntelCE_path/build_i686/i686-linux-elf/bin ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+
+Before first compile
+export IntelCE_path=/path/to/SDK
+export CCACHE_PATH=$IntelCE_path/build_i686/i686-linux-elf/bin:/opt/buildroot-gcc342/bin:$PATH
+cd /path/to/CL2400_HP
+sed -i \
+-e 's#^\s*DEF_INTEL_SDK_PATH.*$#DEF_INTEL_SDK_PATH = $(IntelCE_path)#' \
+-e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(DEF_INTEL_SDK_PATH)/../ccache_sdk/i686-cm-linux-#' \
+cl2400_package/src/celeno.mk
+
+
 #################################ccache for yocto################################################################
 mkdir -p ${HOME}/work/yocto_p6_cache ; \
 cd ${HOME}/work/yocto_p6_ccache ; \
