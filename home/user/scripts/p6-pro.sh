@@ -140,6 +140,16 @@ cl2400_4.7.x_pre()
 	cl2400_pre
 }
 
+cl2400_4.6.x_pre()
+{
+	cl2400_pre
+}
+
+cl2400_4.6.x_91_GA_pre()
+{
+	cl2400_pre
+}
+
 ###############################################################################
 # Cleaning and unpacking functions for CLR242 host package
 cl242_pre() {
@@ -968,10 +978,19 @@ proc_package()
 		CL=CL2400
 		;;
 
-	cl2400)
+	cl2400_4.6.x)
 		export PACKAGE=cl2400
 		echo "Choosen module $PACKAGE"
 		export BRANCH=4.6.x
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2400
+		;;
+
+	cl2400_4.6.x_91_GA)
+		export PACKAGE=cl2400
+		echo "Choosen module $PACKAGE"
+		export BRANCH=4.6.x_91_GA
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL2400
@@ -1182,11 +1201,11 @@ post() {
 	fi
 
 	cp $BINARIES/{bzImage,appcpuImage,appcpuRootfs.img} /tftpboot/
-	cd /tftpboot/
-	atftp -pl bzImage 172.168.110.108
-	atftp -pl appcpuRootfs.img 172.168.110.108
-	atftp -pl appcpuImage 172.168.110.108
-	cd -
+#	cd /tftpboot/
+#	atftp -pl bzImage 172.168.110.108
+#	atftp -pl appcpuRootfs.img 172.168.110.108
+#	atftp -pl appcpuImage 172.168.110.108
+#	cd -
 	date
 	ls -l /tftpboot/{bzImage,appcpuImage,appcpuRootfs.img}
 
