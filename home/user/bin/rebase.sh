@@ -34,6 +34,7 @@ update_2400()
 {
 	cd $1
 	echo "REPO $1: START SVN rebase.."
+	git svn rebase
 	svnrebase utils/clusterd
 
 	cd kernel
@@ -62,6 +63,7 @@ update_2330()
 	cd $1
 
 	echo "REPO $1: START SVN rebase.."
+	git svn rebase
 	svnrebase ce_atm
 	svnrebase ce_atm_classifier
 	svnrebase ceclass
@@ -86,6 +88,7 @@ update_242()
 	cd $1
 
 	echo "REPO $1: START SVN rebase.."
+	git svn rebase
 	cd linux-2.6.21.x/drivers/net
 	svnrebase celeno_cb
 	svnrebase ce_cluster
@@ -111,6 +114,7 @@ update_bahamas()
 	cd $1
 
 	echo "REPO $1: START SVN rebase.."
+	git svn rebase
 	cd user/celeno
 	svnrebase clusterd
 	cd $1
@@ -131,6 +135,8 @@ update_bahamas()
 update_bahamas_all()
 {
 	update_bahamas $SRC/6.87.0xx
+	update_bahamas $SRC/6.87.0xx_3_GA5
+	update_bahamas $SRC/6.85.0xx_comtrend_CM
 }
 
 update_all()

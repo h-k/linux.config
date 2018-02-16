@@ -1018,12 +1018,15 @@ http://moon/svn/celeno-swdb/Utils/svn_tools
 #######################  SVN tricks   ##################################
 #######################  show svn commit log message   ##################################
 svn propget svn:log --revprop -r30199 http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx/sdk
+svn propget svn:log --revprop -r43571 http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 svn propget svn:log --revprop -r30295 http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
 svn propget svn:log --revprop -r40022 http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
 #######################  edit svn commit log message   ##################################
 svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
 svn propedit svn:log --revprop -r41859 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
 svn propedit svn:log --revprop -r41650 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_Comtrend_CM
+svn propedit svn:log --revprop -r43571 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
+svn propedit svn:log --revprop -r43573 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_3_GA5/sdk
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
@@ -1861,6 +1864,10 @@ cmcli set steer_dot11v D0:C5:F3:E3:80:91 D8:B6:B7:2A:EC:44
 #################################################################################
 
 
+##########################QC########################################################
+QC User:
+OleksandrSav
+Savc6&8
 ####################celeno skype##################################################
 gl.celeno.team@gmail.com
 pass GlobalLogic86
