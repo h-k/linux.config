@@ -113,6 +113,7 @@ update_bahamas()
 	echo "REPO $1: START SVN rebase.."
 	cd user/celeno
 	svnrebase clusterd
+	cd $1
 
 	cd linux-2.6.36.x/drivers/net
 	svnrebase celeno_cb
