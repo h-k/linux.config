@@ -97,11 +97,34 @@ wlan.sa == 00:11:99:00:13:18
 
 
 wlan.sa == 00:1c:02:ca:22:a8 || wlan.sa == 00:11:99:00:13:18 || wlan.da == 00:1c:02:ca:22:a8 || wlan.da == 00:11:99:00:13:18
+##################################### wireshark #################################################
 ################### category WNM, BSS Transition Request, 11v###################################
 wlan_mgt.fixed.category_code == 10
 ################### category WNM, Radio Measurement Request, 11k###################################
 wlan_mgt.fixed.category_code == 5
-####################################
+#######################Spectrum nanagement,category code 0 ##################################################
+wlan.fixed.category_code == 0
+#######################TPC request,action code 2 ##################################################
+wlan.fixed.action_code == 2
+wlan.fixed.action_code == 2 && wlan.addr == 40:b8:37:f7:24:3a
+wlan.fixed.action_code == 2 && wlan.addr == 00:09:B5:C7:AA:26
+wlan.fixed.action_code == 2 && wlan.addr == 00:05:9E:2F:82:9E
+########CL242 24G###################
+wlan.addr == 38:43:7D:60:1B:0E
+wlan.addr == 00:1C:51:88:99:88 //CBN v1.0 5g
+wlan.addr == 00:0C:43:26:88:44  //CBN v1.0 24g
+wlan.addr == 38:43:7d:60:0d:b5 //CBN v1.1 5g
+wlan.addr == 00:05:9E:2F:84:9E //Zinwell 24g
+
+#################beacon frame#######################
+wlan.fc.type_subtype == 0x0008
+wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1C:51:88:99:88
+###########Sequence Number######
+wlan.seq == 1067
+##################TIM bit field#####################
+wlan.tim.bmapctl != 0x00
+wlan.tim.partial_virtual_bitmap != 0
+####################################################
 
 CL242
 
@@ -642,6 +665,14 @@ export clr_install_dir=/etc/Wireless/CL242
 export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts:$clr_install_dir/wireless_tools/usr/sbin${PATH+:}${PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib:$clr_install_dir_cl2400/lib​
 iw dev wlan1_0 cecli cls bs.-h
+iw dev wlan1_0 cecli cls bs.-s
+#####################yocto patching kernel##############################################################
+Put file to /home/developer/Intel-6.1.1.21/r6.1.1-ga/yocto/meta-intelce/recipes-kernel/linux/files/patches
+Add line to kernel_patches.scc
+rm -rf /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/tmp/work/intelce-poky-linux/linux-yocto-custom
+cd /home/developer/Intel-6.1.1.21/r6.1.1-ga
+source yocto/oe-init-build-env
+bitbake core-image-gateway​
 ##################YOCTO SDK gdb####################################################
 cd ~/gitsvn/CE_CM$
 /home/alexander/gitsvn/SDK/0.35.cgiweb/IntelCE-0.35.14073.342867/build_i686/i686-linux-elf/bin/i686-cm-linux-gdb
@@ -1018,24 +1049,26 @@ http://moon/svn/celeno-swdb/Utils/svn_tools
 #######################  SVN tricks   ##################################
 #######################  show svn commit log message   ##################################
 svn propget svn:log --revprop -r30199 http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx/sdk
-svn propget svn:log --revprop -r43571 http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
+svn propget svn:log --revprop -r43686 http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 svn propget svn:log --revprop -r30295 http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
 svn propget svn:log --revprop -r40022 http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
 #######################  edit svn commit log message   ##################################
 svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
-svn propedit svn:log --revprop -r41859 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
+svn propedit svn:log --revprop -r43682 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
+svn propedit svn:log --revprop -r43603 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_18_GA5
 svn propedit svn:log --revprop -r41650 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_Comtrend_CM
-svn propedit svn:log --revprop -r43571 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
+svn propedit svn:log --revprop -r43686 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 svn propedit svn:log --revprop -r43573 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_3_GA5/sdk
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
-svn propedit svn:log --revprop -r40022 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
+svn propedit svn:log --revprop -r43683 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
 svn propedit svn:log --revprop -r39537 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_4.6.x
 svn propedit svn:log --revprop -r38768 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_mercury_23_freeze_CM
 svn propedit svn:log --revprop -r40258 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_comtrend_CM
 svn propedit svn:log --revprop -r39539 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_CM
 svn propedit svn:log --revprop -r40307 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x
+svn propedit svn:log --revprop -r43694 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 ######################Edit externals###################################
 
 svn propedit svn:externals .
@@ -1868,6 +1901,10 @@ cmcli set steer_dot11v D0:C5:F3:E3:80:91 D8:B6:B7:2A:EC:44
 QC User:
 OleksandrSav
 Savc6&8
+############################QC Remmina##############################################
+192.168.110.156
+User:   Celeno\Newexl-QC
+passwd: AAbbcc34
 ####################celeno skype##################################################
 gl.celeno.team@gmail.com
 pass GlobalLogic86
@@ -1890,3 +1927,10 @@ indent -kr -ut -ts4 -l160 filename
 #########################Band Steering############################################################
 echo 0 > /sys/module/ap8x/parameters/g_iBsDebug
 ######################################################################################
+###############################CBN v1.1 reset ARM################################################
+
+shell - cbn_hw_reset 1
+or  cbn_hw_reset
+
+######################################################################################
+########################################################################################

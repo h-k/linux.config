@@ -140,12 +140,22 @@ cl2400_4.7.x_pre()
 	cl2400_pre
 }
 
+cl2400_4.7.x_12_GA5_pre()
+{
+	cl2400_pre
+}
+
 cl2400_4.6.x_pre()
 {
 	cl2400_pre
 }
 
 cl2400_4.6.x_91_GA_pre()
+{
+	cl2400_pre
+}
+
+cl2400_4.6.x_92_GA4_pre()
 {
 	cl2400_pre
 }
@@ -854,6 +864,15 @@ proc_package()
 		CL=CL2330
 		;;
 
+	cl2330_25_new_18_GA5)
+		export PACKAGE=cl2330
+		echo "Choosen module $PACKAGE v25_new"
+		export BRANCH=5.2.x_mercury_25_new_18_GA5
+		export CLR=$SRCDIR/$BRANCH/CL2330
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2330
+		;;
+
 	cl2330_24_CM)
 		export PACKAGE=cl2330
 		echo "Choosen module $PACKAGE v24 CM"
@@ -918,6 +937,15 @@ proc_package()
 		export PACKAGE=cl242
 		echo "Choosen module $PACKAGE v25_new"
 		export BRANCH=6.70.0xx_mercury_25_new
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL242
+		;;
+
+	cl242_25_new_18_GA5)
+		export PACKAGE=cl242
+		echo "Choosen module $PACKAGE v25_new"
+		export BRANCH=6.70.0xx_mercury_25_new_18_GA5
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL242
@@ -996,10 +1024,28 @@ proc_package()
 		CL=CL2400
 		;;
 
+	cl2400_4.6.x_92_GA4)
+		export PACKAGE=cl2400
+		echo "Choosen module $PACKAGE"
+		export BRANCH=4.6.x_92_GA4
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2400
+		;;
+
 	cl2400_4.7.x)
 		export PACKAGE=cl2400
 		echo "Choosen module $PACKAGE"
 		export BRANCH=4.7.x
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2400
+		;;
+
+	cl2400_4.7.x_12_GA5)
+		export PACKAGE=cl2400
+		echo "Choosen module $PACKAGE"
+		export BRANCH=4.7.x_12_GA5
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL2400
@@ -1012,7 +1058,9 @@ proc_package()
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		;;
 
-	*)	echo "Bad package name $1. Possible value: cl2330 clr240 cl242 clr260 clr250 cl2200" ; exit
+	*)	echo "Bad package name $1. Possible value: cl2330 clr240 cl242 clr260 clr250 cl2200"
+		echo "cl2330_25_new cl2400_4.6.x cl2400_4.6.x_92_GA4 cl2400_4.7.x"
+		exit
 		;;
 	esac
 }
@@ -1108,7 +1156,7 @@ pre()
 	platforms+=($PLATFORM)
 	packages+=($PACKAGE)
 
-	$1_pre
+	${PACKAGE}_pre
 	notify-send -i starred "host package $PACKAGE $BRANCH $PLATFORM" "build done in $SECONDS seconds"
 #	if [[ $PLATFORM == "ST_NOS" ]] ; then
 #		echo -n
@@ -1201,11 +1249,6 @@ post() {
 	fi
 
 	cp $BINARIES/{bzImage,appcpuImage,appcpuRootfs.img} /tftpboot/
-#	cd /tftpboot/
-#	atftp -pl bzImage 172.168.110.108
-#	atftp -pl appcpuRootfs.img 172.168.110.108
-#	atftp -pl appcpuImage 172.168.110.108
-#	cd -
 	date
 	ls -l /tftpboot/{bzImage,appcpuImage,appcpuRootfs.img}
 
@@ -1262,26 +1305,40 @@ main() {
 	declare -a packages
 	check_env
 	numargs=$#
+	make_only=
 
 	if [[ $numargs == 0 ]] ; then
 		usage
 		exit
-	else if [[ $numargs == 1 ]] ; then
-			echo "BUILD $1"
-			proc_short $1
-		else
-			for ((i = 1 ; i <= numargs ; i += 2))
-			{
-				if [[ -n $1 && -n $2 ]] ; then
-					echo "BUILD $1 $2"
-						pre $1 $2
-						fi
-						shift 2
-			}
-		fi
 	fi
 
-	echo "PLATFORM=$PLATFORM PACKAGE=$PACKAGE"
+	if [[ $numargs == 1 ]] ; then
+		echo "BUILD $1"
+		proc_short $1
+	else
+		if [ $1 = "make_only" ] ; then
+			make_only=1
+			shift 1
+			((numargs--))
+		fi
+
+		for ((i = 1 ; i <= numargs ; i += 2))
+		{
+			if [[ -n $1 && -n $2 ]] ; then
+				echo "BUILD $1 $2"
+				pre $1 $2
+			fi
+			shift 2
+		}
+	fi
+
+	echo "make_only=$make_only"
+	if [ $make_only = "1" ] ; then
+		date
+		echo "Built PLATFORM=$PLATFORM PACKAGE=$PACKAGE in $SECONDS seconds"
+		exit
+	fi
+
 	uImage
 	if [[ $PLATFORM == "ST_NOS" ]] ; then
 		date
