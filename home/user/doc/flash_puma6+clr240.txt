@@ -565,28 +565,85 @@ settings
 update -t atom 1
 update -t atom 2
 
-#############################################
+################ARRIS P7##########################################################################################################
+1) Виртуалка:
+пароль и юзер: dev-root
+2) Внутри репозитория:
+./make_CL2400_release.sh -p ARRIS_P7 как для типичного cl2400
+3)  /home/dev-root/dmde/build.sh - на виртуалке мой скрипт для сборки, оттуда надо взять команду sed (для celeno.mk) которая не закоменчена
+4) make
 
-tftp get 192.168.100.102 0x900000 bzImage
-emmc wr_up 0x240000 0x900000 0x400000
-tftp get 192.168.100.102 0x900000 appcpuRootfs.img
-emmc wr_up 0xa40000 0x900000 0x1100000
-settings
+###### Set in pies 1 mode (in pies 1 mode drivers auto start)
+############ARM################################
+arristi
+rf
+scan 0
 
-ifconfig eth0 192.168.100.8
-export clr_cfg_dir=/nvram
-export clr_cfg_dir_cl2330=/nvram
-export clr_install_dir=/etc/Wireless/CL242
-export clr_install_dir_cl2330=/etc/Wireless/CL2330
-$clr_install_dir_cl2330/ce_host.sh start
-$clr_install_dir/ce_host.sh start
+Switch into pies 1 mode:
+Type: "nvm"
+Type: "dmp"
+Type: "pies 1" // set mode: 1-gateway, 0-bridge
+Type: "stm"    // save
+Type: "!reset"
 
-ifconfig eth0 192.168.100.8
-export clr_cfg_dir=/nvram
-export clr_install_dir=/etc/Wireless/CL242
-$clr_install_dir/ce_host.sh start
+###############ATOM############################
+/cl2400/scripts/ce_host.sh stop
+/cl2400/scripts/ce_host.sh stop 24g
+rmmod cfg80211 compat
 
-/nvram/clusterd -f /nvram/CL2330.dat -b
+###### Download host package#####################
+cd /tmp
+tftp -gl cl2400.tar.gz 192.168.100.102
+tar xf cl2400.tar.gz
+#########################Download release###########
+cd /tmp
+tftp -gl cl2400.tar 192.168.100.102
+tar xf cl2400.tar
+mv build cl2400
+###### exports########################
+export clr_cfg_dir_cl2400=/tmp/nvram/cl2400
+export clr_cfg_dir_cl2400_24g=/tmp/nvram/cl2400_24g
+export clr_install_dir_cl2400=/tmp/cl2400
+export clr_install_dir_cl2400_24g=/tmp/cl2400
+export PATH=/tmp/cl2400/bin/:/tmp/cl2400/scripts:$PATH
+export LD_LIBRARY_PATH=/tmp/cl2400/usr/lib
+#####################tmp nvram#####################
+export clr_cfg_dir_cl2400=/nvram/tmp/cl2400
+export clr_cfg_dir_cl2400_24g=/nvram/tmp/cl2400_24g
+export clr_install_dir_cl2400=/tmp/cl2400
+export clr_install_dir_cl2400_24g=/tmp/cl2400
+export clr_vlan_dir_cl2400=/nvram/tmp/cl2400
+export clr_vlan_dir_cl2400_24g=/nvram/tmp/cl2400_24g
+
+export PATH=/tmp/cl2400/bin/:/tmp/cl2400/scripts:$PATH
+export LD_LIBRARY_PATH=/tmp/cl2400/usr/lib
+
+/tmp/cl2400/scripts/ce_host.sh stop 24g
+/tmp/cl2400/scripts/ce_host.sh stop
+
+rmmod cfg80211 compat
+
+/tmp/cl2400/scripts/ce_host.sh start 24g
+/tmp/cl2400/scripts/ce_host.sh start
+
+brctl addif brlan0 nsgmii1
+brctl addif brlan0 wlan0_0
+brctl addif brlan0 wlan0_1
+brctl addif brlan0 wlan1_0
+brctl addif brlan0 wlan1_1
+ifconfig brlan0:factory down
+ifconfig brlan0 192.168.100.2
+
+brctl addif brlan0 wlan0_1
+brctl addif brlan0 wlan1_1
+
+###########enable printk##########
+echo 8 > /proc/sys/kernel/printk
+echo 0 > /proc/sys/kernel/printk
+
+#############softblock show, etc.######################
+iw dev wlan1_0 cecli sb -p.
+############################################
 
 ##############CL2330 Only######################
 export clr_cfg_dir_cl2330=/nvram
@@ -1763,7 +1820,7 @@ edit add:
 /home/alexander/gitsvn/gitsvn/4.6.x_CM 172.22.190.0/24(rw,no_root_squash,async,subtree_check)
 /home/alexander/gitsvn/gitsvn/4.7.x 172.22.190.0/24(rw,no_root_squash,async,subtree_check)
 ############# check of exports##############
-exportfs -r
+sudo exportfs -r
 ############################################
 
 ########################nmapm show hosname on local net ###################################
@@ -1780,6 +1837,10 @@ or
 sudo mount -t nfs 172.22.190.38:/home/alexander/gitsvn/4.7.x /home/oleksandry/savchenko/4.7.x
 sudo mount -t nfs 172.22.190.38:/home/alexander/gitsvn/6.70.0xx_mercury_23_freeze_CM /home/oleksandry/savchenko/6.70.0xx_mercury_23_freeze_CM
 sudo mount -t nfs 172.168.110.102:/tftpboot /tftpboot
+
+sudo mount -t nfs 192.168.100.102:/home/alexander/gitsvn/4.6.x_91_GA /home/dev-root/gitsvn/4.6.x_91_GA
+sudo mount -t nfs 192.168.100.102:/tftpboot /tftpboot
+
 ####172.22.190.30, my PC(alexander)####
 
 ########build yocto########################################################################

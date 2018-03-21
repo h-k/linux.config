@@ -130,36 +130,6 @@ cl2400_pre() {
 	cd $SDK
 }
 
-cl2400_b0_pre()
-{
-	cl2400_pre
-}
-
-cl2400_4.7.x_pre()
-{
-	cl2400_pre
-}
-
-cl2400_4.7.x_12_GA5_pre()
-{
-	cl2400_pre
-}
-
-cl2400_4.6.x_pre()
-{
-	cl2400_pre
-}
-
-cl2400_4.6.x_91_GA_pre()
-{
-	cl2400_pre
-}
-
-cl2400_4.6.x_92_GA4_pre()
-{
-	cl2400_pre
-}
-
 ###############################################################################
 # Cleaning and unpacking functions for CLR242 host package
 cl242_pre() {
@@ -205,31 +175,6 @@ cl242_pre() {
 		cd $SDK
 		add_packages "package/$PACKAGE"
 	fi
-}
-
-cl242_23_pre()
-{
-	cl242_pre
-}
-
-cl242_23_CM_pre()
-{
-	cl242_pre
-}
-
-cl242_24_pre()
-{
-	cl242_pre
-}
-
-cl242_25_pre()
-{
-	cl242_pre
-}
-
-cl242_25_new_pre()
-{
-	cl242_pre
 }
 
 # Cleaning and unpacking functions for CLR260 host package platform ST_NOS
@@ -386,41 +331,6 @@ cl2330_pre() {
 		cd $SDK
 		add_packages "package/$PACKAGE"
 	fi
-}
-
-cl2330_24_CM_stable_pre()
-{
-	cl2330_pre
-}
-
-cl2330_24_CM_pre()
-{
-	cl2330_pre
-}
-
-cl2330_24_pre()
-{
-	cl2330_pre
-}
-
-cl2330_25_pre()
-{
-	cl2330_pre
-}
-
-cl2330_25_new_pre()
-{
-	cl2330_pre
-}
-
-cl2330_23_pre()
-{
-	cl2330_pre
-}
-
-cl2330_23_CM_pre()
-{
-	cl2330_pre
 }
 
 ###############################################################################
