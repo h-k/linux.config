@@ -5,6 +5,9 @@ sdktype=
 pkgonly=
 
 cgiweb_pre() {
+	rm -rf $CLR/SOURCE_CODE_celeno_package_cgiweb*
+	rm -rf $CLR/celeno_package_cgiweb*
+
 	if [ "$sdktype" = "YOCTO" ] ; then
 		rm -rf $SDK/build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/www
 		rm -rf $SDK/build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/custom_targetFS_gateway/www
@@ -1131,6 +1134,9 @@ make_uImage() {
 	if [ "$sdktype" = "YOCTO" ] ; then
 		cd $SDK
 		source yocto/oe-init-build-env
+		rm -rf build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/custom_targetFS_gateway/
+		rm -rf build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/
+
 		bitbake uimage || exit 1
 		imagesize=`ls -l tmp/deploy/images/intelce/appcpuRootfs.img | awk '{print $5}'`
 		echo "Image size is $imagesize (max 17825792)" >&2
@@ -1242,7 +1248,6 @@ main() {
 		}
 	fi
 
-	echo "make_only=$make_only"
 	if [ $make_only = "1" ] ; then
 		date
 		echo "Built PLATFORM=$PLATFORM PACKAGE=$PACKAGE in $SECONDS seconds"

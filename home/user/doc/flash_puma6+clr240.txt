@@ -116,6 +116,9 @@ wlan.addr == 00:0C:43:26:88:44  //CBN v1.0 24g
 wlan.addr == 38:43:7d:60:0d:b5 //CBN v1.1 5g
 wlan.addr == 00:05:9E:2F:84:9E //Zinwell 24g
 
+########################IP############################
+ip.addr == 192.168.0.0/16
+ip.addr == 192.168.0.1
 #################beacon frame#######################
 wlan.fc.type_subtype == 0x0008
 wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1C:51:88:99:88
@@ -591,41 +594,30 @@ Type: "!reset"
 /cl2400/scripts/ce_host.sh stop 24g
 rmmod cfg80211 compat
 
-###### Download host package#####################
-cd /tmp
-tftp -gl cl2400.tar.gz 192.168.100.102
-tar xf cl2400.tar.gz
 #########################Download release###########
 cd /tmp
 tftp -gl cl2400.tar 192.168.100.102
 tar xf cl2400.tar
-mv build cl2400
 ###### exports########################
-export clr_cfg_dir_cl2400=/tmp/nvram/cl2400
-export clr_cfg_dir_cl2400_24g=/tmp/nvram/cl2400_24g
-export clr_install_dir_cl2400=/tmp/cl2400
-export clr_install_dir_cl2400_24g=/tmp/cl2400
-export PATH=/tmp/cl2400/bin/:/tmp/cl2400/scripts:$PATH
-export LD_LIBRARY_PATH=/tmp/cl2400/usr/lib
 #####################tmp nvram#####################
 export clr_cfg_dir_cl2400=/nvram/tmp/cl2400
 export clr_cfg_dir_cl2400_24g=/nvram/tmp/cl2400_24g
-export clr_install_dir_cl2400=/tmp/cl2400
-export clr_install_dir_cl2400_24g=/tmp/cl2400
+export clr_install_dir_cl2400=/tmp/build
+export clr_install_dir_cl2400_24g=/tmp/build
 export clr_vlan_dir_cl2400=/nvram/tmp/cl2400
 export clr_vlan_dir_cl2400_24g=/nvram/tmp/cl2400_24g
 
-export PATH=/tmp/cl2400/bin/:/tmp/cl2400/scripts:$PATH
-export LD_LIBRARY_PATH=/tmp/cl2400/usr/lib
+export PATH=/tmp/build/bin/:/tmp/build/scripts:$PATH
+export LD_LIBRARY_PATH=/tmp/build/usr/lib
 
-/tmp/cl2400/scripts/ce_host.sh stop 24g
-/tmp/cl2400/scripts/ce_host.sh stop
+/tmp/build/scripts/ce_host.sh stop 24g
+/tmp/build/scripts/ce_host.sh stop
 
 rmmod cfg80211 compat
 
-/tmp/cl2400/scripts/ce_host.sh start 24g
-/tmp/cl2400/scripts/ce_host.sh start
-
+/tmp/build/scripts/ce_host.sh start 24g
+/tmp/build/scripts/ce_host.sh start
+##################################################
 brctl addif brlan0 nsgmii1
 brctl addif brlan0 wlan0_0
 brctl addif brlan0 wlan0_1
@@ -640,7 +632,19 @@ brctl addif brlan0 wlan1_1
 ###########enable printk##########
 echo 8 > /proc/sys/kernel/printk
 echo 0 > /proc/sys/kernel/printk
-
+####################full image######################################
+http://moon/wiki/index.php/Update_Arris_3450_with_Arris_image
+ftp://moon2/cernd/sw/_CL2400_Packages/4.6.x/4.6.91.6.4.0/ARRIS_P7/AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
+download
+set
+file 4.6.89.2.0.0.arrisbase.Jenkins.34XX.uefi.mono.arrsimg
+ip 192.168.100.10
+sec 0
+set
+download
+######################man############################################
+http://moon/wiki/index.php/Update_Arris_3450_with_Arris_image
+http://moon/wiki/index.php/Cgm_sw_r7.0er7_-_RDKB_-_For_Arris
 #############softblock show, etc.######################
 iw dev wlan1_0 cecli sb -p.
 ############################################
@@ -1116,12 +1120,14 @@ svn propedit svn:log --revprop -r43603 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r41650 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_Comtrend_CM
 svn propedit svn:log --revprop -r43686 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 svn propedit svn:log --revprop -r43573 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_3_GA5/sdk
+svn propedit svn:log --revprop -r44460 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_91_GA
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
 svn propedit svn:log --revprop -r43683 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
 svn propedit svn:log --revprop -r39537 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_4.6.x
 svn propedit svn:log --revprop -r38768 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_mercury_23_freeze_CM
+svn propedit svn:log --revprop -r44842 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_mercury_25_new/ce_atm_classifier_18_GA5
 svn propedit svn:log --revprop -r40258 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_comtrend_CM
 svn propedit svn:log --revprop -r39539 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_CM
 svn propedit svn:log --revprop -r40307 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x
@@ -1839,8 +1845,16 @@ sudo mount -t nfs 172.22.190.38:/home/alexander/gitsvn/6.70.0xx_mercury_23_freez
 sudo mount -t nfs 172.168.110.102:/tftpboot /tftpboot
 
 sudo mount -t nfs 192.168.100.102:/home/alexander/gitsvn/4.6.x_91_GA /home/dev-root/gitsvn/4.6.x_91_GA
+sudo mount -t nfs 192.168.100.102:/home/alexander/gitsvn/4.6.x_92_GA4 /home/dev-root/gitsvn/4.6.x_92_GA4
 sudo mount -t nfs 192.168.100.102:/tftpboot /tftpboot
 
+
+sudo mount -t nfs 192.168.1.102:/home/alexander/gitsvn/4.6.x_91_GA /home/dev-root/gitsvn/4.6.x_91_GA
+sudo mount -t nfs 192.168.1.102:/home/alexander/gitsvn/4.6.x_92_GA4 /home/dev-root/gitsvn/4.6.x_92_GA4
+sudo mount -t nfs 192.168.1.102:/tftpboot /tftpboot
+
+
+sudo mount -t nfs 192.168.100.137:/export /export
 ####172.22.190.30, my PC(alexander)####
 
 ########build yocto########################################################################
@@ -1886,6 +1900,24 @@ cl2400_package/src/celeno.mk
 mkdir -p ${HOME}/work/yocto_p6_cache ; \
 cd ${HOME}/work/yocto_p6_ccache ; \
 for i in $( (cd /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/ ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+#################################ccache for ARRIS_P7 yocto################################################################
+mkdir -p ${HOME}/ccache/arris_34xx/ ; \
+cd ${HOME}/ccache/arris_34xx/ ; \
+for i in $( (cd /export/dev-root/arris_34xx/build-arrisatom/tmp/sysroots/x86_64-linux/usr/bin/core2-32-rdk-linux/ ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+
+mkdir -p ${HOME}/ccache/arris_34xx/ ; \
+cd ${HOME}/ccache/arris_34xx/ ; \
+for i in $( (cd ${HOME}/gitsvn/SDK/ArrisP7/core2-32-rdk-linux/ ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+#################################ccache for ARRIS_P7 yocto v2################################################################
+mkdir -p ${HOME}/ccache/34xx_7.0.1/ ; \
+cd ${HOME}/ccache/34xx_7.0.1/ ; \
+for i in $( (cd /export/dev-root/34xx_7.0.1/build-arrisatom/tmp/sysroots/x86_64-linux/usr/bin/core2-32-rdk-linux/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
 ###################################ADD cgiweb to Yocto####################################
@@ -1993,5 +2025,6 @@ echo 0 > /sys/module/ap8x/parameters/g_iBsDebug
 shell - cbn_hw_reset 1
 or  cbn_hw_reset
 
-######################################################################################
+###############copy with status bar#######################################################################
+rsync --info=progress2
 ########################################################################################
