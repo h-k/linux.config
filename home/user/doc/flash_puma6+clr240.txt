@@ -98,13 +98,15 @@ wlan.sa == 00:11:99:00:13:18
 
 wlan.sa == 00:1c:02:ca:22:a8 || wlan.sa == 00:11:99:00:13:18 || wlan.da == 00:1c:02:ca:22:a8 || wlan.da == 00:11:99:00:13:18
 ##################################### wireshark #################################################
-################### category WNM, BSS Transition Request, 11v###################################
+################### category WNM, BSS Transition Request, 11v. Apple format###################################
 wlan_mgt.fixed.category_code == 10
+################### category WNM, BSS Transition Request, 11v. Linux format###################################
+wlan.fixed.category_code == 10
 ################### category WNM, Radio Measurement Request, 11k###################################
 wlan_mgt.fixed.category_code == 5
 #######################Spectrum nanagement,category code 0 ##################################################
 wlan.fixed.category_code == 0
-#######################TPC request,action code 2 ##################################################
+#######################TPC request,action code 2 . Linux format##################################################
 wlan.fixed.action_code == 2
 wlan.fixed.action_code == 2 && wlan.addr == 40:b8:37:f7:24:3a
 wlan.fixed.action_code == 2 && wlan.addr == 00:09:B5:C7:AA:26
@@ -122,6 +124,7 @@ ip.addr == 192.168.0.1
 #################beacon frame#######################
 wlan.fc.type_subtype == 0x0008
 wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1C:51:88:99:88
+wlan.fc.type_subtype == 0x0008 && wlan.addr == 8C:F5:A3:AC:55:B7
 ###########Sequence Number######
 wlan.seq == 1067
 ##################TIM bit field#####################
@@ -647,6 +650,7 @@ http://moon/wiki/index.php/Update_Arris_3450_with_Arris_image
 http://moon/wiki/index.php/Cgm_sw_r7.0er7_-_RDKB_-_For_Arris
 #############softblock show, etc.######################
 iw dev wlan1_0 cecli sb -p.
+iwpriv wdev0 getcmd blacklist_show
 ############################################
 
 ##############CL2330 Only######################
@@ -716,24 +720,223 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wi
 $clr_install_dir_cl2330/ce_host.sh start
 $clr_install_dir/ce_host.sh start
 
+iwconfig wdev0 channel 100
+iwconfig wdev0 commit
+iwpriv wdev0 getstalistext
+###############softblock check blacklist###############
+iwpriv wdev0 getcmd blacklist_show
+###############Print Pdev devices##############
+iwpriv atmcls5g cecli bs.-p
+#################################################
+iwpriv wdev0 setcmd "radioon 0"
+iwpriv wdev0 setcmd "radioon 1"
+#############Band Steering status###########################
 iwpriv atmcls5g cecli bs.-h
+####################steer dot11v############################
+cmcli set steer_dot11v B0:DF:3A:00:7E:A6 DC:53:7C:64:83:ED (CBN 5G)
+cmcli set steer_dot11v B0:DF:3A:00:7E:A6 DC:53:7C:64:83:EE (CBN 24G)
+cmcli set steer_dot11v B0:DF:3A:00:7E:A6 00:1C:51:B0:BA:98 (Comtrend 5G)
+cmcli set steer_dot11v B0:DF:3A:00:7E:A6 00:1C:51:B1:BA:98 (Comtrend 24G)
+##########################steer iPhone7 ####################################################
+cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:1C:51:B0:BA:98 //to 5g Comtrend
+cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:1C:51:B1:BA:98 //to 24g Comtrend
+cmcli set steer_dot11v D0:C5:F3:E3:80:91 DC:53:7C:64:83:ED //to 5g CBN
+##########################steer iPhone6 ####################################################
+cmcli set steer_dot11v 50:82:D5:61:49:96 00:1C:51:B0:BA:98 //to 5g Comtrend
+cmcli set steer_dot11v 50:82:D5:61:49:96 00:1C:51:B1:BA:98 //to 24g Comtrend
+cmcli set steer_dot11v 50:82:D5:61:49:96 DC:53:7C:64:83:ED //to 5g CBN
+##########################steer Meizu ####################################################
+cmcli set steer_dot11v 74:23:44:46:26:60 00:1C:51:B0:BA:98 //to 5g Comtrend
+cmcli set steer_dot11v 74:23:44:46:26:60 DC:53:7C:64:83:ED //to 5g CBN
+##########################steer Huawei P8 ####################################################
+cmcli set steer_dot11v 98:e7:f5:85:d6:95 00:1C:51:B1:BA:98 //to 24g Comtrend
+##########################steer Samsung S7 ####################################################
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:1C:51:B0:BA:98 //to 5g Comtrend
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 D8:B6:B7:2A:EC:44 //to 5g Comtrend2
+##########################steer Samsung S6 ####################################################
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:1C:51:B0:BA:98 //to 5g Comtrend
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE D8:B6:B7:2A:EC:44 //to 5g Comtrend2
+###############################################################################################
+wlan.addr == B0:DF:3A:00:7E:A6
+cmcli set dbg_steering 1
+################### category WNM, BSS Transition Request, 11v. Linux format###################################
+wlan.fixed.category_code == 10
+wlan.addr == B0:DF:3A:00:7E:A6 && wlan.fixed.category_code == 10
+wlan.addr == D0:C5:F3:E3:80:91 && wlan.fixed.category_code == 10 //iPhone7
+wlan.addr == 50:82:D5:61:49:96 && wlan.fixed.category_code == 10 //iPhone6
+wlan.addr == 74:23:44:46:26:60 && wlan.fixed.category_code == 10//Meizu
+##########################data frame################################
+wlan.addr == 00:1C:51:B1:BA:98 && wlan.fc.type == 2
+############RMM(RRM)##########################################################
+wlan.fixed.category_code == 5 || wlan.fixed.category_code == 10
+####################fvpn########################################
 iwscan wdev0ap0 start 4 500 1 36
+################dual console writing flash#################################################################
+tftp get 192.168.100.102 0x900000 appcpuImage
+cache flush
+ord4 0xC80D0000 0x03000000
+settings
+
+#ARM console
+update -t atom 1
+update -t atom 2
+#################################################################################
+aid dump -a - это посмотреть. какая текущая actimage
+aid toggle - сменить ACTIMAGE
 ##################YOCTO SDK CL2400+CL242#############################################
+stty cols 152 rows 40; newgrp
 export clr_cfg_dir_cl2400=/nvram/cl2400
 export clr_install_dir_cl2400=/cl2400
 export clr_cfg_dir=/nvram
 export clr_install_dir=/etc/Wireless/CL242
 export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts:$clr_install_dir/wireless_tools/usr/sbin${PATH+:}${PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib:$clr_install_dir_cl2400/lib​
+#########################CL2400 DUAL BAND START########################################################
+/cl2400/scripts/ce_host.sh start dual
+########################Band steering status#########################################################
 iw dev wlan1_0 cecli cls bs.-h
 iw dev wlan1_0 cecli cls bs.-s
-#####################yocto patching kernel##############################################################
+
+######################bahamas repeater HOST AP#######################################################################
+restore_defaults.sh all ap
+
+nvram_set rtdev SSID1 Celeno_Cluster_REPEATER
+nvram_set rtdev CeCmMasterIp 192.168.100.6
+nvram_set rtdev Channel 100
+nvram_set rtdev AutoChannelSelect 0
+nvram_set rtdev AuthMode WPA2PSK
+nvram_set rtdev EncrypType AES
+nvram_set rtdev WPAPSK1 12345678
+nvram_set rtdev CeCmDeviceType 1
+nvram_set rtdev apOnly 0
+nvram_set rtdev CeCmChMonitorEn5g 0
+nvram_set rtdev CeCmChMonitorEn 0
+nvram_set 2860 MACRepeaterEn 0
+nvram_set rtdev MACRepeaterEn 1
+nvram_set 2860 MACRepeaterOuiMode 0
+nvram_set rtdev MACRepeaterOuiMode 0
+nvram_set 2860 CeDropRoamedStaEn 0
+nvram_set rtdev CeDropRoamedStaEn 0
+nvram_set rtdev CeCmAcsAutoStartEn 0
+######################bahamas repeater ROOT AP#######################################################################
+nvram_set 2860 SSID1 Celeno_Cluster_REPEATER
+nvram_set 2860 AuthMode WPA2PSK
+nvram_set 2860 EncrypType AES
+nvram_set 2860 WPAPSK1 12345678
+nvram_set 2860 CeCmDeviceType 1 # Comtrend
+nvram_set 2860 apOnly 1
+
+#nvram_set 2860 lan_ipaddr 192.168.100.7 # optional
+#nvram_set 2860 dhcpClientEnabled 0      # optional
+
+nvram_set rtdev AutoChannelSelect 0
+nvram_set rtdev Channel 100
+nvram_set rtdev ApCliSsid cluster_sv
+nvram_set rtdev ApCliBssid 00:1C:51:B0:BA:98 # master(Root AP) MAC
+nvram_set rtdev ApCliAuthMode WPA2PSK
+nvram_set rtdev ApCliEncrypType AES
+nvram_set rtdev ApCliWPAPSK 12345678
+nvram_set rtdev ApCliEnable 1
+nvram_set rtdev ApCliAutoConnect 0
+nvram_set rtdev CeCmChMonitorEn5g 0
+nvram_set rtdev CeCmChMonitorEn 0
+nvram_set 2860 MACRepeaterEn 0
+nvram_set rtdev MACRepeaterEn 1
+nvram_set 2860 MACRepeaterOuiMode 0
+nvram_set rtdev MACRepeaterOuiMode 0
+nvram_set 2860 CeDropRoamedStaEn 0
+nvram_set rtdev CeDropRoamedStaEn 0
+nvram_set rtdev CeCmAcsAutoStartEn 0
+####################################################################################################################
+###########set date for mqtt############
+date -s 061518252018.00
+date -s 061811252018.00
+        |month
+          |day
+            |hour
+              |minute
+                |year
+                    |seconds
+###########set date for mqtt CL2400+CL242############
+date -s 06.25-15:03
+[YYYY.]MM.DD-hh:mm[:ss]
+#########################cl2400 repeater########################################
+nvram_set cl2400 ce_bss_num "1"
+nvram_set cl2400 ha_ssid1 "ce_repeater"
+nvram_set cl2400 ce_acs_bootup_scan_en "0"
+nvram_set cl2400 ha_channel 100
+nvram_set cl2400 ce_repeater_en "1"
+nvram_set cl2400 ws_auth_mode "WPA2PSK"
+nvram_set cl2400 ws_key "12345678"
+nvram_set cl2400 ws_ssid "non-cluster"
+nvram_set cl2400 ws_bridge "br0"
+nvram_set cl2400 ha_auth_mode "OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN"
+nvram_set cl2400 ha_encryp_type "NONE;NONE;NONE;NONE;NONE;NONE;NONE;NONE"
+nvram_set cl2400 ws_dbg "1"
+nvram_set cl2400 ha_debug "1"
+nvram_set cl2400 ce_class_enable "0"
+nvram_set cl2400 ce_device_id "0x2440"
+nvram_set cl2400 ha_wpa_passphrase1 "12345678"
+nvram_set cl2400 ce_udma_enabled "0"
+##############################cl2400 repeater wpa_supplicant####################
+iw dev wlan1_0 interface add wlan1_1 type managed
+wpa_supplicant -Dcl_nl80211 -B -P /tmp/wpa_supplicant.pid -f /tmp/wpa_supplicant.log -ddd -c wpa_supplicant_5g.conf
+##############################cl2400 repeater wpa_supplicant_5g.conf####################
+/tmp/wpa_supplicant_5g.conf
+ctrl_interface=/var/run/wpa_supplicant
+update_config=1
+network={
+ssid="non-cluster"
+mode=0
+auth_alg=OPEN
+key_mgmt=WPA-PSK
+psk="12345678"
+proto=RSN
+}
+##############################cl2400 repeater station mode####################
+ws_auth_mode=WPA2PSK
+ws_key=12345678
+ws_ssid=Celeno_ap
+ws_identity=testusr
+ws_bridge=br0
+ce_repeater_en=0
+ce_host.sh cli_start
+
+ifconfig eth0 0
+ifconfig eth0.4093:0 down
+vconfig add eth0 2
+ifconfig eth0.2 up
+brctl addbr br0
+ifconfig br0 192.168.100.2 up
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+
+export clr_cfg_dir_cl2400='/nvram/cl2400'
+export clr_install_dir_cl2400='/tmp/cl2400'
+export PATH=/tmp/cl2400/scripts/:/tmp/cl2400/bin:$PATH
+export LD_LIBRARY_PATH=/tmp/cl2400/lib/:$LD_LIBRARY_PATH
+###############Comtrend start WPS PBC on 5G####################
+cemgr.sh start_wps_pbc rai0
+###############CL2400: station mode: start WPS PBC on 5G#######
+ce_host.sh cli_start
+wpa_cli
+> wps_pbc
+#####################yocto patching kernel######################################
 Put file to /home/developer/Intel-6.1.1.21/r6.1.1-ga/yocto/meta-intelce/recipes-kernel/linux/files/patches
 Add line to kernel_patches.scc
 rm -rf /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/tmp/work/intelce-poky-linux/linux-yocto-custom
 cd /home/developer/Intel-6.1.1.21/r6.1.1-ga
 source yocto/oe-init-build-env
-bitbake core-image-gateway​
+##############preven error `do_compile`####################
+bitbake linux-yocto-custom -c cleansstate
+bitbake linux-yocto-custom
+###################################################################
+`bitbake core-image-gateway` or `bitbake uimage`
+
+####################clean with download src####################
+bitbake linux-yocto-custom -c cleanall
+bitbake linux-yocto-custom
+
 ##################YOCTO SDK gdb####################################################
 cd ~/gitsvn/CE_CM$
 /home/alexander/gitsvn/SDK/0.35.cgiweb/IntelCE-0.35.14073.342867/build_i686/i686-linux-elf/bin/i686-cm-linux-gdb
@@ -1107,20 +1310,27 @@ http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 http://moon/svn/celeno-swdb/target/branches/CE_P6/1.0.0/cgiweb
 http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 http://moon/svn/celeno-swdb/Utils/svn_tools
+######################### svn repos 8.07.2018 CMv2#####################################
+http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_25_cmv2/
+http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_25_cmv2/sdk/
+http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_cmv2/sdk/
+http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_cmv2/
 #######################  SVN tricks   ##################################
 #######################  show svn commit log message   ##################################
 svn propget svn:log --revprop -r30199 http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx/sdk
 svn propget svn:log --revprop -r43686 http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 svn propget svn:log --revprop -r30295 http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
 svn propget svn:log --revprop -r40022 http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
+svn propget svn:log --revprop -r45610 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_25_new/CL2330
+svn propget svn:log --revprop -r47061 http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 #######################  edit svn commit log message   ##################################
 svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
-svn propedit svn:log --revprop -r43682 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
+svn propedit svn:log --revprop -r46739 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
 svn propedit svn:log --revprop -r43603 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_18_GA5
 svn propedit svn:log --revprop -r41650 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_Comtrend_CM
-svn propedit svn:log --revprop -r43686 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
+svn propedit svn:log --revprop -r46738 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 svn propedit svn:log --revprop -r43573 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_3_GA5/sdk
-svn propedit svn:log --revprop -r44460 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_91_GA
+svn propedit svn:log --revprop -r47187 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_25_cmv2/sdk
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
@@ -1131,7 +1341,7 @@ svn propedit svn:log --revprop -r44842 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r40258 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_comtrend_CM
 svn propedit svn:log --revprop -r39539 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_CM
 svn propedit svn:log --revprop -r40307 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x
-svn propedit svn:log --revprop -r43694 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
+svn propedit svn:log --revprop -r47061 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 ######################Edit externals###################################
 
 svn propedit svn:externals .
@@ -1983,10 +2193,12 @@ export clr_install_dir_cl2400=/cl2400
 export PATH=$PATH:$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts
 ce_host.sh start
 
-##########################CTL####################################################
+##########################CTL steer iPhone7 ####################################################
 cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:0C:43:76:52:58
 cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:05:9E:2F:88:9E
 cmcli set steer_dot11v D0:C5:F3:E3:80:91 D8:B6:B7:2A:EC:44
+cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:1C:51:B0:BA:98 //to 5g Comtrend
+cmcli set steer_dot11v D0:C5:F3:E3:80:91 DC:53:7C:64:83:ED //to 5g CBN
 #################################################################################
 
 
@@ -2005,7 +2217,10 @@ pass GlobalLogic86
 First name : Celeno
 Second name: Celeno
 
-pass GlobalLogic86
+pass: GlobalLogic86
+####################celeno twitch##################################################
+login: glceleno
+pass:GlobalLogic86
 #########################Apple ID###################################################
 AppleID: gl.celeno.team@gmail.com
 Pass : GlobalLogic86
@@ -2028,3 +2243,42 @@ or  cbn_hw_reset
 ###############copy with status bar#######################################################################
 rsync --info=progress2
 ########################################################################################
+
+
+############################CELENO SERVERS########################
+192.168.110.253 moon
+192.168.110.252 cernd
+
+172.168.110.107 beta-server
+172.168.110.115 gamma-server
+172.168.110.102 devel
+172.168.110.122 beta
+172.168.110.123 gamma
+##################################################################
+
+##########Country_Code on Tower board(DG3492)################
+#Please check your Arris boards (ARM console) that you have the right country code set. That could dramatically affect performance:
+#Keep customer index at default, or 1.  But manually set the country code.  Nvm> dmp 1   will show you your country code amongst other things.
+#Arm Console
+Console> Nvm> pwcc US
+Nvm> stmfg
+Nvm> !reset
+
+
+#On Euro units just use the customer index which will set the country correctly.
+#3492 use customer index 7. (there are lots of others, but this is most widly used)
+Console> Nvm> pcust 7
+Nvm> stmfg
+Nvm> !reset
+
+#On 3442, use cust index 29
+#Unless you are AR1.1.106 or later code(R5.3.4), you need to be cust index 29 (KDG). Same procedure as above.
+#Customer index 32 for Ono will only work on this load or later.
+########################################################################################################################
+cmcli set set_sta_name F4:5C:89:BE:BD:D9 Macbook
+cmcli set set_sta_name 50:82:D5:61:49:96 iPhone_6
+cmcli set set_sta_name 98:E7:F5:85:D6:95 Huawei_P8
+cmcli set set_sta_name 8C:F5:A3:AC:55:B7 Samsung_S7
+cmcli set set_sta_name E8:50:8B:28:BB:99 Samsung_S6
+cmcli set set_sta_name D0:C5:F3:E3:80:91 iPhone_7
+cmcli set set_ap_name 0 CBN_v1.0

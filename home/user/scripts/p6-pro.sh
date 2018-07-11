@@ -777,6 +777,15 @@ proc_package()
 		CL=CL2330
 		;;
 
+	cl2330_25_cmv2)
+		export PACKAGE=cl2330
+		echo "Choosen module $PACKAGE v25_new"
+		export BRANCH=5.2.x_mercury_25_cmv2
+		export CLR=$SRCDIR/$BRANCH/CL2330
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2330
+		;;
+
 	cl2330_25_new_18_GA5)
 		export PACKAGE=cl2330
 		echo "Choosen module $PACKAGE v25_new"
@@ -855,9 +864,18 @@ proc_package()
 		CL=CL242
 		;;
 
+	cl242_25_cmv2)
+		export PACKAGE=cl242
+		echo "Choosen module $PACKAGE cl242_25_cmv2"
+		export BRANCH=6.70.0xx_mercury_25_cmv2
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL242
+		;;
+
 	cl242_25_new_18_GA5)
 		export PACKAGE=cl242
-		echo "Choosen module $PACKAGE v25_new"
+		echo "Choosen module $PACKAGE cl242_25_new_18_GA5"
 		export BRANCH=6.70.0xx_mercury_25_new_18_GA5
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
@@ -950,6 +968,15 @@ proc_package()
 		export PACKAGE=cl2400
 		echo "Choosen module $PACKAGE"
 		export BRANCH=4.7.x
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2400
+		;;
+
+	cl2400_4.7.x_cmv2)
+		export PACKAGE=cl2400
+		echo "Choosen module $PACKAGE"
+		export BRANCH=4.7.x_cmv2
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL2400
@@ -1171,7 +1198,9 @@ post() {
 	echo -n "Built packages    : "
 	echo ${packages[@]}
 	echo -n "PACKAGES in Image : "
-	ls --color $FS
+	if [ -d $FS ]; then
+		ls --color $FS
+	fi
 	if [[ -n $short ]] ; then
 		echo "$short built"
 	fi
