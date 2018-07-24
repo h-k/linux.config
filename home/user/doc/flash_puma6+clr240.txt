@@ -593,6 +593,8 @@ Type: "stm"    // save
 Type: "!reset"
 
 ###############ATOM############################
+/cl2400/scripts/ce_host.sh stop dual
+############### or ############################
 /cl2400/scripts/ce_host.sh stop
 /cl2400/scripts/ce_host.sh stop 24g
 rmmod cfg80211 compat
@@ -612,12 +614,17 @@ export clr_vlan_dir_cl2400_24g=/nvram/tmp/cl2400_24g
 
 export PATH=/tmp/build/bin/:/tmp/build/scripts:$PATH
 export LD_LIBRARY_PATH=/tmp/build/usr/lib
-
+####################################################
+/tmp/build/scripts/ce_host.sh stop dual
+####################################################
 /tmp/build/scripts/ce_host.sh stop 24g
 /tmp/build/scripts/ce_host.sh stop
 
 rmmod cfg80211 compat
 
+##################################################
+/tmp/build/scripts/ce_host.sh start dual
+##################################################
 /tmp/build/scripts/ce_host.sh start 24g
 /tmp/build/scripts/ce_host.sh start
 ##################################################
@@ -635,16 +642,44 @@ brctl addif brlan0 wlan1_1
 ###########enable printk##########
 echo 8 > /proc/sys/kernel/printk
 echo 0 > /proc/sys/kernel/printk
+####################################################################
+iw wlan1_0 cecli acs -c.36.2.1 ## set channel 36
 ####################full image######################################
 http://moon/wiki/index.php/Update_Arris_3450_with_Arris_image
 ftp://moon2/cernd/sw/_CL2400_Packages/4.6.x/4.6.91.6.4.0/ARRIS_P7/AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
-download
+ftp://moon2/cernd/sw/_ARRIS_images/AR01.02.009ish.R5.4.5_ENG.arrsimg
+#In the ARM shell:
+#- Type the password:
+arristi
+#- Type:
+rf
+#- To disable docsis prints Type:
+scan 0
+#- Go to main menu by Type:
+/
+#- Goto to download menu, by type:
+do
+#- Show the current settings : [ 5] Download>
 set
-file 4.6.89.2.0.0.arrisbase.Jenkins.34XX.uefi.mono.arrsimg
-ip 192.168.100.10
+ip 192.168.100.102
+fi AR01.02.009ish.R5.4.5_ENG.arrsimg
+#or
+#fi AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
+#fi AR01.01.098.4.6.92.8.2.0.34XX.uefi.mono.arrsimg //SDK 7.0.1
+#Return Status: 0
+#- Disable security
+#[ 8] Download>
 sec 0
-set
+#Secure download set to 0
+#Return Status: 0
+#- Download and program the image [ 11] Download>
 download
+#- If you get "ARRIS header not present but required; ABORTING" error, run the following :
+#[ 23] Download>
+!override 1
+#WARNING! ARRIS header checking disabled.
+#And the "download" again.
+#Now, wait till board finished download and reboots itself.
 ######################man############################################
 http://moon/wiki/index.php/Update_Arris_3450_with_Arris_image
 http://moon/wiki/index.php/Cgm_sw_r7.0er7_-_RDKB_-_For_Arris
@@ -791,13 +826,27 @@ export clr_cfg_dir=/nvram
 export clr_install_dir=/etc/Wireless/CL242
 export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts:$clr_install_dir/wireless_tools/usr/sbin${PATH+:}${PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib:$clr_install_dir_cl2400/lib​
+##################YOCTO SDK CL2400+CL2400#############################################
+stty cols 152 rows 40; newgrp
+export clr_install_dir_cl2400=/cl2400
+export clr_cfg_dir=/nvram
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_cfg_dir_cl2400_24g=/nvram/cl2400_24g
+export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts${PATH+:}${PATH}
+export LD_LIBRARY_PATH=$clr_install_dir_cl2400/lib${LD_LIBRARY_PATH+:}${LD_LIBRARY_PATH}​
+#######################################restore_defaults.sh 24g##################################################################
+$clr_install_dir_cl2400/scripts/restore_defaults.sh CL2400_24g
+########################NVG nvram_get #########################################################################################
+export NVG="$clr_install_dir_cl2400/scripts/nvram_get cl2400"
 #########################CL2400 DUAL BAND START########################################################
 /cl2400/scripts/ce_host.sh start dual
-########################Band steering status#########################################################
-iw dev wlan1_0 cecli cls bs.-h
-iw dev wlan1_0 cecli cls bs.-s
-
-######################bahamas repeater HOST AP#######################################################################
+########################Band steering#########################################################
+iw dev wlan1_0 cecli cls bs.-h # status
+iw dev wlan1_0 cecli cls bs.-p # Physical devices
+iw dev wlan1_0 cecli cls bs.-i # - print blacklist
+iw dev wlan1_0 cecli cls bs.-s # BS STatus
+iw dev wlan1_0 cecli cls bs.-c # connected sta
+######################bahamas repeater ROOT AP#######################################################################
 restore_defaults.sh all ap
 
 nvram_set rtdev SSID1 Celeno_Cluster_REPEATER
@@ -808,7 +857,7 @@ nvram_set rtdev AuthMode WPA2PSK
 nvram_set rtdev EncrypType AES
 nvram_set rtdev WPAPSK1 12345678
 nvram_set rtdev CeCmDeviceType 1
-nvram_set rtdev apOnly 0
+nvram_set rtdev apOnly 1
 nvram_set rtdev CeCmChMonitorEn5g 0
 nvram_set rtdev CeCmChMonitorEn 0
 nvram_set 2860 MACRepeaterEn 0
@@ -818,19 +867,15 @@ nvram_set rtdev MACRepeaterOuiMode 0
 nvram_set 2860 CeDropRoamedStaEn 0
 nvram_set rtdev CeDropRoamedStaEn 0
 nvram_set rtdev CeCmAcsAutoStartEn 0
-######################bahamas repeater ROOT AP#######################################################################
-nvram_set 2860 SSID1 Celeno_Cluster_REPEATER
-nvram_set 2860 AuthMode WPA2PSK
-nvram_set 2860 EncrypType AES
-nvram_set 2860 WPAPSK1 12345678
-nvram_set 2860 CeCmDeviceType 1 # Comtrend
-nvram_set 2860 apOnly 1
-
-#nvram_set 2860 lan_ipaddr 192.168.100.7 # optional
-#nvram_set 2860 dhcpClientEnabled 0      # optional
-
+######################bahamas repeater AP#######################################################################
+nvram_set rtdev SSID1 Celeno_Cluster_REPEATER
+nvram_set rtdev AuthMode WPA2PSK
+nvram_set rtdev EncrypType AES
+nvram_set rtdev WPAPSK1 12345678
+nvram_set rtdev CeCmDeviceType 1
+nvram_set rtdev apOnly 0
 nvram_set rtdev AutoChannelSelect 0
-nvram_set rtdev Channel 100
+nvram_set rtdev Channel 36
 nvram_set rtdev ApCliSsid cluster_sv
 nvram_set rtdev ApCliBssid 00:1C:51:B0:BA:98 # master(Root AP) MAC
 nvram_set rtdev ApCliAuthMode WPA2PSK
@@ -847,6 +892,7 @@ nvram_set rtdev MACRepeaterOuiMode 0
 nvram_set 2860 CeDropRoamedStaEn 0
 nvram_set rtdev CeDropRoamedStaEn 0
 nvram_set rtdev CeCmAcsAutoStartEn 0
+nvram_set 2860 lan_ipaddr 192.168.100.7 # optional
 ####################################################################################################################
 ###########set date for mqtt############
 date -s 061518252018.00
@@ -1345,7 +1391,11 @@ svn propedit svn:log --revprop -r47061 --editor-cmd vim http://moon/svn/celeno-s
 ######################Edit externals###################################
 
 svn propedit svn:externals .
-
+########################svn copy branch##########################################
+svn copy http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_v2.0.0 http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_v2.0.0_6_GA1
+########################svn commit###############################################
+svn commit -m "added howto section."
+svn commit
 ################################################################################
 ################################################################################
 Please see NXP LS1043-ARDB frescale SDK useful commands
@@ -2036,7 +2086,7 @@ edit add:
 /home/alexander/gitsvn/gitsvn/4.6.x_CM 172.22.190.0/24(rw,no_root_squash,async,subtree_check)
 /home/alexander/gitsvn/gitsvn/4.7.x 172.22.190.0/24(rw,no_root_squash,async,subtree_check)
 ############# check of exports##############
-sudo exportfs -r
+cc
 ############################################
 
 ########################nmapm show hosname on local net ###################################
@@ -2063,6 +2113,7 @@ sudo mount -t nfs 192.168.1.102:/home/alexander/gitsvn/4.6.x_91_GA /home/dev-roo
 sudo mount -t nfs 192.168.1.102:/home/alexander/gitsvn/4.6.x_92_GA4 /home/dev-root/gitsvn/4.6.x_92_GA4
 sudo mount -t nfs 192.168.1.102:/tftpboot /tftpboot
 
+sudo mount -t nfs 172.168.110.105:/home/alexander/gitsvn/SDK/ARRIS/dev-root /export/dev-root
 
 sudo mount -t nfs 192.168.100.137:/export /export
 ####172.22.190.30, my PC(alexander)####
@@ -2125,9 +2176,9 @@ for i in $( (cd ${HOME}/gitsvn/SDK/ArrisP7/core2-32-rdk-linux/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
 #################################ccache for ARRIS_P7 yocto v2################################################################
-mkdir -p ${HOME}/ccache/34xx_7.0.1/ ; \
-cd ${HOME}/ccache/34xx_7.0.1/ ; \
-for i in $( (cd /export/dev-root/34xx_7.0.1/build-arrisatom/tmp/sysroots/x86_64-linux/usr/bin/core2-32-rdk-linux/ ; ls * ) ) ; do \
+mkdir -p ${HOME}/ccache/34xx_7.1.1/ ; \
+cd ${HOME}/ccache/34xx_7.1.1/ ; \
+for i in $( (cd /export/dev-root/34xx_7.1.1/build-arrisatom/tmp/sysroots/x86_64-linux/usr/bin/core2-32-rdk-linux/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
 ###################################ADD cgiweb to Yocto####################################

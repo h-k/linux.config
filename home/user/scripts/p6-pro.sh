@@ -631,6 +631,14 @@ proc_platform()
 		export platform=cbn_p6_yocto_cl2400_cl242
 	;;
 
+	CBN_P6_YOCTO_CL2400_DUAL) echo "Choosen platform $1"
+		export sdk=6.1.1.21.yocto
+		export sdktype=YOCTO
+		export SDK=$SDKDIR/Intel-6.1.1.21/r6.1.1-ga
+		export PLATFORM=CBN_P6_YOCTO_CL2400_DUAL
+		export platform=cbn_p6_yocto_cl2400_dual
+	;;
+
 	CBN_P6_YOCTO_CL2330_CL242) echo "Choosen platform $1"
 		export sdk=6.1.1.21.yocto
 		export sdktype=YOCTO
@@ -656,10 +664,10 @@ proc_platform()
 
 	PUMA6) echo "Choosen platform $1"
 		export sdk=0.35.CL2400
-		export SDK=$SDKDIR/0.35.CL2400/IntelCE-0.35.14073.342867
+		export SDK=$SDKDIR/0.35.CL2400/Intel-4.3/IntelCE-0.35.14073.342867
 		export platform=PUMA6
 #		relink_sdk2 /home/devel/IntelCE-4.3_cl2400 IntelCE-0.35.14073.342867 $SDK
-		relink_sdk2 /home/developer/work/CL2400/SDK_4.3.0.37 IntelCE-0.35.14073.342867 $SDK
+		relink_sdk2 /home/developer/work/CL2400/Intel-4.3 IntelCE-0.35.14073.342867 $SDK
 	;;
 
 	CISCO_PUMA6) echo "Choosen platform $1"
