@@ -35,7 +35,6 @@ update_2400()
 
 update_2400_all()
 {
-	update_2400 4.6.x_91_GA
 	update_2400 4.6.x_92_GA4
 	update_2400 4.7.x
 }
@@ -92,6 +91,7 @@ update_242_all()
 {
 	update_242 6.70.0xx_mercury_25_new
 	update_242 6.70.0xx_mercury_25_new_18_GA5
+	update_242 6.70.0xx_mercury_25_cmv2
 }
 
 update_bahamas()
@@ -123,6 +123,7 @@ update_bahamas_all()
 	update_bahamas 6.87.0xx
 	update_bahamas 6.87.0xx_3_GA5
 	update_bahamas 6.85.0xx_comtrend_CM
+	update_bahamas 6.87.0xx_cmv2
 }
 
 update_all()
