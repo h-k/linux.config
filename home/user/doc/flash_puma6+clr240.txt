@@ -558,7 +558,9 @@ help
 wps_pbc
 wps_cancel
 
-
+###################run hostapd_cli on board#####################################
+hostapd_cli -p /tmp/hostapd_wlan0
+################################################################################
 
 #eMta CL2330 CL242
 
@@ -593,33 +595,50 @@ Type: "stm"    // save
 Type: "!reset"
 
 ###############ATOM############################
-stty cols 152 rows 40; newgrp
+stty cols 152 rows 40;
 echo 8 > /proc/sys/kernel/printk
 /cl2400/scripts/ce_host.sh stop dual
 rmmod cfg80211 compat
-############### or ############################
+############### or #############################################################
 /cl2400/scripts/ce_host.sh stop
 /cl2400/scripts/ce_host.sh stop 24g
 rmmod cfg80211 compat
-#########################Download release###########
+#########################Download release#######################################
 ifconfig brlan0:factory down
 ifconfig brlan0 192.168.100.2
+#########################Comhem#################################################
+ifconfig eth0 0
+ifconfig eth0.4093:0 down
+vconfig add eth0 2
+ifconfig eth0.2 up
+brctl addbr br0
+ifconfig br0 192.168.100.2 up
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+################################################################################
 cd /tmp
 tftp -gl cl2400.tar 192.168.100.102
 tar xf cl2400.tar
-###### exports########################
+############################## exports##########################################
 #####################tmp nvram#####################
-export LD_LIBRARY_PATH=/tmp/build/usr/lib
+export LD_LIBRARY_PATH=/tmp/build/lib
 #######################ARRIS 4.7.x#############################
 export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
 export clr_cfg_dir_cl2400=/nvram/cl
 export clr_install_dir_cl2400=/tmp/build
 export clr_install_dir_cl2400_24g=/tmp/build
+export clr_vlan_dir_cl2400=/nvram/cl
+export clr_vlan_dir_cl2400_24g=/nvram/cl_24g
 PATH=/tmp/build/bin:/tmp/build/scripts:$PATH
 ####################################################
 /tmp/build/scripts/ce_host.sh stop dual
 rmmod cfg80211 compat
-####################################################
+##################static mac########################
+ce_phys_mac_addr=00:1c:51:9a:a4:06
+#################################static mac ComHem##############################
+iw wlan1_0 e2p get mac
+iw wlan1_0 e2p set mac <xx:xx:xx:xx:xx:xx>
+################################################################################
 /tmp/build/scripts/ce_host.sh stop 24g
 /tmp/build/scripts/ce_host.sh stop
 
@@ -667,7 +686,8 @@ do
 #- Show the current settings : [ 5] Download>
 set
 ip 192.168.100.102
-fi AR01.02.009ish.R5.4.5_ENG.arrsimg
+#fi AR01.02.009ish.R5.4.5_ENG.arrsimg
+fi arris-base.4.6.92.8.20.0.arrsimg  //SDK 7.1.1
 #or
 #fi AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
 #fi AR01.01.098.4.6.92.8.2.0.34XX.uefi.mono.arrsimg //SDK 7.0.1
@@ -771,6 +791,12 @@ iwpriv wdev0 setcmd "radioon 0"
 iwpriv wdev0 setcmd "radioon 1"
 #############Band Steering status###########################
 iwpriv atmcls5g cecli bs.-h
+#############set channel 36###########################
+iw wlan1_0 cecli acs -c.36.2.1
+#############set channel 56###########################
+iw wlan1_0 cecli acs -c.56.2.1
+#############dfs###########################
+iw wlan1_0 cecli dfs -p.1# print channel info
 ####################steer dot11v############################
 cmcli set steer_dot11v B0:DF:3A:00:7E:A6 DC:53:7C:64:83:ED (CBN 5G)
 cmcli set steer_dot11v B0:DF:3A:00:7E:A6 DC:53:7C:64:83:EE (CBN 24G)
@@ -791,11 +817,13 @@ cmcli set steer_dot11v 50:82:D5:61:49:96 00:0C:43:76:22:28 // to 24g Comtrend3
 ##########################steer Meizu ####################################################
 cmcli set steer_dot11v 74:23:44:46:26:60 00:1C:51:B0:BA:98 //to 5g Comtrend
 cmcli set steer_dot11v 74:23:44:46:26:60 DC:53:7C:64:83:ED //to 5g CBN
+cmcli set steer_dot11v 74:23:44:46:26:60 ac:22:05:c3:26:0b //to 5g Comhem2
+cmcli set steer_dot11v 74:23:44:46:26:60 ac:22:05:c3:26:0a //to 24g Comhem2
+cmcli set steer_dot11v 74:23:44:46:26:60 38:43:7d:60:19:55 //to 5g CBN2
+cmcli set steer_dot11v 74:23:44:46:26:60 38:43:7d:8d:08:90 //to 5g Comhem3
+cmcli set steer_dot11v 74:23:44:46:26:60 38:43:7d:8d:08:a0 //to 24g Comhem3
 ##########################steer Huawei P8 ####################################################
 cmcli set steer_dot11v 98:e7:f5:85:d6:95 00:1C:51:B1:BA:98 //to 24g Comtrend
-##########################steer Samsung S7 ####################################################
-cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:1C:51:B0:BA:98 //to 5g Comtrend
-cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 D8:B6:B7:2A:EC:44 //to 5g Comtrend2
 ##########################steer Samsung S6 ####################################################
 cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:1C:51:B0:BA:98 //to 5g Comtrend
 cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:1C:51:B1:BA:98 //to 24g Comtrend
@@ -808,6 +836,14 @@ cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:0C:43:76:52:58 // to 5g Comtrend3
 cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:0C:43:76:22:28 // to 24g Comtrend3
 cmcli set steer_dot11v EC:1F:72:F2:A3:CE 38:43:7d:8d:08:9f // to 5g Comhem
 cmcli set steer_dot11v EC:1F:72:F2:A3:CE 38:43:7D:8D:08:A0 // to 24g Comhem
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE ac:22:05:c3:26:0b // to 5g Comhem2
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE ac:22:05:c3:26:0a // to 24g Comhem2
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE 3a:43:7d:8d:08:9c //to 5g Comhem BSSID2
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE 3a:43:7d:8d:08:a0 //to 24g Comhem BSSID2
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:1c:51:c1:c1:39 //to 5g ARRIS_P7
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:1c:51:94:a0:03 //to 24g ARRIS_P7
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:1c:51:9a:a4:06 //to 5g ARRIS_P7 paralellogram
+cmcli set steer_dot11v EC:1F:72:F2:A3:CE 00:1c:51:0c:ee:84 //to 24g ARRIS_P7 paralellogram
 ##########################steer Samsung SM ####################################################
 cmcli set steer_dot11v E8:50:8B:28:BB:99 00:1C:51:B0:BA:98 //to 5g Comtrend
 cmcli set steer_dot11v E8:50:8B:28:BB:99 00:1C:51:B1:BA:98 //to 24g Comtrend
@@ -821,19 +857,55 @@ cmcli set steer_dot11v E8:50:8B:28:BB:99 38:43:7d:8d:08:9f //to 5g Comhem
 cmcli set steer_dot11v E8:50:8B:28:BB:99 38:43:7D:8D:08:A0 //to 24g Comhem
 cmcli set steer_dot11v E8:50:8B:28:BB:99 3a:43:7d:8d:08:9c //to 5g Comhem BSSID2
 cmcli set steer_dot11v E8:50:8B:28:BB:99 3a:43:7d:8d:08:a0 //to 24g Comhem BSSID2
-##########################steer SONY ####################################################
+##########################steer Samsung S7 #####################################
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:1C:51:B0:BA:98 //to 5g Comtrend
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:1C:51:B1:BA:98 //to 24g Comtrend
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:05:9E:2F:88:90 //to 5g Zinwell
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:05:9E:2F:86:90 //to 24g Zinwell
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:05:9E:2F:82:9E //to 5g Zinwell2
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:05:9E:2F:84:9E //to 24g Zinwell2
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:0C:43:76:52:58 //to 5g Comtrend3
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 00:0C:43:76:22:28 //to 24g Comtrend3
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 38:43:7d:8d:08:9f //to 5g Comhem
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 38:43:7D:8D:08:A0 //to 24g Comhem
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 3a:43:7d:8d:08:9c //to 5g Comhem BSSID2
+cmcli set steer_dot11v 8C:F5:A3:AC:55:B7 3a:43:7d:8d:08:a0 //to 24g Comhem BSSID2
+##########################steer SONY ###########################################
 cmcli set steer_dot11v 40:B8:37:F7:24:3A 00:05:9E:2F:88:90 //to 5g  Comtrend2
 cmcli set steer_dot11v 40:B8:37:F7:24:3A 00:05:9E:2F:86:90 //to 24g Comtrend2
-##########################steer Xiaomi ####################################################
+##########################steer Xiaomi #########################################
 cmcli set steer_dot11v E8:50:8B:28:BB:99 00:05:9E:2F:88:90 //to 5g Zinwell
 cmcli set steer_dot11v E8:50:8B:28:BB:99 00:05:9E:2F:86:90 //to 24g Zinwell
-##########################steer Xiaomi ####################################################
+##########################steer Xiaomi #########################################
 cmcli set steer_dot11v E8:50:8B:28:BB:99 00:1C:51:B0:BA:98 //to 5g  Comtrend
 cmcli set steer_dot11v E8:50:8B:28:BB:99 00:1C:51:B1:BA:98 //to 24g Comtrend
-################################################################################################
+##########################steer Google Pixel ###################################
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1C:51:B0:BA:98 //to 5g Comtrend
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1C:51:B1:BA:98 //to 24g Comtrend
+cmcli set steer_dot11v AC:37:43:A3:E1:06 D8:B6:B7:2A:EC:44 //to 5g Comtrend2
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:05:9E:2F:88:90 //to 5g Zinwell
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:05:9E:2F:86:90 //to 24g Zinwell
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:05:9E:2F:82:9E //to 5g Zinwell2
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:05:9E:2F:84:9E //to 24g Zinwell2
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:0C:43:76:52:58 // to 5g Comtrend3
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:0C:43:76:22:28 // to 24g Comtrend3
+cmcli set steer_dot11v AC:37:43:A3:E1:06 38:43:7d:8d:08:9f // to 5g Comhem
+cmcli set steer_dot11v AC:37:43:A3:E1:06 38:43:7D:8D:08:A0 // to 24g Comhem
+cmcli set steer_dot11v AC:37:43:A3:E1:06 ac:22:05:c3:26:0b // to 5g Comhem2
+cmcli set steer_dot11v AC:37:43:A3:E1:06 ac:22:05:c3:26:0a // to 24g Comhem2
+cmcli set steer_dot11v AC:37:43:A3:E1:06 3a:43:7d:8d:08:9c //to 5g Comhem BSSID2
+cmcli set steer_dot11v AC:37:43:A3:E1:06 3a:43:7d:8d:08:a0 //to 24g Comhem BSSID2
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:c1:c1:39 //to 5g ARRIS_P7
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:94:a0:03 //to 24g ARRIS_P7
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:9a:a4:06 //to 5g ARRIS_P7 paralellogram
+cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:0c:ee:84 //to 24g ARRIS_P7 paralellogram
+################################################################################
 wlan.addr == B0:DF:3A:00:7E:A6
 cmcli set dbg_steering 1
-################### category WNM, BSS Transition Request, 11v. Linux format###################################
+##########################hostapd restart with printf###########################
+/tmp/build/bin/hostapd -P /tmp/hostapd-wlan1_0.pid /tmp/hostapd-wlan1_0.conf -d &
+/tmp/build/bin/hostapd -P /tmp/hostapd-wlan0_0.pid /tmp/hostapd-wlan0_0.conf -d &
+################### category WNM, BSS Transition Request, 11v. Linux format#####
 wlan.fixed.category_code == 10
 wlan.addr == B0:DF:3A:00:7E:A6 && wlan.fixed.category_code == 10
 wlan.addr == D0:C5:F3:E3:80:91 && wlan.fixed.category_code == 10 //iPhone7
@@ -843,9 +915,23 @@ wlan.addr == 74:23:44:46:26:60 && wlan.fixed.category_code == 10//Meizu
 wlan.addr == 00:1C:51:B1:BA:98 && wlan.fc.type == 2
 ############RMM(RRM)##########################################################
 wlan.fixed.category_code == 5 || wlan.fixed.category_code == 10
+############wireshark filters###################################################
+Frame type	 	Filter
+Management frames	wlan.fc.type == 0
+Control frames	 	wlan.fc.type == 1
+Data frames	 	wlan.fc.type == 2
+
+Frame subtype	 	Filter
+Association request	wlan.fc.type_subtype == 0
+Association response	wlan.fc.type_subtype == 1
+Probe request	 	wlan.fc.type_subtype == 4
+Probe response	 	wlan.fc.type_subtype == 5
+Beacon		 	wlan.fc.type_subtype == 8
+Authentication	 	wlan.fc.type_subtype == 11
+Deauthentication	wlan.fc.type_subtype == 12
 ####################fvpn########################################
 iwscan wdev0ap0 start 4 500 1 36
-################dual console writing flash#################################################################
+################dual console writing flash######################################
 tftp get 192.168.100.102 0x900000 appcpuImage
 cache flush
 ord4 0xC80D0000 0x03000000
@@ -858,15 +944,16 @@ update -t atom 2
 aid dump -a - это посмотреть. какая текущая actimage
 aid toggle - сменить ACTIMAGE
 ##################YOCTO SDK CL2400+CL242#############################################
-stty cols 152 rows 40; newgrp
+stty cols 152 rows 40
 export clr_cfg_dir_cl2400=/nvram/cl2400
 export clr_install_dir_cl2400=/cl2400
 export clr_cfg_dir=/nvram
 export clr_install_dir=/etc/Wireless/CL242
 export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts:$clr_install_dir/wireless_tools/usr/sbin${PATH+:}${PATH}
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib:$clr_install_dir_cl2400/lib​
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib:$clr_install_dir_cl2400/lib
 #####################################CBN static mac addr######################################################################
 ce_phys_mac_addr=00:11:22:33:44:55
+ce_phys_mac_addr=00:1c:51:81:58:da
 ##################YOCTO SDK CL2400+CL2400#############################################
 stty cols 152 rows 40; newgrp
 export clr_install_dir_cl2400=/cl2400
@@ -874,7 +961,29 @@ export clr_cfg_dir=/nvram
 export clr_cfg_dir_cl2400=/nvram/cl2400
 export clr_cfg_dir_cl2400_24g=/nvram/cl2400_24g
 export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts${PATH+:}${PATH}
-export LD_LIBRARY_PATH=$clr_install_dir_cl2400/lib${LD_LIBRARY_PATH+:}${LD_LIBRARY_PATH}​
+export LD_LIBRARY_PATH=$clr_install_dir_cl2400/lib${LD_LIBRARY_PATH+:}${LD_LIBRARY_PATH}
+########################################package load on Comhem##################
+export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
+export clr_cfg_dir_cl2400=/nvram/cl
+export clr_install_dir_cl2400=/tmp/build
+export clr_install_dir_cl2400_24g=/tmp/build
+export clr_vlan_dir_cl2400=/nvram/cl
+export clr_vlan_dir_cl2400_24g=/nvram/cl_24g
+PATH=/tmp/build/bin:/tmp/build/scripts:$PATH
+################################################################################
+ifconfig eth0 0
+ifconfig eth0.4093:0 down
+vconfig add eth0 2
+ifconfig eth0.2 up
+brctl addbr br0
+ifconfig br0 192.168.100.3 up
+brctl delif br0 eth0
+brctl addif br0 eth0.2
+################################################################################
+cd /tmp
+tftp -gl cl2400.tar 192.168.100.102
+tar xf cl2400.tar
+ce_host.sh start
 #######################################restore_defaults.sh 24g##################################################################
 $clr_install_dir_cl2400/scripts/restore_defaults.sh CL2400_24g
 ########################NVG nvram_get #########################################################################################
@@ -889,16 +998,16 @@ iw dev wlan1_0 cecli cls bs.-s # BS STatus
 iw dev wlan1_0 cecli cls bs.-c # connected sta
 ########################SoftBlock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blacklist
-########################DSCPtoUP NVRAM#########################################################
+########################DSCPtoUP NVRAM##########################################
 ce_dscp_to_up0_7dec=0,3;8,5;16,5;24,1;32,1;40,0;48,2;56,2
-########################DSCPtoUP test with iperf#########################################################
+########################DSCPtoUP test with iperf################################
 iperf -c 192.168.100.117 -i1 -t1000 -p12345 -u -b 80k -S 224 # host
 iperf -s -i1 -p12345 -u # sta
-########################DSCPtoUP, cmd iw#########################################################
+########################DSCPtoUP, cmd iw########################################
 iw dev wlan1_0 cecli qos -s.? # will show set parameters for All BSS
 iw dev wlan1_0 cecli qos -a."0,3;8,5;16,5;24,1;32,1;40,0;48,2;56,2"
 iw dev wlan1_1 cecli qos -a."0,3;8,5;16,5;24,1;32,1;40,0;48,2;56,2"
-######################bahamas repeater ROOT AP#######################################################################
+######################bahamas ROOT AP###########################################
 restore_defaults.sh all ap
 
 nvram_set rtdev SSID1 Celeno_Cluster_REPEATER
@@ -924,7 +1033,7 @@ nvram_set 2860 CeDropRoamedStaEn 0
 nvram_set rtdev CeDropRoamedStaEn 0
 nvram_set rtdev CeCmAcsAutoStartEn 0
 nvram_set 2860 dhcpClientEnabled 1
-######################bahamas repeater AP#######################################################################
+######################bahamas repeater AP#######################################
 nvram_set rtdev SSID1 Celeno_Cluster_REPEATER
 nvram_set rtdev AuthMode WPA2PSK
 nvram_set rtdev EncrypType AES
@@ -943,7 +1052,7 @@ nvram_set rtdev ApCliAuthMode WPA2PSK
 nvram_set rtdev ApCliEncrypType AES
 nvram_set rtdev ApCliWPAPSK 12345678
 nvram_set rtdev ApCliEnable 1
-nvram_set rtdev ApCliAutoConnect 0
+nvram_set rtdev ApCliAutoConnect 1
 nvram_set rtdev CeCmChMonitorEn5g 0
 nvram_set rtdev CeCmChMonitorEn 0
 nvram_set 2860 MACRepeaterEn 0
@@ -957,7 +1066,31 @@ nvram_set rtdev CeCmMqttHost 192.168.100.145
 nvram_set 2860 dhcpClientEnabled 1
 nvram_set 2860 lan_ipaddr 192.168.100.8 # optional
 nvram_set 2860 wan_gateway 192.168.100.102
-####################################################################################################################
+###########################check Bssid where repeater connected to##############
+iwpriv apclii0 show ApCliBssid
+###############################WDS Repeater#####################################
+RootAP+WDS:
+ce_wds_en=1
+ce_udma_enabled=0
+ce_work_mode=0
+ce_rxamsdu_en=0
+ce_txamsdu_en=0
+ci_env_det_flags=20
+
+Repeater+WDS:
+ce_wds_en=1
+ce_udma_enabled=0
+ce_work_mode=2
+ce_rxamsdu_en=0
+ce_txamsdu_en=0
+ci_env_det_flags=20
+ce_class_enable=0
+
+in /nvram/cl2400/cluster.cfg set:
+CeCmWdsEn=1
+
+2.4G Default
+################################################################################
 ###########set date for mqtt############
 date -s 061518252018.00
 date -s 061811252018.00
@@ -970,7 +1103,7 @@ date -s 061811252018.00
 ###########set date for mqtt CL2400+CL242############
 date -s 06.25-15:03
 [YYYY.]MM.DD-hh:mm[:ss]
-#########################cl2400 repeater########################################
+#########################cl2400 repeater obsolete###############################
 nvram_set cl2400 ce_bss_num "1"
 nvram_set cl2400 ha_ssid1 "ce_repeater"
 nvram_set cl2400 ce_acs_bootup_scan_en "0"
@@ -988,10 +1121,26 @@ nvram_set cl2400 ce_class_enable "0"
 nvram_set cl2400 ce_device_id "0x2440"
 nvram_set cl2400 ha_wpa_passphrase1 "12345678"
 nvram_set cl2400 ce_udma_enabled "0"
+CL2400 RootAP:
+ce_udma_enabled=0
+ce_iface_ip=192.168.100.2/255.255.255.0
+ce_work_mode=0​
+#########################cl2400 repeater########################################
+CL2400 Repeater:
+ce_udma_enabled=0
+ce_acs_bootup_scan_en=0
+ce_iface_ip=192.168.100.3/255.255.255.0
+ws_auth_mode=<RootAP Auth Mode>
+ws_key=<RootAP Security Password>
+ws_ssid=<RootAP SSID>
+ws_bridge=br0
+ce_work_mode=2​ // 0 - AP mode, 1 - STA mode, 2 - Repeater mode
+###################on repeater##################################################
+iw dev wlan1_0 cecli repeater -i // show connected macs to repeater
 ##############################cl2400 repeater wpa_supplicant####################
 iw dev wlan1_0 interface add wlan1_1 type managed
 wpa_supplicant -Dcl_nl80211 -B -P /tmp/wpa_supplicant.pid -f /tmp/wpa_supplicant.log -ddd -c wpa_supplicant_5g.conf
-##############################cl2400 repeater wpa_supplicant_5g.conf####################
+##############################cl2400 repeater wpa_supplicant_5g.conf############
 /tmp/wpa_supplicant_5g.conf
 ctrl_interface=/var/run/wpa_supplicant
 update_config=1
@@ -1025,7 +1174,31 @@ export clr_cfg_dir_cl2400='/nvram/cl2400'
 export clr_install_dir_cl2400='/tmp/cl2400'
 export PATH=/tmp/cl2400/scripts/:/tmp/cl2400/bin:$PATH
 export LD_LIBRARY_PATH=/tmp/cl2400/lib/:$LD_LIBRARY_PATH
-##################YOCTO SDK CL2400+CL2400 GDB build#############################################
+####################BRCM3390 flashing the board#################################
+10. How to update brcm board to latest SDK image:
+
+The fast path is the accelerator of Broadcom (like UDMA of Intel), so it should improve performance.
+It didn’t work for a long time until this week. You can upgrade the board to the new SDK image and then netxl should work.
+In order to do that please copy the files in this folder: \\moon2\cernd\_Users\aviad\usb17.4 to a USB device with FAT32 FS, and then plug it to the board and power it on.
+It should load the image automatically. Please wait patiently until it finishes (when it will be finished, the board will reboot itself and ask you to login). Only then you can plug the USB off and reboot the board again.
+'''PLEASE DON’T PLUG THE USB OUT OR POWER OFF THE BOARD DURING THE PROCESS OR THE BOARD WILL BE CORRUPTED.'''
+
+11. How to enable NetXL:
+
+ Netxl is Broadcom’s accelerator (like UDMA in Puma6 or lite_path in Puma7).
+
+In order to work with it well you need to do the following:
+
+Enable ce_fast_path_en in nvram (when the driver is down)
+Insert flowmgr_frap module: insmod /lib/modules/3.14.28-Prod_17.4/extra/flowmgr_rfap/flowmgr_rfap.ko
+echo fap_config a b > /proc/driver/flowmgr/cmd
+echo fap_enable 1 > /proc/driver/flowmgr/cmd
+Start the driver as usual via ce_host.sh start
+
+When you work with netxl enabled, it should add a new interface for each bss (wlan1_0xl, wlan1_1xl, etc…), and these interfaces are automatically added under the bridge (ce_host.sh does that).
+
+In order to avoid crashes, please change the value of ce_fast_path_en in nvram only when the driver is down.
+##################YOCTO SDK CL2400+CL2400 GDB build#############################
 Edit /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/conf/local.conf
 
     ​Add line after EXTRA_IMAGE_FEATURES = ....
@@ -1048,9 +1221,13 @@ run with ulimit:
 tftp -gl clusterd 192.168.100.102
 chmod +x ./clusterd
 cd /tmp ; ulimit -c 2000000 ; ./clusterd -f $clr_cfg_dir_cl2400/cluster.cfg -b
+or
+cd /tmp ; ulimit -c 2000000 ; /cl2400/bin/clusterd -f /nvram/cl2400/cluster.cfg -b
 
 after crashing file `core` is appeared in /tmp
 gdb ./clusterd core
+or
+gdb /cl2400/bin/clusterd core
 Ex.
 GNU gdb (GDB) 7.6.2
 Copyright (C) 2013 Free Software Foundation, Inc.
@@ -1093,6 +1270,8 @@ Program terminated with signal 11, Segmentation fault.
 #0  cm_repeater_calc_rssi (ap_inf_orig=ap_inf_orig@entry=0xb4c05250, ap_inf_stat_orig=ap_inf_stat_orig@entry=0xb4c03d40, 
     ap_inf_stat=ap_inf_stat@entry=0xb5e01038, sta=sta@entry=0x0, rssi=rssi@entry=0xbf9a996f "") at cm_repeater.c:211
 211     cm_repeater.c: No such file or directory.
+(gdb) thread apply all bt
+or
 (gdb) bt
 #0  cm_repeater_calc_rssi (ap_inf_orig=ap_inf_orig@entry=0xb4c05250, ap_inf_stat_orig=ap_inf_stat_orig@entry=0xb4c03d40, 
     ap_inf_stat=ap_inf_stat@entry=0xb5e01038, sta=sta@entry=0x0, rssi=rssi@entry=0xbf9a996f "") at cm_repeater.c:211
@@ -1218,8 +1397,13 @@ brctl addif br0 wdev0ap1
 brctl addif br0 wdev0ap2
 brctl addif br0 wdev0ap3
 route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
-##########change mac addr #####################
+##########change mac addr CBN bootloader#####################
 shell> mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xCD 0xD7 nand
+mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xD4 0xD7 nand
+mfh add lan_eeprom 0x00 0x50 0xF1 0x66 0xD8 0xD7 nand
+mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xC0 0xD7 nand
+##################COMHEM MAC#############################
+S/N:613481720100038200000790
 #################
 
 ifconfig eth0 0.0.0.0
@@ -1250,6 +1434,133 @@ export clr_install_dir=/etc/Wireless/CLR260
 $clr_install_dir/ce_host.sh start 24g
 
 $clr_install_dir/nvram_set rtdev CeDriverAutoStart 0
+######################MAP##################################################
+#short guide how to test mapd agent and controller on host machine.
+
+#1. make
+#2. Bind daemons to "lo" iterface and set to use custom mac, otherwise it will be 00:00..
+
+#mapd-controller.default.cfg
+# Controller
+al_mac_addr=CC:CC:CC:CC:CC:CC
+l2_mac_addr=CC:CC:CC:33:33:33
+use_custom_l2_mac_addr=1
+dbg_controller_mac_addr=DD:DD:DD:DD:DD:DD
+duplicate_1905_to_self=0
+iface_name=lo
+do_not_check_hostapd=1
+
+
+#mapd-agent.default.cfg
+# Agent
+al_mac_addr=AA:AA:AA:AA:AA:AA
+l2_mac_addr=AA:AA:AA:99:99:99
+use_custom_l2_mac_addr=1
+dbg_controller_mac_addr=DD:DD:DD:DD:DD:DD
+duplicate_1905_to_self=0
+iface_name=lo
+5g_driver_en=1
+24g_driver_en=0
+do_not_check_hostapd=1
+
+
+
+#3.0. Start module ce_map.ko
+###############ARRIS_P7############################
+stty cols 152 rows 40; newgrp
+echo 8 > /proc/sys/kernel/printk
+/cl2400/scripts/ce_host.sh stop dual
+rmmod cfg80211 compat
+#########################Download release###########
+ifconfig brlan0:factory down
+ifconfig brlan0 192.168.100.2
+cd /tmp
+tftp -gl cl2400.tar 192.168.100.102
+tar xf cl2400.tar
+###### exports ########################
+export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
+export clr_cfg_dir_cl2400=/nvram/cl
+export clr_install_dir_cl2400=/tmp/build
+export clr_install_dir_cl2400_24g=/tmp/build
+PATH=/tmp/build/bin:/tmp/build/scripts:$PATH
+export LD_LIBRARY_PATH=/tmp/build/usr/lib
+###### only once ########################
+mkdir /nvram/cl
+mkdir /nvram/cl_24g
+./build/scripts/restore_defaults.sh CL2400
+./build/scripts/restore_defaults.sh CL2400_24g
+####################################################
+/tmp/build/scripts/ce_host.sh stop dual
+rmmod cfg80211 compat
+####################################################
+/tmp/build/scripts/ce_host.sh stop 24g
+/tmp/build/scripts/ce_host.sh stop
+
+rmmod cfg80211 compat
+##################################################
+/tmp/build/scripts/ce_host.sh start dual
+##################################################
+/tmp/build/scripts/ce_host.sh start 24g
+/tmp/build/scripts/ce_host.sh start
+##################################################
+#brctl addif brlan0 nsgmii1
+brctl addif brlan0 wlan1_0
+brctl addif brlan0 wlan1_1
+brctl addif brlan0 wlan0_0
+brctl addif brlan0 wlan0_1
+###########enable printk##########
+echo 8 > /proc/sys/kernel/printk
+##############CBN_P6_YOCTO######################################################
+stty cols 152 rows 40; newgrp
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_install_dir_cl2400=/cl2400
+export clr_cfg_dir=/nvram
+export clr_install_dir=/etc/Wireless/CL242
+export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts:$clr_install_dir/wireless_tools/usr/sbin${PATH+:}${PATH}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib:$clr_install_dir_cl2400/lib
+ce_host.sh start
+#############optional, insmode module####################
+insmod $clr_install_dir_cl2400/modules/ce_map.ko
+#########################################################
+
+#3. Start controller instance:
+sudo rm -rf /tmp/mapd-controller*; sudo ./mapd -f mapd-controller.default.cfg -n -c
+
+#4. Start agent instance:
+sudo rm -rf /tmp/mapd-agent*; sudo ./mapd -f mapd-agent.default.cfg -n
+
+##or
+mapd -f /nvram/cl2400/mapd-controller.default.cfg -b -c
+mapd -f /nvram/cl2400/mapd-agent.default.cfg -b
+####send test 1905 RRM frame##################################
+mapcli test send_1905 8
+sudo mapcli/mapcli test custom_send_1905 8 00:50:F1:64:CE:D7 # Comhem bridge
+mapcli test custom_send_1905 8 8c:ec:4b:07:40:72 # PC p9p1
+################### 1905 eth proto, beacon metrics Linux format#####
+ieee1905.tlv_type == 153
+eth.type == 0x893a
+################### category WNM, BSS Transition Request, 11v. Linux format#####
+wlan.fixed.category_code == 10
+################### category WNM, Radio Measurement Request, 11k################
+wlan.fixed.category_code == 5
+wlan.tag.number == 38
+Gwlan.fixed.category_code == 5 && wlan.addr == e8:50:8b:28:bb:99
+################################################################################
+5. Communication with agent + fake NL events injection:
+
+ sudo ./mapcli test drv_register
+ sudo ./mapcli test apinf_add
+ sudo ./mapcli test sta_add E8:50:8B:28:BB:99
+ sudo ./mapcli test sta_stats
+
+
+6. Communication with controller (example):
+
+sudo TO_CONTROLLER=1 ./mapcli test 1905_policy_config
+
+Additional info:
+
+Wireshark macros for filtering 1905: (eth.type == 0x893a), usage - ${1905}
 ###################tcp_test##################################
 echo 1 > /sys/module/atmcls5g/parameters/g_bDebugCmEn
 iwpriv wdev0ap0 setcmd "tcp_init 1"
@@ -1516,15 +1827,19 @@ svn propget svn:log --revprop -r30295 http://moon/svn/celeno-swdb/target/branche
 svn propget svn:log --revprop -r40022 http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
 svn propget svn:log --revprop -r45610 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_25_new/CL2330
 svn propget svn:log --revprop -r47061 http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
+svn propget svn:log --revprop -r50358 http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.2.0
 #######################  edit svn commit log message   ##################################
 svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
 svn propedit svn:log --revprop -r46739 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
 svn propedit svn:log --revprop -r43603 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_18_GA5
 svn propedit svn:log --revprop -r48644 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_v2.0.0_6_GA1
+svn propedit svn:log --revprop -r48837 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_v2.0.0
 svn propedit svn:log --revprop -r41650 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_Comtrend_CM
 svn propedit svn:log --revprop -r46738 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 svn propedit svn:log --revprop -r43573 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_3_GA5/sdk
+svn propedit svn:log --revprop -r48916 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_cmv2/sdk
 svn propedit svn:log --revprop -r47187 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_25_cmv2/sdk
+svn propedit svn:log --revprop -r50358 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.2.0
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
@@ -1979,6 +2294,9 @@ PROCESS STATE CODES
 
 ####################classifier.?########################################
 iwpriv atmcls5g cecli classifier.?
+######################classifier.? CL2400###############################
+iw dev wlan1_0 cecli cls classifier.-a
+#######################################################################
 atmcls5g  cecli:classifier.?
 # print info about the classifier
 Usage: classifier -{abcdefghijklmpqrtuvwxyzBS} [options]
@@ -2213,8 +2531,7 @@ cegpio led 0x800  0 -1 all leds power off
 cegpio led 0xffffffff 1 -1
 echo 0 > /sys/module/kernel/parameters/mod_timer_print
 echo 1 > /sys/module/kernel/parameters/mod_timer_print
-###############################################################################
-
+#############################Ubuntu#############################################
 Run a ext4 file system check and badblocks scan with progress info
 Terminal - Run a ext4 file system check and badblocks scan with progress info
 fsck.ext4 -cDfty -C 0 /dev/sdxx
@@ -2226,6 +2543,9 @@ fsck.ext4 -cDfty -C 0 /dev/sdxx
 -C 0 ? print progress info to stdout
 /dev/sdxx ? the partition to check, (e.g. /dev/sda1 for first partition on first hard disk)
 NOTE: Never run fsck on a mounted partition!
+###########################cleanump boot#########################################
+sudo dpkg --list 'linux-image*'|awk '{ if ($1=="ii") print $2}'|grep -v `uname -r`
+sudo apt-get purge linux-image-`YOUR OLD VERSION`
 #################################################################################
 
 ############################4.6.x_CM/4.7.x compilation, in my PC #################################
@@ -2418,13 +2738,16 @@ First name : Celeno
 Second name: Celeno
 
 pass: GlobalLogic86
-####################celeno twitch##################################################
+####################celeno only kiev skype/google docs##########################
+celeno.kyiv@gmail.com
+pass: celeno.ky1v.the.be3t
+####################celeno twitch###############################################
 login: glceleno
 pass:GlobalLogic86
-#########################Apple ID###################################################
+#########################Apple ID###############################################
 AppleID: gl.celeno.team@gmail.com
 Pass : GlobalLogic86
-########################tips########################################################
+########################tips####################################################
 recuresive chmod for read/write for all in directory
 sudo chmod -R ugo+rw foldername
 ###########indent##########################
@@ -2486,4 +2809,283 @@ cmcli set set_ap_name 0 CBN_v1.0
 ##############################linux code style##################################
 #############################check correct function declaration##################################
 grep -i '^[a-z_ ]*(' *.c
+########################802.11x########UNAUTH_TLS###############################
+##########################wpa_supplicant########################################
+##########################wpa_supplicant.conf###################################
+ctrl_interface=/run/wpa_supplicant
+update_config=1
+ap_scan=1
+network={
+    ssid="senior_open_secure"
+    scan_ssid=1
+    key_mgmt=WPA-EAP
+    proto=WPA2
+    pairwise=CCMP
+    group=CCMP
+    eap=UNAUTH-TLS
+    ca_cert="/tmp/ca.pem"
+    identity="unauthenticated"
+}
+##########################wpa_cli###############################################
+add_network
+set_network 0 ssid "senior_psk"
+set_network 0 eap UNAUTH-TLS
+set_network 0 ca_cert "/tmp/ca.crt"
+set_network 0 identity "unauthenticated"
+set_network 0 proto RSN
+set_network 0 key_mgmt WPA-EAP
+set_network 0 pairwise CCMP TKIP
+set_network 0 group CCMP TKIP
+enable_network 0
+
+add_network
+set_network 0 ssid "senior_psk"
+set_network 0 eap UNAUTH-TLS
+set_network 0 ca_cert "/tmp/ca.crt"
+set_network 0 identity "unauthenticated"
+enable_network 0
+################################hostapd#########################################
+################################hostapd.conf####################################
+wpa_key_mgmt=WPA-EAP
+ca_cert=/tmp/ca.pem
+server_cert=/tmp/server.crt
+private_key=/tmp/server.key
+private_key_passwd=Celeno
+eap_user_file=/tmp/hostapd.eap_user
+eap_server=1
+ieee8021x=1
+wps_state=0
+################################hostapd.eap_user#################################
+"unauthenticated" UNAUTH-TLS
+##############openssl############################################################
+openssl s_client -CAfile /tmp/ca.pem -connect 172.168.110.132:44444
+s_server -CAfile ca.pem -cert ap.crt -key ap.key -accept 44444 -www -dhparam hostapd.dh.pem
+################################################################################
+#create self signed root CA
+openssl req -new -x509 -newkey rsa:2048 -keyout cakey.key -out ca.pem -days 3650
+
+#create server pair
+openssl req -new -newkey rsa:2048 -nodes -keyout server.key -out server.csr
+openssl x509 -req -days 3650 -in server.csr -CA ca.pem -CAkey cakey.key -CAcreateserial -out server.crt
+
+#create client pair
+openssl req -new -newkey rsa:2048 -nodes -keyout client.key -out client.csr
+openssl x509 -req -days 3650 -in client.csr -CA ca.pem -CAkey cakey.key -CAcreateserial -out client.crt
+
+We need files: ca.crt (or ca.pem), client.crt, client.key, server.crt, server.key.
+###################run CS 1.6 on ubuntu#########################################
+cd ~/.wine/drive_c/Program Files/Counter-Strike 1.6
+wine hl.exe -nomaster -game cstrike
+#####################HACKATHON##################################################
+cmcli set enable_cm_decision 0
+cmcli set decision EC:1F:72:F2:A3:CE 1
+cmcli set decision EC:1F:72:F2:A3:CE 3
+CeCmDefaultDecision=3
+# 1 - allow
+# 3 - deny
+##################Comhem hostapd.conf UNAUTH-TLS##############################################################
+/tmp/build/bin/hostapd -B -P /tmp/hostapd-wlan1_0.pid /tmp/hostapd-wlan1_0.conf
+#################################################################################
+cat /tmp/hostapd-wlan1_0.unauth-tls.conf
+interface=wlan1_0
+logger_syslog=-1
+logger_syslog_level=2
+logger_stdout=-1
+logger_stdout_level=2
+ctrl_interface=/tmp/hostapd-wlan1_0
+ctrl_interface_group=0
+ssid=Celeno_Cluster_UNAUTH
+hw_mode=a
+channel=36
+beacon_int=100
+dtim_period=2
+max_num_sta=255
+rts_threshold=2347
+fragm_threshold=2346
+macaddr_acl=0
+auth_algs=3
+ignore_broadcast_ssid=0
+wmm_enabled=1
+ieee80211n=1
+ht_capab=[HT40+][LDPC][SHORT-GI-20][SHORT-GI-40]
+ieee80211ac=1
+vht_capab=[RXLDPC][SU-BEAMFORMER][SOUNDING-DIMENSION-4][BF-ANTENNA-4][SHORT-GI-80][MAX-A-MPDU-LEN-EXP7]
+vht_oper_chwidth=1
+eapol_key_index_workaround=0
+own_ip_addr=127.0.0.1
+preamble=1
+basic_rates=60 120 240
+first_mask_bit=0
+ha_lam_enable=1
+eapol_retry_count=10
+country_code=EU
+ieee80211d=0
+ieee80211h=0
+uapsd_advertisement_enabled=1
+vht_rx_mcs_map=9,9,9,9
+vht_oper_centr_freq_seg0_idx=42
+ap_pin=64013121
+config_methods=
+device_name=Wireless AP CL2400
+manufacturer=Celeno
+model_name=CL2400
+model_number=20
+serial_number=12345
+device_type=6-0050F204-1
+ap_table_expiration_time=60
+disabled_supp=
+disabled_basic=
+basic_ht_mcs=
+obss_interval=0
+bss_transition=1
+ieee80211k=3
+wpa=2
+wpa_group_rekey=0
+wpa_pairwise=CCMP
+wps_rf_bands=ag
+ap_setup_locked=
+upnp_iface=br0
+friendly_name=WPS Access Point
+ForwardIdEnable=0
+RadiusStaIdEnable=
+CM-MAC=aa-bb-cc-dd-ee-ff
+ha_is_low_reg_mac_fmt=0
+uuid=5a268ea1-7b2e-55bc-b2e9-8dd6ba2624ad
+ieee80211w=0
+deny_mac_file=/tmp/hostapd-wlan1_0.list
+ha_wps_win7_support=1
+wpa_key_mgmt=WPA-EAP
+ca_cert=/tmp/ca.pem
+server_cert=/tmp/server.crt
+private_key=/tmp/server.key
+private_key_passwd=Celeno
+eap_user_file=/tmp/hostapd.eap_user
+eap_server=1
+ieee8021x=1
+wps_state=0
+################################################################################
+sudo ip addr flush dev p9p1
+###########wpa_cli help#########################################################
+wpa_cli -i wlan1_1 help
+commands:
+  status [verbose] = get current WPA/EAPOL/EAP status
+  ifname = get current interface name
+  ping = pings wpa_supplicant
+  relog = re-open log-file (allow rolling logs)
+  note <text> = add a note to wpa_supplicant debug log
+  mib = get MIB variables (dot1x, dot11)
+  help [command] = show usage help
+  interface [ifname] = show interfaces/select interface
+  level <debug level> = change debug level
+  license = show full wpa_cli license
+  quit = exit wpa_cli
+  set = set variables (shows list of variables when run without arguments)
+  dump = dump config variables
+  get <name> = get information
+  driver_flags = list driver flags
+  logon = IEEE 802.1X EAPOL state machine logon
+  logoff = IEEE 802.1X EAPOL state machine logoff
+  pmksa = show PMKSA cache
+  pmksa_flush = flush PMKSA cache entries
+  reassociate = force reassociation
+  reattach = force reassociation back to the same BSS
+  preauthenticate <BSSID> = force preauthentication
+  identity <network id> <identity> = configure identity for an SSID
+  password <network id> <password> = configure password for an SSID
+  new_password <network id> <password> = change password for an SSID
+  pin <network id> <pin> = configure pin for an SSID
+  otp <network id> <password> = configure one-time-password for an SSID
+  passphrase <network id> <passphrase> = configure private key passphrase
+    for an SSID
+  sim <network id> <pin> = report SIM operation result
+  bssid <network id> <BSSID> = set preferred BSSID for an SSID
+  blacklist <BSSID> = add a BSSID to the blacklist
+  blacklist clear = clear the blacklist
+  blacklist = display the blacklist
+  log_level <level> [<timestamp>] = update the log level/timestamp
+  log_level = display the current log level and log options
+  list_networks = list configured networks
+  select_network <network id> = select a network (disable others)
+  enable_network <network id> = enable a network
+  disable_network <network id> = disable a network
+  add_network = add a network
+  remove_network <network id> = remove a network
+  set_network <network id> <variable> <value> = set network variables (shows
+    list of variables when run without arguments)
+  get_network <network id> <variable> = get network variables
+  dup_network <src network id> <dst network id> <variable> = duplicate network variables
+  list_creds = list configured credentials
+  add_cred = add a credential
+  remove_cred <cred id> = remove a credential
+  set_cred <cred id> <variable> <value> = set credential variables
+  get_cred <cred id> <variable> = get credential variables
+  save_config = save the current configuration
+  disconnect = disconnect and wait for reassociate/reconnect command before
+    connecting
+  reconnect = like reassociate, but only takes effect if already disconnected
+  scan = request new BSS scan
+  scan_results = get latest scan results
+  abort_scan = request ongoing scan to be aborted
+  bss <<idx> | <bssid>> = get detailed scan result info
+  get_capability <eap/pairwise/group/key_mgmt/proto/auth_alg/channels/freq/modes> = get capabilities
+  reconfigure = force wpa_supplicant to re-read its configuration file
+  terminate = terminate wpa_supplicant
+  interface_add <ifname> <confname> <driver> <ctrl_interface> <driver_param>
+    <bridge_name> <create> <type> = adds new interface, all parameters but
+    <ifname> are optional. Supported types are station ('sta') and AP ('ap')
+  interface_remove <ifname> = removes the interface
+  interface_list = list available interfaces
+  ap_scan <value> = set ap_scan parameter
+  scan_interval <value> = set scan_interval parameter (in seconds)
+  bss_expire_age <value> = set BSS expiration age parameter
+  bss_expire_count <value> = set BSS expiration scan count parameter
+  bss_flush <value> = set BSS flush age (0 by default)
+  stkstart <addr> = request STK negotiation with <addr>
+  ft_ds <addr> = request over-the-DS FT with <addr>
+  wps_pbc [BSSID] = start Wi-Fi Protected Setup: Push Button Configuration
+  wps_pin <BSSID> [PIN] = start WPS PIN method (returns PIN, if not hardcoded)
+  wps_check_pin <PIN> = verify PIN checksum
+  wps_cancel Cancels the pending WPS operation
+  wps_reg <BSSID> <AP PIN> = start WPS Registrar to configure an AP
+  wps_ap_pin [params..] = enable/disable AP PIN
+  wps_er_start [IP address] = start Wi-Fi Protected Setup External Registrar
+  wps_er_stop = stop Wi-Fi Protected Setup External Registrar
+  wps_er_pin <UUID> <PIN> = add an Enrollee PIN to External Registrar
+  wps_er_pbc <UUID> = accept an Enrollee PBC using External Registrar
+  wps_er_learn <UUID> <PIN> = learn AP configuration
+  wps_er_set_config <UUID> <network id> = set AP configuration for enrolling
+  wps_er_config <UUID> <PIN> <SSID> <auth> <encr> <key> = configure AP
+  ibss_rsn <addr> = request RSN authentication with <addr> in IBSS
+  suspend = notification of suspend/hibernate
+  resume = notification of resume/thaw
+  roam <addr> = roam to the specified BSS
+  sta_autoconnect <0/1> = disable/enable automatic reconnection
+  tdls_discover <addr> = request TDLS discovery with <addr>
+  tdls_setup <addr> = request TDLS setup with <addr>
+  tdls_teardown <addr> = tear down TDLS with <addr>
+  tdls_link_status <addr> = TDLS link status with <addr>
+  wmm_ac_addts <uplink/downlink/bidi> <tsid=0..7> <up=0..7> [nominal_msdu_size=#] [mean_data_rate=#] [min_phy_rate=#] [sba=#] [fixed_nominal_msdu] = add WMM-AC traffic stream
+  wmm_ac_delts <tsid> = delete WMM-AC traffic stream
+  wmm_ac_status = show status for Wireless Multi-Media Admission-Control
+  tdls_chan_switch <addr> <oper class> <freq> [sec_channel_offset=] [center_freq1=] [center_freq2=] [bandwidth=] [ht|vht] = enable channel switching with TDLS peer
+  tdls_cancel_chan_switch <addr> = disable channel switching with TDLS peer <addr>
+  signal_poll = get signal parameters
+  signal_monitor = set signal monitor parameters
+  pktcnt_poll = get TX/RX packet counters
+  reauthenticate = trigger IEEE 802.1X/EAPOL reauthentication
+  raw <params..> = Sent unprocessed command
+  flush = flush wpa_supplicant state
+  radio_work = radio_work <show/add/done>
+  vendor <vendor id> <command id> [<hex formatted command argument>] = Send vendor command
+  neighbor_rep_request [ssid=<SSID>] [lci] [civic] = Trigger request to AP for neighboring AP report (with optional given SSID in hex or enclosed in double quotes, default: current SS)
+  erp_flush = flush ERP keys
+  mac_rand_scan <scan|sched|pno|all> enable=<0/1> [addr=mac-address mask=mac-address-mask] = scan MAC randomization
+  get_pref_freq_list <interface type> = retrieve preferred freq list for the specified interface type
+  p2p_lo_start <freq> <period> <interval> <count> = start P2P listen offload
+  p2p_lo_stop = stop P2P listen offload
+#########################gamma-server container#################################
+ssh alexander@gamma-server
+password:123456
+lxc exec r6-1-5-ga-alexander -- sudo -i -u alexander
+password:111111
 ################################################################################

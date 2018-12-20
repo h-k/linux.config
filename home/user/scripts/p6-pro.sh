@@ -139,6 +139,9 @@ cl242_pre() {
 	cd $SDK
 	if [ "$sdktype" = "YOCTO" ] ; then
 		rm -rf ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		echo "YOCTO_r6.1.5 SDK"
+		rm -rf ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
 	else
 		rm -f cl242_host_pkg-*.*
 		rm -f clr_host_pkg-$platform.tar
@@ -156,13 +159,19 @@ cl242_pre() {
 	make $PACKAGE platform=$PLATFORM
 
 	cd $HP_LOCATION
-		tar xf SOURCE_CODE_celeno_clr_package_*_cl242_*.tar.bz2
-		cd celeno_clr_package*_cl242_*
+	tar xf SOURCE_CODE_celeno_clr_package_*_cl242_*.tar.bz2
+	cd celeno_clr_package*_cl242_*
 
 	if [ "$sdktype" = "YOCTO" ] ; then
+		echo "build host_package YOCTO. Using ccache.."
 		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
 		export CCACHE_PATH=${SDK}/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux:$PATH
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		echo "build host_package YOCTO_r6.1.5. Using ccache.."
+		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
+		export CCACHE_PATH=${SDK}/build-intelce/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/:$PATH
 	else
+		echo "build host_package IntelCE. Using ccache.."
 		export CCACHE_PATH=$IntelCE_path/build_i686/i686-linux-elf/bin:/opt/buildroot-gcc342/bin:$PATH
 	fi
 
@@ -173,6 +182,11 @@ cl242_pre() {
 		rm -rf ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
 		mkdir -p ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
 		tar xvf ${CLR}/clr_package_release/$PACKAGE/*/celeno_clr_package_*_$PACKAGE_*/build/*/$PACKAGE"_"host_pkg-*-*.tar -C ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		cd $SDK
+		rm -rf ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
+		mkdir -p ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
+		tar xvf ${CLR}/clr_package_release/$PACKAGE/*/celeno_clr_package_*_$PACKAGE_*/build/*/$PACKAGE"_"host_pkg-*-*.tar -C ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
 	else
 		tar xf build/$PLATFORM/$PACKAGE"_host_pkg"-$PLATFORM.tar -C $SDK
 		cd $SDK
@@ -292,13 +306,22 @@ cl2200_CM_pre()
 # Cleaning and unpacking functions for CL2330 host package
 cl2330_pre() {
 	cd $SDK
-	rm -f cl2330_host_pkg-*.*
-	rm -rf ./package/cl2330
-	rm -rf ./project_build_i686/IntelCE/cl2330*
-	sudo rm -rf ./project_build_i686/IntelCE/root/etc/Wireless/CL2330
-	rm -rf project_build_i686/IntelCE/netconf_wifi_ap-*/.built
-	rm -rf project_build_i686/IntelCE/targetFS_gateway-*/.built
-	rm -rf project_build_i686/IntelCE/uImage-*/building/.unpacked
+	if [ "$sdktype" = "YOCTO" ] ; then
+		echo "YOCTO SDK"
+		rm -rf ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		echo "YOCTO_r6.1.5 SDK"
+		rm -rf ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
+	else
+		rm -f cl2330_host_pkg-*.*
+		rm -rf ./package/cl2330
+		rm -rf ./project_build_i686/IntelCE/cl2330*
+		sudo rm -rf ./project_build_i686/IntelCE/root/etc/Wireless/CL2330
+		rm -rf project_build_i686/IntelCE/netconf_wifi_ap-*/.built
+		rm -rf project_build_i686/IntelCE/targetFS_gateway-*/.built
+		rm -rf project_build_i686/IntelCE/uImage-*/building/.unpacked
+	fi
+
 	rm -rf $HP_LOCATION/celeno_clr_package_$PACKAGE"_"$PLATFORM/
 
 	cd $CLR
@@ -307,9 +330,15 @@ cl2330_pre() {
 
 	cd celeno_clr_package_$PACKAGE"_"$PLATFORM/
 	if [ "$sdktype" = "YOCTO" ] ; then
+		echo "build host_package YOCTO. Using ccache.."
 		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
 		export CCACHE_PATH=${SDK}/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux:$PATH
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		echo "build host_package YOCTO_r6.1.5. Using ccache.."
+		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
+		export CCACHE_PATH=${SDK}/build-intelce/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/:$PATH
 	else
+		echo "build host_package non-yocto"
 		export CCACHE_PATH=$SDK/build_i686/i686-linux-elf/bin:/opt/buildroot-gcc342/bin:$PATH
 		sed -i -e 's#^\s*DEF_INTEL_SDK_PATH.*$#DEF_INTEL_SDK_PATH = $(SDK)#' -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/0.35_ccache/i686-cm-linux-#' src/celeno.mk
 		#sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/0.35_ccache/i686-cm-linux-#' src/celeno.mk
@@ -318,9 +347,8 @@ cl2330_pre() {
 
 	make
 
-	echo "pkgonly=$pkgonly"
 	if [ "$pkgonly" = "yes" ] ; then
-		echo "exit 1"
+		echo "build only host_package. exit 1"
 		exit 1
 	fi
 
@@ -329,6 +357,11 @@ cl2330_pre() {
 		rm -rf ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
 		mkdir -p ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
 		tar xvf ${CLR}/celeno_clr_package_$PACKAGE_*/build/*/$PACKAGE"_host_pkg"-*-*-*.t* -C ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		cd $SDK
+		rm -rf ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
+		mkdir -p ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
+		tar xf ${CLR}/celeno_clr_package_$PACKAGE_*/build/*/$PACKAGE"_host_pkg"-*-*-*.t* -C ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
 	else
 		tar xf build/$PLATFORM/cl2330_host_pkg-*-*-*.tar -C $SDK
 		cd $SDK
@@ -440,6 +473,14 @@ proc_platform()
 		sdktype=YOCTO
 	;;
 
+	CBN_INTELP6_YOCTO_r6.1.5) echo "Choosen platform $1: SDK puma6-r6.1.5-ga yocto"
+		export sdk=r6.1.5.yocto
+		export SDK=/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga
+		export PLATFORM=CBN_INTELP6_YOCTO
+		export platform=cbn_intelp6
+		sdktype=YOCTO_r6.1.5
+	;;
+
 	CBN_MERCURY) echo "Choosen platform CBN_MERCURY"
 		export sdk=0.35
 		export SDK=$SDKDIR/0.35/IntelCE-0.35.14073.342867
@@ -454,6 +495,15 @@ proc_platform()
 		export PLATFORM=CBN_MERCURY
 		export platform=cbn_mercury
 		relink_sdk $SDK
+	;;
+
+	CBN_MERCURY_YOCTO_r6.1.5) echo "Choosen platform $1: SDK puma6-r6.1.5-ga yocto"
+		export sdk=r6.1.5.yocto
+		#export SDK=$SDKDIR/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga
+		export SDK=/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga
+		export platform=cbn_mercury
+		export PLATFORM=CBN_MERCURY_YOCTO
+		sdktype=YOCTO_r6.1.5
 	;;
 
 	CBN_MERCURY_YOCTO) echo "Choosen platform $1: SDK Intel-6.1.1.21 yocto"
@@ -821,6 +871,15 @@ proc_package()
 		CL=CL2330
 		;;
 
+	cl2330_27)
+		export PACKAGE=cl2330
+		echo "Choosen module $PACKAGE v27"
+		export BRANCH=5.2.x_mercury_27
+		export CLR=$SRCDIR/$BRANCH/CL2330
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2330
+		;;
+
 	cl2330_st_nos)
 		echo "Choosen module $PACKAGE"
 		export BRANCH=5.2.x
@@ -885,6 +944,15 @@ proc_package()
 		export PACKAGE=cl242
 		echo "Choosen module $PACKAGE cl242_25_new_18_GA5"
 		export BRANCH=6.70.0xx_mercury_25_new_18_GA5
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL242
+		;;
+
+	cl242_27)
+		export PACKAGE=cl242
+		echo "Choosen module $PACKAGE cl242_27"
+		export BRANCH=6.70.0xx_mercury_27
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL242
@@ -1103,6 +1171,7 @@ pre()
 
 	platforms+=($PLATFORM)
 	packages+=($PACKAGE)
+	packages_clr+=($CLR)
 
 	${PACKAGE}_pre
 	notify-send -i starred "host package $PACKAGE $BRANCH $PLATFORM" "build done in $SECONDS seconds"
@@ -1157,6 +1226,27 @@ clean_uImage() {
 		uimage-intelce-20????????????.intelce-repo-manifest \
 		|| true)
 		echo "$sdktype: clean uImage skipped"
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		(cd $SDK/build-intelce/tmp/deploy/images/intelce ;
+		rm -fv \
+		app_cpu_efi_partition.20??????????.bin \
+		app_cpu_efi_partition.20??????????.bin \
+		bzImage.20??????????.osmanifest \
+		core-image-cougarmountain-cougarmountain-20????????????.intelce-repo-manifest \
+		core-image-cougarmountain-cougarmountain-20????????????.rootfs.manifest \
+		core-image-cougarmountain-cougarmountain-20????????????.rootfs.tar.bz2 \
+		core-image-cougarmountain-cougarmountain-20????????????.rootfs.squashfs \
+		bzImage.2017???????? \
+		app_cpu_rootfs_partition.20??????????.bin \
+		app_cpu_rootfs_partition.20??????????.bin.osmanifest \
+		app_cpu_image_sec.20??????????.uimg \
+		app_cpu_image.20??????????.uimg \
+		core-image-gateway-intelce-20????????????.rootfs.tar.bz2 \
+		core-image-gateway-intelce-20????????????.rootfs.manifest \
+		uimage-intelce-20????????????.intelce-repo-manifest \
+		|| true)
+		echo "$sdktype: clean uImage r6.1.5 skipped"
+
 	else
 		echo "clean_uImage"
 		rm -rf project_build_i686/IntelCE/netconf_wifi_ap-*/.built
@@ -1179,6 +1269,18 @@ make_uImage() {
 			echo "Image size is too big!!!" >&2
 			exit 1
 		fi
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		cd $SDK
+
+		source yocto/oe-init-build-env build-intelce
+		bitbake uimage || exit 1
+		imagesize=`ls -l tmp/deploy/images/intelce/appcpuRootfs.img | awk '{print $5}'`
+		echo "Image size is $imagesize (max 17825792)" >&2
+		if [ $imagesize -gt 17825792 ]; then
+			echo "Image size is too big!!!" >&2
+			exit 1
+		fi
+
 	else
 		sudo make all && sudo make uImage-clean && sudo make uImage
 	fi
@@ -1194,6 +1296,10 @@ post() {
 		cd $SDK
 		BINARIES=build/tmp/deploy/images/intelce
 		FS=build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		cd $SDK
+		BINARIES=build-intelce/tmp/deploy/images/intelce
+		FS=build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/
 	else
 		BINARIES=binaries/IntelCE
 		FS=project_build_i686/IntelCE/root/etc/Wireless/
@@ -1219,7 +1325,8 @@ post() {
 		imagesize=`ls -l $SDK/build/tmp/deploy/images/intelce/appcpuRootfs.img | awk '{print $5}'`
 	echo "Image size        : $imagesize/17825792"
 	fi
-	echo "CLR branch        : $CLR"
+	echo "CLR branches         :"
+	echo "${packages_clr[@]}" | tr ' ' '\n'
 	notify-send -i emblem-default "Image" "sdk.$sdk $short build done in $SECONDS seconds"
 	echo "This build took $SECONDS seconds"
 	return $exit_status
@@ -1256,6 +1363,7 @@ main() {
 	SECONDS=0
 	declare -a platforms
 	declare -a packages
+	declare -a packages_clr
 	check_env
 	numargs=$#
 	make_only=
@@ -1285,7 +1393,7 @@ main() {
 		}
 	fi
 
-	if [ $make_only = "1" ] ; then
+	if [ "$make_only" = "1" ] ; then
 		date
 		echo "Built PLATFORM=$PLATFORM PACKAGE=$PACKAGE in $SECONDS seconds"
 		exit

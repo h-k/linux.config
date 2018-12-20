@@ -6,8 +6,9 @@ SRC=~/gitsvn
 svnrebase()
 {
 	cd $1
+	echo "$1: rebase .."
 	git svn rebase
-	echo "$1: rebase done.."
+	echo "$1: rebase done"
 	cd -
 }
 
@@ -17,6 +18,7 @@ update_2400()
 	echo "REPO $1: START SVN rebase.."
 	git svn rebase
 	svnrebase utils/clusterd
+	svnrebase utils/mapd
 
 	cd kernel
 
@@ -29,13 +31,14 @@ update_2400()
 	svnrebase ce_wrs
 	svnrebase celeno_cb
 	svnrebase ce_cluster
+	svnrebase ce_map
 	repos+="${1}\n"
 	echo "REPO $1: DONE SVN rebase"
 }
 
 update_2400_all()
 {
-	update_2400 4.6.x_92_GA4
+#	update_2400 4.6.x_92_GA4
 	update_2400 4.7.x
 }
 
@@ -89,9 +92,10 @@ update_242()
 
 update_242_all()
 {
-	update_242 6.70.0xx_mercury_25_new
-	update_242 6.70.0xx_mercury_25_new_18_GA5
-	update_242 6.70.0xx_mercury_25_cmv2
+#	update_242 6.70.0xx_mercury_25_new
+#	update_242 6.70.0xx_mercury_25_new_18_GA5
+#	update_242 6.70.0xx_mercury_25_cmv2
+	update_242 6.70.0xx_mercury_27
 }
 
 update_bahamas()
@@ -120,9 +124,9 @@ update_bahamas()
 
 update_bahamas_all()
 {
-	update_bahamas 6.87.0xx
-	update_bahamas 6.87.0xx_3_GA5
-	update_bahamas 6.85.0xx_comtrend_CM
+#	update_bahamas 6.87.0xx
+#	update_bahamas 6.87.0xx_3_GA5
+#	update_bahamas 6.85.0xx_comtrend_CM
 	update_bahamas 6.87.0xx_cmv2
 }
 
