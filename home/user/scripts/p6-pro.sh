@@ -1067,6 +1067,24 @@ proc_package()
 		CL=CL2400
 		;;
 
+	cl2400_4.7.x_21_GA13)
+		export PACKAGE=cl2400
+		echo "Choosen module $PACKAGE"
+		export BRANCH=4.7.x_21_GA13
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2400
+		;;
+
+	cl2400_4.7.x_21_GA13_ocs)
+		export PACKAGE=cl2400
+		echo "Choosen module $PACKAGE"
+		export BRANCH=4.7.x_21_GA13_ocs
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2400
+		;;
+
 	tanami_plus)
 		echo "Choosen module $PACKAGE"
 		export BRANCH=6.70.0xx
@@ -1325,7 +1343,7 @@ post() {
 		imagesize=`ls -l $SDK/build/tmp/deploy/images/intelce/appcpuRootfs.img | awk '{print $5}'`
 	echo "Image size        : $imagesize/17825792"
 	fi
-	echo "CLR branches         :"
+	echo "CLR branches      :"
 	echo "${packages_clr[@]}" | tr ' ' '\n'
 	notify-send -i emblem-default "Image" "sdk.$sdk $short build done in $SECONDS seconds"
 	echo "This build took $SECONDS seconds"

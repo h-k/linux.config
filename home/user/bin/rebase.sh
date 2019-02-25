@@ -24,14 +24,15 @@ update_2400()
 
 	svnrebase ce_atm
 	svnrebase ce_atm_classifier
+	svnrebase ce_lite_atm
 	svnrebase ceclass
+	svnrebase ce_cluster
+	svnrebase ce_map
 
-	cd bp/net/mac80211
+	cd cl_drv
 
 	svnrebase ce_wrs
 	svnrebase celeno_cb
-	svnrebase ce_cluster
-	svnrebase ce_map
 	repos+="${1}\n"
 	echo "REPO $1: DONE SVN rebase"
 }
@@ -64,8 +65,9 @@ update_2330()
 
 update_2330_all()
 {
-	update_2330 5.2.x_mercury_25_new/CL2330
-	update_2330 5.2.x_mercury_25_new_18_GA5/CL2330
+#	update_2330 5.2.x_mercury_25_new/CL2330
+#	update_2330 5.2.x_mercury_25_new_18_GA5/CL2330
+	update_2330 5.2.x_mercury_27/CL2330
 }
 
 update_242()

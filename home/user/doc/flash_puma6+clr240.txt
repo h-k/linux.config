@@ -97,16 +97,16 @@ wlan.sa == 00:11:99:00:13:18
 
 
 wlan.sa == 00:1c:02:ca:22:a8 || wlan.sa == 00:11:99:00:13:18 || wlan.da == 00:1c:02:ca:22:a8 || wlan.da == 00:11:99:00:13:18
-##################################### wireshark #################################################
-################### category WNM, BSS Transition Request, 11v. Apple format###################################
+##################################### wireshark ################################
+################### category WNM, BSS Transition Request, 11v. Apple format#####
 wlan_mgt.fixed.category_code == 10
-################### category WNM, BSS Transition Request, 11v. Linux format###################################
+################### category WNM, BSS Transition Request, 11v. Linux format#####
 wlan.fixed.category_code == 10
-################### category WNM, Radio Measurement Request, 11k###################################
+################### category WNM, Radio Measurement Request, 11k, Apple format##
 wlan_mgt.fixed.category_code == 5
-#######################Spectrum nanagement,category code 0 ##################################################
+#######################Spectrum nanagement,category code 0 #####################
 wlan.fixed.category_code == 0
-#######################TPC request,action code 2 . Linux format##################################################
+#######################TPC request,action code 2 . Linux format#################
 wlan.fixed.action_code == 2
 wlan.fixed.action_code == 2 && wlan.addr == 40:b8:37:f7:24:3a
 wlan.fixed.action_code == 2 && wlan.addr == 00:09:B5:C7:AA:26
@@ -620,8 +620,6 @@ cd /tmp
 tftp -gl cl2400.tar 192.168.100.102
 tar xf cl2400.tar
 ############################## exports##########################################
-#####################tmp nvram#####################
-export LD_LIBRARY_PATH=/tmp/build/lib
 #######################ARRIS 4.7.x#############################
 export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
 export clr_cfg_dir_cl2400=/nvram/cl
@@ -630,6 +628,7 @@ export clr_install_dir_cl2400_24g=/tmp/build
 export clr_vlan_dir_cl2400=/nvram/cl
 export clr_vlan_dir_cl2400_24g=/nvram/cl_24g
 PATH=/tmp/build/bin:/tmp/build/scripts:$PATH
+export LD_LIBRARY_PATH=/tmp/build/lib
 ####################################################
 /tmp/build/scripts/ce_host.sh stop dual
 rmmod cfg80211 compat
@@ -646,6 +645,7 @@ rmmod cfg80211 compat
 
 ##################################################
 /tmp/build/scripts/ce_host.sh start dual
+/tmp/build/scripts/ce_host.sh restart dual
 ##################################################
 /tmp/build/scripts/ce_host.sh start 24g
 /tmp/build/scripts/ce_host.sh start
@@ -659,8 +659,9 @@ brctl addif brlan0 wlan0_1
 echo 8 > /proc/sys/kernel/printk
 echo 0 > /proc/sys/kernel/printk
 #####################acs channel select###############################################
-iw wlan1_0 cecli acs -c.36.2.1 ## set channel 36
-iw wlan1_0 cecli acs -c.149.2.1
+iw wlan1_0 cecli acs -c.36.2.1  ## set channel 36
+iw wlan1_0 cecli acs -c.149.2.1 ## set channel 149
+iw wlan0_0 cecli acs -c.1.2.1   ## set channel 1
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
 ####################netlink logger enable#########################################
@@ -899,6 +900,8 @@ cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:c1:c1:39 //to 5g ARRIS_P7
 cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:94:a0:03 //to 24g ARRIS_P7
 cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:9a:a4:06 //to 5g ARRIS_P7 paralellogram
 cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:0c:ee:84 //to 24g ARRIS_P7 paralellogram
+##########################Jio Phone#############################################
+c0:78:78:14:61:87
 ################################################################################
 wlan.addr == B0:DF:3A:00:7E:A6
 cmcli set dbg_steering 1
@@ -955,7 +958,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wi
 ce_phys_mac_addr=00:11:22:33:44:55
 ce_phys_mac_addr=00:1c:51:81:58:da
 ##################YOCTO SDK CL2400+CL2400#############################################
-stty cols 152 rows 40; newgrp
+stty cols 152 rows 40
 export clr_install_dir_cl2400=/cl2400
 export clr_cfg_dir=/nvram
 export clr_cfg_dir_cl2400=/nvram/cl2400
@@ -1066,10 +1069,11 @@ nvram_set rtdev CeCmMqttHost 192.168.100.145
 nvram_set 2860 dhcpClientEnabled 1
 nvram_set 2860 lan_ipaddr 192.168.100.8 # optional
 nvram_set 2860 wan_gateway 192.168.100.102
+nvram_set rtdev IEEE80211H 0
 ###########################check Bssid where repeater connected to##############
 iwpriv apclii0 show ApCliBssid
 ###############################WDS Repeater#####################################
-RootAP+WDS:
+#RootAP+WDS:
 ce_wds_en=1
 ce_udma_enabled=0
 ce_work_mode=0
@@ -1077,7 +1081,7 @@ ce_rxamsdu_en=0
 ce_txamsdu_en=0
 ci_env_det_flags=20
 
-Repeater+WDS:
+#Repeater+WDS:
 ce_wds_en=1
 ce_udma_enabled=0
 ce_work_mode=2
@@ -1086,10 +1090,46 @@ ce_txamsdu_en=0
 ci_env_det_flags=20
 ce_class_enable=0
 
-in /nvram/cl2400/cluster.cfg set:
+#in /nvram/cl2400/cluster.cfg set:
 CeCmWdsEn=1
 
-2.4G Default
+#2.4G Default
+#################wds cli########################################################
+echo 1 > /sys/module/CL2400_5g/parameters/wds_dbg
+echo 0 > /sys/module/CL2400_5g/parameters/wds_dbg
+iw dev wlan1_0 cecli wds -p                      - print WDS hash table;
+iw dev wlan1_0 cecli wds -n.[STA MAC].[HOST MAC] - add new entry into it;
+iw dev wlan1_0 cecli wds -d.[HOST MAC]           - delete new entry into it;
+iw dev wlan1_0 cecli wds -f                      - clear hash  table;
+######################wpa_supplicant############################################
+./wpa_supplicant -Dcl_nl80211 -B -P /tmp/wpa_supplicant.pid -f /tmp/wpa_supplicant.log -dd -c /tmp/wpa_supplicant_5g.conf -iwlan1_1
+wpa_cli -iwlan1_1 vendor_elem_add 13 dd05001c510101 
+wpa_cli -iwlan1_1 vendor_elem_add 14 dd05001c510101 
+wpa_cli -iwlan1_1 -a $clr_install_dir_cl2400/scripts/wpa_action.sh -B
+#exampe bgscan file
+cat /tmp/network1.bgscan
+wpa_supplicant-bgscan-learn
+BSS 00:1c:51:57:e0:70 5180
+BSS 00:1c:51:3c:40:50 5180
+NEIGHBOR 00:1c:51:57:e0:70 00:1c:51:3c:40:50
+NEIGHBOR 00:1c:51:3c:40:50 00:1c:51:57:e0:70
+################################################################################
+cat /tmp/wpa_supplicant_5g.conf
+ctrl_interface=/var/run/wpa_supplicant
+update_config=1
+#bgscan="simple:30:-25:100"
+bgscan="learn:30:-25:100:/tmp/network1.bgscan"
+passive_scan=1
+network={
+mode=0
+ssid="RootAP"
+auth_alg=OPEN
+key_mgmt=WPA-PSK
+psk="12345678"
+proto=RSN
+}
+#######################hostapd cmd##############################################
+/cl2400/bin/hostapd -B -P /tmp/hostapd-wlan1_0.pid /tmp/hostapd-wlan1_0.conf -f /tmp/hostapd-wlan1_0.log -ddd
 ################################################################################
 ###########set date for mqtt############
 date -s 061518252018.00
@@ -1174,6 +1214,41 @@ export clr_cfg_dir_cl2400='/nvram/cl2400'
 export clr_install_dir_cl2400='/tmp/cl2400'
 export PATH=/tmp/cl2400/scripts/:/tmp/cl2400/bin:$PATH
 export LD_LIBRARY_PATH=/tmp/cl2400/lib/:$LD_LIBRARY_PATH
+###########################WDS COMHEM###########################################
+#RootAP+WDS:
+ce_wds_en=1
+ce_udma_enabled=0
+ce_work_mode=0
+ce_rxamsdu_en=0         
+ce_txamsdu_en=0
+ci_env_det_flags=20
+
+#Repeater+WDS:
+ce_wds_en=1
+ce_udma_enabled=0
+ce_work_mode=2
+ce_rxamsdu_en=0         
+ce_txamsdu_en=0
+ci_env_det_flags=20
+ce_class_enable=0
+
+#in /nvram/cl2400/cluster.cfg set:
+CeCmWdsEn=1
+
+#2.4G Default
+#####Print WDS table############################################################
+iw dev wlan1_0 cecli wds -p                      - print WDS hash table;
+iw dev wlan1_0 cecli wds -n.[STA MAC].[HOST MAC] - add new entry into it;
+iw dev wlan1_0 cecli wds -d.[HOST MAC]           - delete new entry into it;
+iw dev wlan1_0 cecli wds -f                      - clear hash  table;
+########################firmware lmac###########################################
+ftp://oleksandr.savchenko@cernd/cernd/_Users/ilya/xtensa.tar.bz2
+You need to untar it into /home/trego/cl2400 and add the following line to ~/.flexlmrc:
+XTENSAD_LICENSE_FILE=27000@dc2.celeno.com
+
+Then you compile as follows:
+
+make lmac-asic-B0
 ####################BRCM3390 flashing the board#################################
 10. How to update brcm board to latest SDK image:
 
@@ -1363,6 +1438,77 @@ echo 1000 > /sys/module/MT7620_ap/parameters/g_iCmDebug
 ####################OFFCHANNEL#########################
 iwpriv wdev0 setcmd "offchannel 64 4 0 1 0 1"
 iwpriv wdev0 setcmd "offchannel 36 4 0 1 0 1"
+######################cl2400: 4.7.x: skb->cb[48] description####################
+skb->cb[0-7]   struct ieee80211_ra_tid
+skb->cb[24-38] CECLASS_CB_HDR_OFFSET downlink_cb_header_t
+skb->cb[35]    user priotity bit occupies 1 byte in CB
+u8 atm_queue_id = (ATM_PATTERN == skb->cb[39]) ? skb->cb[38] : 0xFF;
+skb->cb[40-43] Litepath tx indication flag
+######################cl2400: 4.7.x: tx path####################################
+[  127.061742]  [<d6593050>] ? ieee80211_subif_start_xmit+0x2c0/0x370 [CL2400_5g]
+[  127.069007]  [<c103ce7a>] ? local_bh_disable+0xa/0x10
+[  127.074088]  [<c15ee9d2>] ? _raw_read_lock_bh+0x12/0x20
+[  127.079350]  [<c103cf3b>] ? local_bh_enable_ip+0x3b/0x90
+[  127.084737]  [<d6637c94>] ? ce_tx_bss_isolation_check+0xe4/0x110 [CL2400_5g]
+[  127.091869]  [<d65934dd>] ? __ce_start_xmit+0x3dd/0x4b0 [CL2400_5g]
+[  127.098160]  [<c14d6e2a>] ? harmonize_features+0x2a/0x200
+[  127.103601]  [<d568cbda>] ? InfMacAddrCompare+0xa/0x10 [atmcls5g]
+[  127.109725]  [<d568a3eb>] ? acls_route_tx+0x9b/0x250 [atmcls5g]
+[  127.115681]  [<c14d736c>] ? dev_hard_start_xmit+0x28c/0x400
+[  127.121350]  [<c14ec484>] ? sch_direct_xmit+0x94/0x160
+[  127.126529]  [<c14d7672>] ? dev_queue_xmit+0x192/0x3b0
+[  127.131692]  [<c1596561>] ? br_dev_queue_push_xmit+0x41/0x60
+[  127.137389]  [<c1597167>] ? br_handle_frame_finish+0x117/0x350
+[  127.143241]  [<c15974db>] ? br_handle_frame+0x13b/0x1f0
+[  127.148506]  [<c15973a0>] ? br_handle_frame_finish+0x350/0x350
+[  127.154357]  [<c14d4023>] ? __netif_receive_skb_core+0x203/0x500
+[  127.160404]  [<c14d54ec>] ? netif_receive_skb+0x2c/0xa0
+[  127.165651]  [<c14d59c7>] ? napi_gro_receive+0x57/0x80
+[  127.170822]  [<c1382dc3>] ? e1000_clean_rx_irq+0x133/0x440
+[  127.176375]  [<c1381793>] ? e1000_clean+0x1f3/0x870
+[  127.181290]  [<c15ee80f>] ? _raw_spin_unlock_irqrestore+0xf/0x30
+[  127.187320]  [<c14caa0d>] ? skb_dequeue+0x3d/0x50
+[  127.192104]  [<d656d582>] ? cfg80211_debugfs_rdev_add+0x1c2/0x410 [CL2400_5g]
+[  127.199265]  [<c14d5ec1>] ? net_rx_action+0x81/0x140
+[  127.204265]  [<c103d6b3>] ? __do_softirq+0xa3/0x160
+[  127.209163]  [<c103d610>] ? remote_softirq_receive+0x20/0x20
+[  127.214843]  <IRQ>  [<c103d876>] ? irq_exit+0x66/0x90
+[  127.219923]  [<c100397a>] ? do_IRQ+0x3a/0xa0
+[  127.224276]  [<c1055780>] ? hrtimer_start+0x20/0x30
+[  127.229184]  [<c15efa69>] ? common_interrupt+0x29/0x2e
+[  127.234360]  [<c1009587>] ? default_idle+0x7/0x10
+[  127.239090]  [<c1009c96>] ? arch_cpu_idle+0x16/0x20
+[  127.244006]  [<c1071623>] ? cpu_startup_entry+0xc3/0x110
+[  127.249338]  [<c18439d0>] ? start_kernel+0x306/0x30b
+[  127.254340]  [<c1843516>] ? repair_env_string+0x4d/0x4d
+[  127.259584] [CL2400_5g][ieee80211_subif_start_xmit] skb [cf0e7b40]
+
+e1000_clean_rx_irq
+napi_gro_receive
+netif_receive_skb
+__netif_receive_skb_core
+linux-3.12.17/net/bridge/br_forward.c: br_handle_frame
+linux-3.12.17/net/bridge/br_forward.c: br_handle_frame_finish
+linux-3.12.17/net/bridge/br_forward.c: br_dev_queue_push_xmit
+kernel/bp/net/mac80211/tx.c: ce_start_xmit()
+kernel/bp/net/mac80211/tx.c: __ce_start_xmit()
+kernel/bp/net/mac80211/tx.c: ieee80211_subif_start_xmit()
+################################################################################
+br_dev_queue_push_xmit()
+if (!skb->cb[36])                                                
+	skb->cb[36] |= BIT(1);                                   
+else                                                             
+	printk("[%s] skb->cb[36] [0x%x]\n", __func__, skb->cb[36]);
+######################cl2400: 4.7.x: rx path####################################
+celeno_cb.c: do_netif_rx_ni
+             netif_rx_ni
+kernel/bp/net/mac80211/main.c:   ieee80211_tasklet_handler
+kernel/bp/net/mac80211/rx.c:     ieee80211_rx
+kernel/bp/net/mac80211/rx.c:     __ieee80211_rx_handle_packet
+kernel/bp/net/mac80211/rx.c:     ieee80211_prepare_and_rx_handle
+kernel/bp/net/mac80211/rx.c:     ieee80211_invoke_rx_handlers
+kernel/bp/net/mac80211/rx.c:     ieee80211_rx_handlers
+kernel/bp/net/mac80211/rx.c:     ieee80211_rx_handlers_result
 ##########  CBN, CBN_KDG   ##################
 #######CL2330##################
 brctl addbr br0
@@ -1840,6 +1986,7 @@ svn propedit svn:log --revprop -r43573 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r48916 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_cmv2/sdk
 svn propedit svn:log --revprop -r47187 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_25_cmv2/sdk
 svn propedit svn:log --revprop -r50358 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.2.0
+svn propedit svn:log --revprop -r52069 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_21_GA13
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
@@ -1852,6 +1999,7 @@ svn propedit svn:log --revprop -r40258 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r39539 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_CM
 svn propedit svn:log --revprop -r40307 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x
 svn propedit svn:log --revprop -r47061 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
+svn propedit svn:log --revprop -r52332 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_v2.0.0_21_GA13_ocs
 ######################Edit externals###################################
 
 svn propedit svn:externals .
@@ -2328,7 +2476,10 @@ Usage: classifier -{abcdefghijklmpqrtuvwxyzBS} [options]
 -S Show per client statisitics
 ####################classifier.?########################################
 
+######################### MCS indexes table#####################################
+http://mcsindex.com
 ####################wrs.?########################################
+
 iwpriv rai0 cecli wrs.-?
 rai0      cecli:wrs.-?
 # Driver specific options
@@ -2759,10 +2910,8 @@ indent -kr -ut -ts4 -l160 filename
 echo 0 > /sys/module/ap8x/parameters/g_iBsDebug
 ######################################################################################
 ###############################CBN v1.1 reset ARM################################################
-
 shell - cbn_hw_reset 1
 or  cbn_hw_reset
-
 ###############copy with status bar#######################################################################
 rsync --info=progress2
 ########################################################################################
