@@ -117,7 +117,6 @@ wlan.addr == 00:1C:51:88:99:88 //CBN v1.0 5g
 wlan.addr == 00:0C:43:26:88:44  //CBN v1.0 24g
 wlan.addr == 38:43:7d:60:0d:b5 //CBN v1.1 5g
 wlan.addr == 00:05:9E:2F:84:9E //Zinwell 24g
-
 ########################IP############################
 ip.addr == 192.168.0.0/16
 ip.addr == 192.168.0.1
@@ -125,12 +124,16 @@ ip.addr == 192.168.0.1
 wlan.fc.type_subtype == 0x0008
 wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1C:51:88:99:88
 wlan.fc.type_subtype == 0x0008 && wlan.addr == 8C:F5:A3:AC:55:B7
+#################authentication frame###########################################
+wlan.fc.type_subtype == 0x000b
+#################association frame##############################################
+wlan.fc.type_subtype == 0x0000
 ###########Sequence Number######
 wlan.seq == 1067
-##################TIM bit field#####################
+##################TIM bit field#################################################
 wlan.tim.bmapctl != 0x00
 wlan.tim.partial_virtual_bitmap != 0
-####################################################
+################################################################################
 
 CL242
 
@@ -1547,7 +1550,12 @@ route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
 shell> mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xCD 0xD7 nand
 mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xD4 0xD7 nand
 mfh add lan_eeprom 0x00 0x50 0xF1 0x66 0xD8 0xD7 nand
-mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xC0 0xD7 nand
+mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xDA 0xD7 nand
+mfh add lan_eeprom 0x00 0x50 0xF1 0x64 0xDC 0xD7 nand
+##################wrs help#############################
+iwpriv cei00 cecli wrs.-?
+iwpriv cei00 cecli wrs.-d
+iwpriv cei00 cecli wrs.-s.1.4 # 1 - wcid, 4 - per statistics
 ##################COMHEM MAC#############################
 S/N:613481720100038200000790
 #################
@@ -1580,7 +1588,10 @@ export clr_install_dir=/etc/Wireless/CLR260
 $clr_install_dir/ce_host.sh start 24g
 
 $clr_install_dir/nvram_set rtdev CeDriverAutoStart 0
-######################MAP##################################################
+################################################################################
+export PATH=$clr_install_dir/wireless_tools/usr/sbin${PATH+:}${PATH}
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wireless_tools/lib
+######################MAP######################################################
 #short guide how to test mapd agent and controller on host machine.
 
 #1. make
@@ -1972,9 +1983,11 @@ svn propget svn:log --revprop -r43686 http://moon/svn/celeno-swdb/target/branche
 svn propget svn:log --revprop -r30295 http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
 svn propget svn:log --revprop -r40022 http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_orig
 svn propget svn:log --revprop -r45610 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_25_new/CL2330
+svn propget svn:log --revprop -r52459 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
 svn propget svn:log --revprop -r47061 http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 svn propget svn:log --revprop -r50358 http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.2.0
 #######################  edit svn commit log message   ##################################
+svn propedit svn:log --revprop -r52460 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
 svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
 svn propedit svn:log --revprop -r46739 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
 svn propedit svn:log --revprop -r43603 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_18_GA5
@@ -2205,8 +2218,12 @@ echo "/tmp/core-%e-%s-%p" > /proc/sys/kernel/core_pattern
 ###########################################################
 
 iwpriv ra0 set Debug=3
-
-#########################ce_atm help#############################
+#############################CL2400 TX PATH#####################################
+iw wlan1_0 cecli txq -a //print tx stat queue
+iw wlan1_0 cecli txq -
+iw wlan1_0 cecli txq -r //reset tx stat queue
+echo 0x40 > /sys/modules/CL2400_5G/
+#############################ce_atm help########################################
  iwpriv atm24g cecli help
 atm24g    cecli:help
 #
@@ -2479,8 +2496,8 @@ Usage: classifier -{abcdefghijklmpqrtuvwxyzBS} [options]
 ######################### MCS indexes table#####################################
 http://mcsindex.com
 ####################wrs.?########################################
-
 iwpriv rai0 cecli wrs.-?
+iwpriv cei00 cecli wrs.-?
 rai0      cecli:wrs.-?
 # Driver specific options
 -A  - Display driver-specific station data.
@@ -2526,8 +2543,7 @@ Weighted Rate Selection mechanism: {abcbdefghilmnopqrstuvwxyzG}
 iwpriv rai0 cecli wrs.-f.1.0.8.2.1.1
 # [WRS] Station [1] was set to fixed mode - MCS[8], BW[2], NSS[1], GI[1]
 iwpriv rai0 cecli wrs.-f.1.0.7.2.1.0
-####################wrs.?########################################
-############################Magic SysRq####################################
+############################Magic SysRq#########################################
 echo "1" > /proc/sys/kernel/sysrq
 CTRL+A+F+'key'
 CTRL+A+F+H(help)
@@ -3237,4 +3253,17 @@ ssh alexander@gamma-server
 password:123456
 lxc exec r6-1-5-ga-alexander -- sudo -i -u alexander
 password:111111
+#########################wireshark build########################################
+https://github.com/wireshark/wireshark.git
+sudo apt install qt5-default -y
+sudo apt install qttools5-dev-tools -y
+sudo apt install qttools5-dev -y
+sudo apt install qtmultimedia5-dev -y
+sudo apt install libqt5svg5-dev -y
+
+cd wireshark
+mkdir build
+cd build
+cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=FALSE -DENABLE_KERBEROS:BOOL=FALSE ../
+make
 ################################################################################
