@@ -108,6 +108,8 @@ cl2400_pre() {
 	if [ "$sdktype" = "YOCTO" ] ; then
 		rm -rf ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/cl2400 || true
 		rm -rf ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/cl2400 || true
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		rm -rf ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/cl2400
 	fi
 
 	cd $CLR
@@ -120,16 +122,28 @@ cl2400_pre() {
 	cd celeno_clr_package_cl2400*
 
 	if [ "$sdktype" = "YOCTO" ] ; then
+		echo "build host_package YOCTO. Using ccache.."
 		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
 		export CCACHE_PATH=${SDK}/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux:$PATH
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		echo "build host_package YOCTO_r6.1.5. Using ccache.."
+		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
+		export CCACHE_PATH=${SDK}/build-intelce/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/:$PATH
+	else
+		echo "build host_package IntelCE. Using ccache.."
+		export CCACHE_PATH=$IntelCE_path/build_i686/i686-linux-elf/bin:/opt/buildroot-gcc342/bin:$PATH
 	fi
 
 	make
 
 	if [ "$sdktype" = "YOCTO" ] ; then
 		mkdir -p $SDK/build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/cl2400
-		cp -fr ./build/* $SDK/build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/cl2400/
+		cp -rf ./build/* $SDK/build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/cl2400/
+	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
+		mkdir -p $SDK/build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/cl2400
+		cp -rf ./build/* $SDK/build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/cl2400/
 	fi
+
 	cd $SDK
 }
 
@@ -181,12 +195,12 @@ cl242_pre() {
 		cd $SDK
 		rm -rf ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
 		mkdir -p ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
-		tar xvf ${CLR}/clr_package_release/$PACKAGE/*/celeno_clr_package_*_$PACKAGE_*/build/*/$PACKAGE"_"host_pkg-*-*.tar -C ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
+		tar xf ${CLR}/clr_package_release/$PACKAGE/*/celeno_clr_package_*_$PACKAGE_*/build/*/$PACKAGE"_"host_pkg-*-*.tar -C ./build/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
 	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
 		cd $SDK
 		rm -rf ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL || true
 		mkdir -p ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
-		tar xvf ${CLR}/clr_package_release/$PACKAGE/*/celeno_clr_package_*_$PACKAGE_*/build/*/$PACKAGE"_"host_pkg-*-*.tar -C ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
+		tar xf ${CLR}/clr_package_release/$PACKAGE/*/celeno_clr_package_*_$PACKAGE_*/build/*/$PACKAGE"_"host_pkg-*-*.tar -C ./build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway/etc/Wireless/$CL
 	else
 		tar xf build/$PLATFORM/$PACKAGE"_host_pkg"-$PLATFORM.tar -C $SDK
 		cd $SDK
@@ -440,6 +454,14 @@ proc_platform()
 		export PLATFORM=CBN_P6_YOCTO
 		export platform=cbn_p6_yocto
 		sdktype=YOCTO
+	;;
+
+	CBN_P6_YOCTO_r6.1.5) echo "Choosen platform $1: SDK puma6-r6.1.5-ga yocto"
+		export sdk=r6.1.5.yocto
+		export SDK=/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga
+		export PLATFORM=CBN_P6_YOCTO
+		export platform=cbn_p6_yocto
+		sdktype=YOCTO_r6.1.5
 	;;
 
 	CBN_P6_YOCTO_CM) echo "Choosen platform $1: SDK Intel-6.1.1.21 yocto"
@@ -735,6 +757,14 @@ proc_platform()
 		relink_sdk $SDK
 	;;
 
+	HAIER_r6.1.5) echo "Choosen platform $1: SDK puma6-r6.1.5-ga yocto"
+		export sdk=r6.1.5.yocto
+		export SDK=/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga
+		export PLATFORM=HAIER
+		export platform=haier
+		sdktype=YOCTO_r6.1.5
+	;;
+
 	CCN) echo "Choosen platform $1"
 		export sdk=0.5
 		export SDK=$SDKDIR/5.0.18/IntelCE-0.5.14491.347720
@@ -990,6 +1020,14 @@ proc_package()
 	cl2200)
 		echo "Choosen module $PACKAGE"
 		export BRANCH=6.84.0xx
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2200
+		;;
+
+	cl2200_4_GA6)
+		echo "Choosen module $PACKAGE"
+		export BRANCH=6.87.0xx_4_GA6
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL2200

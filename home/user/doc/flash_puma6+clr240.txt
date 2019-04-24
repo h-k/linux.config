@@ -590,6 +590,10 @@ arristi
 rf
 scan 0
 
+###############
+pies 0 - autoboot modules disabled
+pies 1 - autoboot modules enabled
+################
 Switch into pies 1 mode:
 Type: "nvm"
 Type: "dmp"
@@ -637,6 +641,7 @@ export LD_LIBRARY_PATH=/tmp/build/lib
 rmmod cfg80211 compat
 ##################static mac########################
 ce_phys_mac_addr=00:1c:51:9a:a4:06
+ce_phys_mac_addr=00:1c:51:8c:4a:d0
 #################################static mac ComHem##############################
 iw wlan1_0 e2p get mac
 iw wlan1_0 e2p set mac <xx:xx:xx:xx:xx:xx>
@@ -662,9 +667,11 @@ brctl addif brlan0 wlan0_1
 echo 8 > /proc/sys/kernel/printk
 echo 0 > /proc/sys/kernel/printk
 #####################acs channel select###############################################
+iw wlan1_0 cecli acs -d         ## ACS configuration
 iw wlan1_0 cecli acs -c.36.2.1  ## set channel 36
 iw wlan1_0 cecli acs -c.149.2.1 ## set channel 149
 iw wlan0_0 cecli acs -c.1.2.1   ## set channel 1
+iw wlan1_0 cecli acs -s         ## start ACS
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
 ####################netlink logger enable#########################################
@@ -692,6 +699,8 @@ set
 ip 192.168.100.102
 #fi AR01.02.009ish.R5.4.5_ENG.arrsimg
 fi arris-base.4.6.92.8.20.0.arrsimg  //SDK 7.1.1
+fi AR01.02.036ish.4.6.92.8.34.3.arrsimg //SDK 7.1.1
+fi AR01.02.037ish.R6.8.2.arrsimg //HP 4.7.x_12_GA14
 #or
 #fi AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
 #fi AR01.01.098.4.6.92.8.2.0.34XX.uefi.mono.arrsimg //SDK 7.0.1
@@ -709,15 +718,109 @@ download
 #WARNING! ARRIS header checking disabled.
 #And the "download" again.
 #Now, wait till board finished download and reboots itself.
-######################man############################################
+#errors
+#if you get error: "tftp: rcvmsgopt: Resource temporarily unavailable"
+#you need to restore default you board:
+#1. - Type the password:
+arristi
+#2. - Type:
+rf
+#3. - To disable docsis prints Type:
+scan 0
+#4. - Go to main menu by Type:
+/
+#5. - Go to nvram menu by Type:
+NVM
+#6. - to restore defaulte you board type:
+!resetdef
+#7. - wait a 2-3 minutes, if board does not reboots automaticaly then do it yourself
+#8. - repeat steps 1-5 to get to nvram menue
+#9. - set factory to one by type:
+!factory 1
+#10. - type:
+stmfg
+#11. - reset the board by type:
+!reset
+#now you should be able to load a new image on ARRIS boards
+######################AR01.02.037ish.R6.8.2.arrsimg, board TG3442############################################
+You can use the following to restore defaults:
+syscfg set factory_reset y
+syscfg commit
+reboot
+
+When the unit bootup you'll have the default configuration Arris use (make sure you use TG3442)
+You can get the nvram configuration by using:
+cfg_cl2400 show
+cfg_cl2400_24g show
+cfg_cl2400_24g get [param]
+cfg_cl2400_24g set [param]
+cfg_cl2400_24g commit
+######################man#######################################################
 http://moon/wiki/index.php/Update_Arris_3450_with_Arris_image
 http://moon/wiki/index.php/Cgm_sw_r7.0er7_-_RDKB_-_For_Arris
-#############softblock show, etc.######################
+#####################BRCM3390_(Askey)###########################################
+http://moon/wiki/index.php/BRCM3390_(Askey)
+#Configuration
+#This platform doesn't have an nvram directory. Instead the non-volatile directory is called data. Therefore in order to load the driver properly on this platform please use this export command:
+export clr_cfg_dir_cl2400=/data/cl2400
+export clr_cfg_dir_cl2400_24g=/data/cl2400_24g
+#Serial
+#Use baud rate 115200 8N1 (no flow control)
+#SDK
+#There are a few SDKs for this platform.
+#The common used one is OpenBFC17.4.
+#Others are OpenBFC17.2 and OpenBFC18.2 (newer than the other 2).
+#All of them can be found here: \\moon2\cernd\sw\_SDK_BRCM3390.
+#A fully configured 17.4 SDK can be found here: \\moon2\cernd\sw\_SpecialBuildsGL\FromAviad\sdk_OpenBFC17.4_fully_configured.tar.gz.
+#Just untar it and run compile-brcm.sh.
+#At the same directory you can find also the toolchain for compilation: \\moon2\cernd\sw\_SpecialBuildsGL\FromAviad\stbgcc-4.8-1.5.tar.bz2
+#Load Image
+#To load an image on the board take the files located here: \\moon2\cernd\sw\_SDK_BRCM3390\image_prod17.4_with_netxl and put them on a USB stick. Connect it to the board and plug it to power. It #should load the image automatically.
+#DO NOT PRESS ANY BUTTON OR PLUG THE BOARD OFF THE POWER AS LONG AS THE PROCESS IS NOT FINISHED
+#You know when it finished once you will be prompted to enter username and password.
+#Credentials
+#You should use the following username and password:
+################################################################################
+username: root
+password: Broadcom
+#####################BRCM3390 externals#########################################
+#Traffic accelerator
+#Broadcom use NETXL as their traffic accelerator (like UDMA on PUMA6 platforms).
+#In order to activate it, enable ce_fast_path_en in CL2400.dat(should be the default value).
+#When working with NETXL a master interface is created for each enabled BSS and the regular interface is enslaved to it. For example, wlan1_0 is enslaved to wlan1_0xl.
+#Pay attention that wlan1_0xl should be under the bridge (and not wlan1_0). Notice that ce_host.sh adds wlan1_0xl automatically to the bridge.
+#Configure NETXL
+#The following configuration should be done automatically if you loaded the above image, but in case it isn't do it yourself:
+insmod /lib/modules/3.14.28-Prod_17.4/extra/flowmgr_rfap/flowmgr_rfap.ko
+echo fap_config a b > /proc/driver/flowmgr/cmd
+echo fap_enable 1 > /proc/driver/flowmgr/cmd
+########################BRCM exports(/data/exports)#############################
+export clr_cfg_dir_cl2400_24g=/data/cl2400_24g
+export clr_cfg_dir_cl2400=/data/cl2400
+export clr_install_dir_cl2400=/tmp/build
+export clr_install_dir_cl2400_24g=/tmp/build
+export clr_vlan_dir_cl2400=/data/cl2400
+export clr_vlan_dir_cl2400_24g=/data/cl2400_24g
+PATH=/tmp/build/bin:/tmp/build/scripts:$PATH
+export LD_LIBRARY_PATH=/tmp/build/lib
+################################################################################
+. /data/exports
+stty cols 152 rows 40
+echo 8 > /proc/sys/kernel/printk
+ifconfig br0 192.168.100.2
+cd /tmp
+tftp -gl cl2400.tar 192.168.100.102
+tar xzf cl2400.tar
+./build/scripts/ce_host.sh start
+################################################################################
+iw dev wlan1_0 cecli dfs -d.1 # dfs debug enable
+iw dev wlan1_0 cecli dfs -p.2 # channel status
+#############softblock show, etc.###############################################
 iw dev wlan1_0 cecli sb -p.
 iwpriv wdev0 getcmd blacklist_show
-############################################
+################################################################################
 
-##############CL2330 Only######################
+##############CL2330 Only#######################################################
 export clr_cfg_dir_cl2330=/nvram
 export clr_install_dir_cl2330=/etc/Wireless/CL2330
 $clr_install_dir_cl2330/ce_host.sh start
@@ -903,8 +1006,13 @@ cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:c1:c1:39 //to 5g ARRIS_P7
 cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:94:a0:03 //to 24g ARRIS_P7
 cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:9a:a4:06 //to 5g ARRIS_P7 paralellogram
 cmcli set steer_dot11v AC:37:43:A3:E1:06 00:1c:51:0c:ee:84 //to 24g ARRIS_P7 paralellogram
+##########################steer Samsung EC:9B:F3:E8:63:45 ######################
+cmcli set steer_dot11v EC:9B:F3:E8:63:45 00:0C:43:76:52:58 // to 5g Comtrend3
+cmcli set steer_dot11v EC:9B:F3:E8:63:45 00:0C:43:76:22:28 // to 24g Comtrend3
 ##########################Jio Phone#############################################
 c0:78:78:14:61:87
+##########################JIO SDK###############################################
+http://moon/wiki/index.php/Jio_CL1870_SDK
 ################################################################################
 wlan.addr == B0:DF:3A:00:7E:A6
 cmcli set dbg_steering 1
@@ -1601,7 +1709,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH+:}$clr_install_dir/wi
 # Controller
 al_mac_addr=CC:CC:CC:CC:CC:CC
 l2_mac_addr=CC:CC:CC:33:33:33
-use_custom_l2_mac_addr=1
+use_custom_l2_mac_addr=0
 dbg_controller_mac_addr=DD:DD:DD:DD:DD:DD
 duplicate_1905_to_self=0
 iface_name=lo
@@ -1612,7 +1720,7 @@ do_not_check_hostapd=1
 # Agent
 al_mac_addr=AA:AA:AA:AA:AA:AA
 l2_mac_addr=AA:AA:AA:99:99:99
-use_custom_l2_mac_addr=1
+use_custom_l2_mac_addr=0
 dbg_controller_mac_addr=DD:DD:DD:DD:DD:DD
 duplicate_1905_to_self=0
 iface_name=lo
@@ -1623,7 +1731,69 @@ do_not_check_hostapd=1
 
 
 #3.0. Start module ce_map.ko
-###############ARRIS_P7############################
+###############ARRIS_P7#########################################################
+###############cross mapping table:#############################################
+Target Release 	Branch  	Internal 	Release date 	HP version 	DSP version
+5.3.5 		4.6.x_91_GA3 	26-Apr 		06-May 		4.6.91.6.8.0 	600.D.0/1
+5.3.6 		4.6.x_91_GA3 	26-Jun 	  			4.6.91.6.9.0 	600.D.0/1
+5.3.7 		4.6.x_91_GA3 	05-Jul 		19-Jul 		4.6.91.6.10.0 	600.D.0/1
+5.3.8 		4.6.x_91_GA3 	09-Jul 		26-Jul 		4.6.91.6.11.0 	600.D.3
+5.3.8.2 	4.6.x_91_GA3 	  			  	4.6.91.6.11.2 	600.D.3
+5.3.8.3 	4.6.x_91_GA3 	09-Jan 			  	4.6.91.6.11.3 	600.D.3
+5.4.5.1 	4.6.x_92_GA4 	11-Jun 		18-Jun	 	4.6.92.8.10.1_1 701.2.0/1
+5.4.6 		4.6.x_92_GA4 	14-Jun 		28-Jun 		4.6.92.8.12.0 	701.2.0/1
+5.4.7 		4.6.x_92_GA4 	28-Jun 		12-Jul 		4.6.92.8.13.0 	701.2.0/1
+5.4.8 		4.6.x_92_GA4 	12-Jul	 	26-Jul	 	4.6.92.8.14.0  	701.2.0/1
+5.4.9 		4.6.x_92_GA4 	26-Jul 		12-Aug 		4.6.92.8.15.0 	701.2.0/1
+5.4.9.1 	4.6.x_92_GA4 	05-Aug 	  			4.6.92.8.15.1  	701.3.0/1
+5.4.10 		4.6.x_92_GA4 	21-Aug 		31-Aug 		4.6.92.8.18.0  	701.3.0/1
+5.4.11 		4.6.x_92_GA4 	02-Sep 		16-Sep 		4.6.92.8.20.0 	701.3.0/1
+5.4.12 		4.6.x_92_GA4 	16-Sep 		30-Sep	 	4.6.92.8.21.0  	701.4.0
+5.4.13 		4.6.x_92_GA4 	04-Oct 		14-Oct 		4.6.92.8.23.0 	701.6.0
+5.4.14 		4.6.x_92_GA4 	14-Oct 		28-Oct 		4.6.92.8.24.0 	701.6.0
+5.4.15 		4.6.x_92_GA4 	29-Oct	 	11-Nov 		4.6.92.8.26.0 	701.6.0
+5.4.16 		4.6.x_92_GA4 	11-Nov 		25-Nov 		4.6.92.8.27.0 	701.6.0
+5.4.17 		4.6.x_92_GA4 	25-Nov 		09-Dec	 	4.6.92.8.28.0 	701.6.0
+5.4.17.1	4.6.x_92_GA4 	09-Dec 	 		 	4.6.92.8.29.0 	701.6.0
+5.4.17.2	4.6.x_92_GA4 	16-Dec 		23-Dec 		4.6.92.8.30.0 	701.6.0
+5.4.18 		4.6.x_92_GA4 	23-Dec 	  			4.6.92.8.31.0 	701.9.0
+5.4.18.1	4.6.x_92_GA4 	06-Jan 	  			4.6.92.8.31.1  	701.9.0
+5.4.18.2 	4.6.x_92_GA4 	13-Jan 		20-Jan
+5.4.19 		4.6.x_92_GA4 	20-Jan 	  			4.6.92.8.33.0 	701.A.0
+5.4.19.1 	4.6.x_92_GA4 	03-Feb 	  			4.6.92.8.33.2 	701.C.0
+5.4.19.2 	4.6.x_92_GA4 	10-Feb 		17-Feb 		4.6.92.8.33.3 	701.C.0
+5.4.20 		4.6.x_92_GA4 	17-Feb
+5.4.20.1 	4.6.x_92_GA4 	03-Mar
+5.4.20.2	4.6.x_92_GA4 	10-Mar 		17-Mar
+6.0.0 		4.7.x_13_GA6 	10-May 		07-Jun 		4.7.13.5.0.0 	700.D.1
+6.1.0 		4.7.x_12_GA7 	21-Jun 	  			4.7.15.2.0.0 	702.3.0
+6.1.1 		4.7.x_12_GA7 	05-Jul 	  			4.7.15.3.0.0 	702.5.0
+6.1.2 		4.7.x_12_GA7 	12-Jul 		19-Jul
+6.2.0 		4.7.x_12_GA8 	25-Jul 			  	4.7.16.4.0.0 	702.5.0
+6.2.1 		4.7.x_12_GA8 	05-Aug 			  	4.7.16.5.0.0 	702.5.0
+6.2.2 		4.7.x_12_GA8 	09-Aug 		16-Aug	 	4.7.16.6.0.0 	702.5.0
+6.3.0 		4.7.x_12_GA9 	19-Aug 	 		 	4.7.17.2.0.0 	703.0.0
+6.3.1 		4.7.x_12_GA9 	02-Sep 			  	4.7.17.3.0.0 	703.0.0
+6.3.2 		4.7.x_12_GA9 	09-Sep 		NA
+6.4.0 		4.7.x_12_GA10 	27-Sep 			  	4.7.18.1.0.0 	703.0.0
+6.4.1 		4.7.x_12_GA10 	14-Oct 			  	4.7.18.2.0.0  	703.0.0
+6.4.2 		4.7.x_12_GA10 	21-Oct 		28-Oct	 	4.7.18.3.0.0 	703.0.0
+6.5.0 		4.7.x_12_GA11 	28-Oct 	  			4.7.19.2.0.0 	703.1.0
+6.5.1 		4.7.x_12_GA11 	11-Nov 	  			4.7.19.3.0.0 	703.1.0
+6.5.2 		4.7.x_12_GA11 	18-Nov 		25-Nov
+6.6.0 		4.7.x_12_GA12 	25-Nov 	  			4.7.20.1.0.0 	703.3.0
+6.6.1 		4.7.x_12_GA12 	09-Dec 	  			4.7.20.2.0.0 	703.3.0
+6.6.2 		4.7.x_12_GA12 	16-Dec 		23-Dec 		4.7.20.6.0.0 	703.3.0
+6.7.0 		4.7.x_12_GA13 	23-Dec 	 		 	4.7.21.4.0.0 	704.1.0
+6.7.1 		4.7.x_12_GA13 	06-Jan 	 		 	4.7.21.5.0.0  	704.2.0
+6.7.2 		4.7.x_12_GA13 	13-Jan 		20-Jan		4.7.21.6.0.0  	704.2.0
+6.8.0 		4.7.x_22_GA14 	20-Jan 	 		 	4.7.22.2.0.0 	705.0.0
+6.8.1 		4.7.x_22_GA14 	03-Feb 	 		 	4.7.22.3.0.0 	705.0.0
+6.8.2 		4.7.x_22_GA14 	10-Feb 		17-Feb 		4.7.22.4.0.0 	705.0.0
+6.9.0 		4.7.x_22_GA15 	17-Feb
+6.9.1 		4.7.x_22_GA15 	03-Mar
+6.9.2 		4.7.x_22_GA15 	10-Mar 		17-Mar
+################################################################################
 stty cols 152 rows 40; newgrp
 echo 8 > /proc/sys/kernel/printk
 /cl2400/scripts/ce_host.sh stop dual
@@ -1635,6 +1805,7 @@ cd /tmp
 tftp -gl cl2400.tar 192.168.100.102
 tar xf cl2400.tar
 ###### exports ########################
+stty cols 152 rows 40;
 export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
 export clr_cfg_dir_cl2400=/nvram/cl
 export clr_install_dir_cl2400=/tmp/build
@@ -1690,9 +1861,9 @@ sudo rm -rf /tmp/mapd-agent*; sudo ./mapd -f mapd-agent.default.cfg -n
 mapd -f /nvram/cl2400/mapd-controller.default.cfg -b -c
 mapd -f /nvram/cl2400/mapd-agent.default.cfg -b
 ####send test 1905 RRM frame##################################
-mapcli test send_1905 8
-sudo mapcli/mapcli test custom_send_1905 8 00:50:F1:64:CE:D7 # Comhem bridge
-mapcli test custom_send_1905 8 8c:ec:4b:07:40:72 # PC p9p1
+sudo TO_CONTROLLER=1 mapcli/mapcli test send_1905 11 F8:2D:C0:28:FC:0A FF:FF:FF:FF:FF:FF 50:82:d5:61:49:96
+###################debug segfaults##############################################
+sudo rm -rf /tmp/mapd-controller*; sudo valgrind -v --leak-check=yes --leak-check=full --show-leak-kinds=all --track-origins=yes ./mapd -f mapd-controller.default.cfg -n -c
 ################### 1905 eth proto, beacon metrics Linux format#####
 ieee1905.tlv_type == 153
 eth.type == 0x893a
@@ -1992,7 +2163,7 @@ svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r46739 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER
 svn propedit svn:log --revprop -r43603 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_18_GA5
 svn propedit svn:log --revprop -r48644 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_v2.0.0_6_GA1
-svn propedit svn:log --revprop -r48837 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_v2.0.0
+svn propedit svn:log --revprop -r52873 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER_v2.0.0
 svn propedit svn:log --revprop -r41650 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_Comtrend_CM
 svn propedit svn:log --revprop -r46738 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
 svn propedit svn:log --revprop -r43573 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_3_GA5/sdk
@@ -2000,6 +2171,10 @@ svn propedit svn:log --revprop -r48916 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r47187 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_25_cmv2/sdk
 svn propedit svn:log --revprop -r50358 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.2.0
 svn propedit svn:log --revprop -r52069 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_21_GA13
+svn propedit svn:log --revprop -r52862 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_22_GA14
+svn propedit svn:log --revprop -r52862 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_23_GA15
+svn propedit svn:log --revprop -r52992 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_92_GA4
+svn propedit svn:log --revprop -r52993 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
@@ -2713,9 +2888,10 @@ NOTE: Never run fsck on a mounted partition!
 ###########################cleanump boot#########################################
 sudo dpkg --list 'linux-image*'|awk '{ if ($1=="ii") print $2}'|grep -v `uname -r`
 sudo apt-get purge linux-image-`YOUR OLD VERSION`
-#################################################################################
-
-############################4.6.x_CM/4.7.x compilation, in my PC #################################
+###########################bash tricks##########################################
+#################find only matches in *.c files#################################
+grep -irn "\bint8_t\b" *.c
+############################4.6.x_CM/4.7.x compilation, in my PC ###############
 sudo apt-get install nfs-kernel-server nfs-common
 sudo vi /etc/exports
 edit add:
@@ -2817,7 +2993,13 @@ cd ${HOME}/ccache/34xx_7.1.1/ ; \
 for i in $( (cd /export/dev-root/34xx_7.1.1/build-arrisatom/tmp/sysroots/x86_64-linux/usr/bin/core2-32-rdk-linux/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
-###################################ADD cgiweb to Yocto####################################
+############################ccache for BRCM_3390################################
+mkdir -p ${HOME}/ccache/brcm_3390/ ; \
+cd ${HOME}/ccache/brcm_3390/ ; \
+for i in $( (cd /opt/toolchain/stbgcc-4.8-1.5/bin ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+###################################ADD cgiweb to Yocto##########################
 ###Copy folder
 platformdb/CBN_P6_YOCTO_CL2330_CL242/__common__/Yocto/* to
 
@@ -3264,6 +3446,9 @@ sudo apt install libqt5svg5-dev -y
 cd wireshark
 mkdir build
 cd build
+################################gui wireshark###################################
+cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=TRUE -DENABLE_KERBEROS:BOOL=FALSE ../
+################################without gui wireshark###########################
 cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=FALSE -DENABLE_KERBEROS:BOOL=FALSE ../
 make
 ################################################################################
