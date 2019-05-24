@@ -672,6 +672,7 @@ iw wlan1_0 cecli acs -c.36.2.1  ## set channel 36
 iw wlan1_0 cecli acs -c.149.2.1 ## set channel 149
 iw wlan0_0 cecli acs -c.1.2.1   ## set channel 1
 iw wlan1_0 cecli acs -s         ## start ACS
+ce_host.sh stop
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
 ####################netlink logger enable#########################################
@@ -1011,8 +1012,48 @@ cmcli set steer_dot11v EC:9B:F3:E8:63:45 00:0C:43:76:52:58 // to 5g Comtrend3
 cmcli set steer_dot11v EC:9B:F3:E8:63:45 00:0C:43:76:22:28 // to 24g Comtrend3
 ##########################Jio Phone#############################################
 c0:78:78:14:61:87
-##########################JIO SDK###############################################
+##########################man JIO SDK###########################################
 http://moon/wiki/index.php/Jio_CL1870_SDK
+##########################man 1870 SDK##########################################
+http://moon/wiki/index.php/Create_external_SDK
+make cl1870 platform=CL2330_CL242 --check-symlink-times
+#########################Compiling External SDK for BoosterAP1##################
+svn export http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
+export VERSION=006.084.28.3
+vi ${VERSION}/sdk/Makefile
+SDK_CLASSES=cl1870
+make sdk platform=CL2330_CL242 SDK_NAME="CELENO-SDK-${VERSION}"
+##########################DeskAp work with CL1870######################################
+http://moon/wiki/index.php/Booster_1
+nvram_set rtdev CeChangeAffinity 0
+#######################DeskAp restore defaults#########################################s
+celeno_init renew rtdev /etc_ro/Wireless/CL242AP/CL242_ap_default
+celeno_init renew 2860 /etc_ro/Wireless/CL2330AP/CL2330_ap_default
+##########################show all svn externals in svn repo####################
+svn propget -R svn:externals . # show all externals
+
+CL2330:
+cfg http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330/platformdb/CBN_MERCURY_YOCTO/src/cfg/
+scripts http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330/cl2330_package/src/scripts
+
+CL242:
+scripts http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_27/sdk/cl242_package/src/scripts
+cfg http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_27/sdk/platformdb/cl242/__common__
+
+linux-2.6.36.x/drivers/net - http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_mercury_27/celeno_cb celeno_cb
+http://moon/svn/celeno-swdb/target/branches/CE_CLASS/CE_CLUSTER ce_cluster
+http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0_mercury_27/ceclass ceclass
+
+linux-2.6.36.x/drivers/net/wireless - ce_atm http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_mercury_27/ce_atm
+ce_atm_classifier http://moon/svn/celeno-swdb/target/branches/CE_ATM/2.0.0_mercury_27/ce_atm_classifier
+CL2330 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330/wlan-v7
+CL242 http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_27/sdk/linux-2.6.21.x/drivers/net/wireless/CL242
+
+linux-2.6.36.x/drivers/net/wireless/CL2200 - ce_wrs http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.0.0
+
+linux-2.6.36.x/drivers/net/wireless/CLR260 - ce_wrs -r 25007 http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.0.0
+
+user - hostapd-2.1 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330/hostapd-2.1-pmf
 ################################################################################
 wlan.addr == B0:DF:3A:00:7E:A6
 cmcli set dbg_steering 1
@@ -1862,6 +1903,7 @@ mapd -f /nvram/cl2400/mapd-controller.default.cfg -b -c
 mapd -f /nvram/cl2400/mapd-agent.default.cfg -b
 ####send test 1905 RRM frame##################################
 sudo TO_CONTROLLER=1 mapcli/mapcli test send_1905 11 F8:2D:C0:28:FC:0A FF:FF:FF:FF:FF:FF 50:82:d5:61:49:96
+TO_CONTROLLER=1 mapcli test send_1905 11 F8:2D:C0:28:FC:0A FF:FF:FF:FF:FF:FF 50:82:d5:61:49:96
 ###################debug segfaults##############################################
 sudo rm -rf /tmp/mapd-controller*; sudo valgrind -v --leak-check=yes --leak-check=full --show-leak-kinds=all --track-origins=yes ./mapd -f mapd-controller.default.cfg -n -c
 ################### 1905 eth proto, beacon metrics Linux format#####
@@ -1958,7 +2000,7 @@ $clr_install_dir/ce_host.sh start 24g
 
 
 brctl addbr br0
-ifconfig br0 192.168.101.2
+ifconfig br0 192.168.100.2
 vconfig add eth0 2
 ifconfig eth0.2 up
 ifconfig eth0 0.0.0.0
@@ -1974,7 +2016,6 @@ brctl addif br0 wdev0ap1
 brctl addif br0 wdev0ap2
 brctl addif br0 wdev0ap3
 route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
-
 ################# CL2400 + inic_cmdr ########################
 
 export clr_cfg_dir_cl2400=/nvram/cl2400
@@ -2157,6 +2198,8 @@ svn propget svn:log --revprop -r45610 http://moon/svn/celeno-swdb/target/branche
 svn propget svn:log --revprop -r52459 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
 svn propget svn:log --revprop -r47061 http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 svn propget svn:log --revprop -r50358 http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.2.0
+svn propget svn:log --revprop -r53616 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
+svn propget svn:log --revprop -r53494 http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
 #######################  edit svn commit log message   ##################################
 svn propedit svn:log --revprop -r52460 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
 svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
@@ -2174,7 +2217,10 @@ svn propedit svn:log --revprop -r52069 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r52862 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_22_GA14
 svn propedit svn:log --revprop -r52862 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_23_GA15
 svn propedit svn:log --revprop -r52992 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x_92_GA4
-svn propedit svn:log --revprop -r52993 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
+svn propedit svn:log --revprop -r53597 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
+svn propedit svn:log --revprop -r53494 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
+svn propedit svn:log --revprop -r53613 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
+svn propedit svn:log --revprop -r53617 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_27/sdk
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
@@ -3007,9 +3053,17 @@ platformdb/CBN_P6_YOCTO_CL2330_CL242/__common__/Yocto/* to
 
 ##Edit
 /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/conf/local.conf
-##Add lines
+############or for r6.1.5#######################################################
+cd /opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce
+source yocto/oe-init-build-env build-intelce
+bitbake uimage -c cleanall
+bitbake core-image-gateway
+bitbake uimage
+##Add lines to local.conf#####################################
+/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce/build/conf/local.conf
+###################################################
 CELENO_CGIWEB_PATH="/home/alexander/gitsvn/cgiweb"
-IMAGE_INSTALL_append = " cgiweb"
+IMAGE_INSTALL_append = " cgiweb wireless-tools"
 
 #################### Yocto + gdb #################################
 EXTRA_IMAGE_FEATURES += " tools-debug"

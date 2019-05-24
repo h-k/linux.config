@@ -1329,6 +1329,8 @@ make_uImage() {
 		cd $SDK
 
 		source yocto/oe-init-build-env build-intelce
+#		rm -rf build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/custom_targetFS_gateway
+#		rm -rf build-intelce/tmp/work/core2-32-poky-linux/uimage/1.0-r0/targetFS_gateway
 		bitbake uimage || exit 1
 		imagesize=`ls -l tmp/deploy/images/intelce/appcpuRootfs.img | awk '{print $5}'`
 		echo "Image size is $imagesize (max 17825792)" >&2
