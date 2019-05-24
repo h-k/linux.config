@@ -1026,7 +1026,7 @@ make sdk platform=CL2330_CL242 SDK_NAME="CELENO-SDK-${VERSION}"
 ##########################DeskAp work with CL1870######################################
 http://moon/wiki/index.php/Booster_1
 nvram_set rtdev CeChangeAffinity 0
-#######################DeskAp restore defaults#########################################s
+#######################DeskAp restore defaults CL2330_CL242#####################
 celeno_init renew rtdev /etc_ro/Wireless/CL242AP/CL242_ap_default
 celeno_init renew 2860 /etc_ro/Wireless/CL2330AP/CL2330_ap_default
 ##########################show all svn externals in svn repo####################
@@ -1873,7 +1873,6 @@ rmmod cfg80211 compat
 /tmp/build/scripts/ce_host.sh start
 ##################################################
 #brctl addif brlan0 nsgmii1
-brctl addif brlan0 wlan1_0
 brctl addif brlan0 wlan1_1
 brctl addif brlan0 wlan0_0
 brctl addif brlan0 wlan0_1

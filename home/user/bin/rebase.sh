@@ -154,6 +154,11 @@ do_deskap()
 	$2 ce_atm
 	$2 ce_atm_classifier
 	$2 CL2330
+	cd driver/linux
+	$2 celeno_cb
+	$2 ce_cluster
+	$2 ce_wrs
+
 	$2 CL242
 
 	cd CL2200
