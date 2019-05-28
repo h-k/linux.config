@@ -154,12 +154,16 @@ do_deskap()
 	$2 ce_atm
 	$2 ce_atm_classifier
 	$2 CL2330
-	cd driver/linux
+	cd CL2330/driver/linux
 	$2 celeno_cb
 	$2 ce_cluster
 	$2 ce_wrs
+	cd ../../..
 
 	$2 CL242
+	cd CL242
+	$2 ce_wrs
+	cd ..
 
 	cd CL2200
 	$2 ce_wrs
@@ -182,12 +186,6 @@ do_deskap()
 do_bahamas_all()
 {
 	do_bahamas 6.87.0xx_cmv2 $1
-}
-
-
-do_deskap()
-{
-	do_deskap $1 $2
 }
 
 do_deskap_all()
