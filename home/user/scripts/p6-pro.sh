@@ -918,6 +918,24 @@ proc_package()
 		CL=CL2330
 		;;
 
+	cl2330_26_freeze)
+		export PACKAGE=cl2330
+		echo "Choosen module $PACKAGE v26_freeze"
+		export BRANCH=5.2.x_mercury_26_freeze
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2330
+		;;
+
+	cl2330_26_freeze_dfs)
+		export PACKAGE=cl2330
+		echo "Choosen module $PACKAGE v26_freeze_dfs"
+		export BRANCH=5.2.x_mercury_26_freeze_dfs
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2330
+		;;
+
 	clr240|cl242)
 		echo "Choosen module $PACKAGE"
 		export BRANCH=6.70.0xx
@@ -983,6 +1001,24 @@ proc_package()
 		export PACKAGE=cl242
 		echo "Choosen module $PACKAGE cl242_27"
 		export BRANCH=6.70.0xx_mercury_27
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL242
+		;;
+
+	cl242_26_freeze)
+		export PACKAGE=cl242
+		echo "Choosen module $PACKAGE cl242_26_freeze"
+		export BRANCH=6.70.0xx_mercury_26_freeze
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL242
+		;;
+
+	cl242_26_freeze_dfs)
+		export PACKAGE=cl242
+		echo "Choosen module $PACKAGE cl242_26_freeze_dfs"
+		export BRANCH=6.70.0xx_mercury_26_freeze_dfs
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL242
@@ -1118,6 +1154,15 @@ proc_package()
 		export PACKAGE=cl2400
 		echo "Choosen module $PACKAGE"
 		export BRANCH=4.7.x_21_GA13_ocs
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2400
+		;;
+
+	cl2400_4.7.x_23_GA15)
+		export PACKAGE=cl2400
+		echo "Choosen module $PACKAGE"
+		export BRANCH=4.7.x_23_GA15
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL2400

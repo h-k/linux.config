@@ -601,7 +601,7 @@ Type: "pies 1" // set mode: 1-gateway, 0-bridge
 Type: "stm"    // save
 Type: "!reset"
 
-###############ATOM############################
+###############ARRIS ATOM############################
 stty cols 152 rows 40;
 echo 8 > /proc/sys/kernel/printk
 /cl2400/scripts/ce_host.sh stop dual
@@ -626,6 +626,7 @@ brctl addif br0 eth0.2
 cd /tmp
 tftp -gl cl2400.tar 192.168.100.102
 tar xf cl2400.tar
+. /nvram/exports
 ############################## exports##########################################
 #######################ARRIS 4.7.x#############################
 export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
@@ -672,6 +673,7 @@ iw wlan1_0 cecli acs -c.36.2.1  ## set channel 36
 iw wlan1_0 cecli acs -c.149.2.1 ## set channel 149
 iw wlan0_0 cecli acs -c.1.2.1   ## set channel 1
 iw wlan1_0 cecli acs -s         ## start ACS
+iw wlan0_0 cecli acs -b         ## per bss stat
 ce_host.sh stop
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
@@ -703,8 +705,8 @@ fi arris-base.4.6.92.8.20.0.arrsimg  //SDK 7.1.1
 fi AR01.02.036ish.4.6.92.8.34.3.arrsimg //SDK 7.1.1
 fi AR01.02.037ish.R6.8.2.arrsimg //HP 4.7.x_12_GA14
 #or
-#fi AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
-#fi AR01.01.098.4.6.92.8.2.0.34XX.uefi.mono.arrsimg //SDK 7.0.1
+fi AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
+fi AR01.01.098.4.6.92.8.2.0.34XX.uefi.mono.arrsimg //SDK 7.0.1
 #Return Status: 0
 #- Disable security
 #[ 8] Download>
@@ -812,8 +814,9 @@ ifconfig br0 192.168.100.2
 cd /tmp
 tftp -gl cl2400.tar 192.168.100.102
 tar xzf cl2400.tar
-./build/scripts/ce_host.sh start
+./build/scripts/ce_host.sh start dual
 ################################################################################
+iw dev wlan1_0 cecli dfs -d.0 # dfs debug disable
 iw dev wlan1_0 cecli dfs -d.1 # dfs debug enable
 iw dev wlan1_0 cecli dfs -p.2 # channel status
 #############softblock show, etc.###############################################
@@ -1019,9 +1022,12 @@ http://moon/wiki/index.php/Create_external_SDK
 make cl1870 platform=CL2330_CL242 --check-symlink-times
 #########################Compiling External SDK for BoosterAP1##################
 svn export http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
-export VERSION=006.084.28.3
-vi ${VERSION}/sdk/Makefile
+export VERSION=006.084.28.4
+vi ./Makefile
 SDK_CLASSES=cl1870
+#########Remove .svn dirctories##################
+find . -name .svn -type d -exec rm -rf {} +
+###################################################
 make sdk platform=CL2330_CL242 SDK_NAME="CELENO-SDK-${VERSION}"
 ##########################DeskAp work with CL1870######################################
 http://moon/wiki/index.php/Booster_1
@@ -2220,6 +2226,7 @@ svn propedit svn:log --revprop -r53597 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r53494 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
 svn propedit svn:log --revprop -r53613 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
 svn propedit svn:log --revprop -r53617 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_27/sdk
+svn propedit svn:log --revprop -r53883 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_4_GA6/sdk
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################

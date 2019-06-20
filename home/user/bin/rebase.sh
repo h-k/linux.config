@@ -185,7 +185,8 @@ do_deskap()
 
 do_bahamas_all()
 {
-	do_bahamas 6.87.0xx_cmv2 $1
+#	do_bahamas 6.87.0xx_cmv2 $1
+	do_bahamas 6.87.0xx_4_GA6 $1
 }
 
 do_deskap_all()
