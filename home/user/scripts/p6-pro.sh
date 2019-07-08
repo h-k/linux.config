@@ -521,7 +521,6 @@ proc_platform()
 
 	CBN_MERCURY_YOCTO_r6.1.5) echo "Choosen platform $1: SDK puma6-r6.1.5-ga yocto"
 		export sdk=r6.1.5.yocto
-		#export SDK=$SDKDIR/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga
 		export SDK=/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga
 		export platform=cbn_mercury
 		export PLATFORM=CBN_MERCURY_YOCTO

@@ -26,21 +26,21 @@ do_2400()
 	cd $SRC/$1
 	echo "REPO $1: START SVN $2.."
 	git svn rebase
-	$2 utils/clusterd
-	$2 utils/mapd
+#	$2 utils/clusterd
+#	$2 utils/mapd
 
 	cd kernel
 
-	$2 ce_atm
-	$2 ce_atm_classifier
-	$2 ce_lite_atm
+#	$2 ce_atm
+#	$2 ce_atm_classifier
+#	$2 ce_lite_atm
 	$2 ce_cluster
 	$2 ce_map
 
 	cd cl_drv
 
-	$2 ce_wrs
-	$2 celeno_cb
+#	$2 ce_wrs
+#	$2 celeno_cb
 	repos+="${1}\n"
 	echo "REPO $1: DONE SVN $2"
 }
@@ -85,6 +85,7 @@ do_242()
 	$2 celeno_cb
 	$2 ce_cluster
 	$2 ceclass
+	$2 ce_map
 
 	cd wireless
 	$2 ce_atm

@@ -627,6 +627,8 @@ cd /tmp
 tftp -gl cl2400.tar 192.168.100.102
 tar xf cl2400.tar
 . /nvram/exports
+/tmp/build/scripts/ce_host.sh start dual
+/tmp/build/scripts/ce_host.sh reload_hostapd 24g
 ############################## exports##########################################
 #######################ARRIS 4.7.x#############################
 export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
@@ -677,6 +679,13 @@ iw wlan0_0 cecli acs -b         ## per bss stat
 ce_host.sh stop
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
+######################ignore list###############################################
+iw wlan1_0 cecli il -a.d0:13:fd:4f:42:cd # add mac to ignore list
+iw wlan1_0 cecli tx -b.0 # disable beacons and probe responses
+iw wlan0_0 cecli tx -b.0 # disable beacons and probe responses
+iw dev wlan1_0 cecli tx -a.64:cc:2e:d8:98:38.3000 # add mac to collect_list, 3000 ms timeout
+iw dev wlan1_0 cecli tx -a.d0:13:fd:4f:42:cd.30000
+wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1c:51:f5:90:a7
 ####################netlink logger enable#########################################
 echo 1 > /sys/module/CL2400_5g/parameters/ce_wl_event_logger_en
 ce_netlink
@@ -3033,12 +3042,6 @@ cd ${HOME}/ccache/arris_34xx/ ; \
 for i in $( (cd /export/dev-root/arris_34xx/build-arrisatom/tmp/sysroots/x86_64-linux/usr/bin/core2-32-rdk-linux/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
-
-mkdir -p ${HOME}/ccache/arris_34xx/ ; \
-cd ${HOME}/ccache/arris_34xx/ ; \
-for i in $( (cd ${HOME}/gitsvn/SDK/ArrisP7/core2-32-rdk-linux/ ; ls * ) ) ; do \
-echo $i; ln -s /usr/bin/ccache $i ; \
-done
 #################################ccache for ARRIS_P7 yocto v2################################################################
 mkdir -p ${HOME}/ccache/34xx_7.1.1/ ; \
 cd ${HOME}/ccache/34xx_7.1.1/ ; \
@@ -3049,6 +3052,12 @@ done
 mkdir -p ${HOME}/ccache/brcm_3390/ ; \
 cd ${HOME}/ccache/brcm_3390/ ; \
 for i in $( (cd /opt/toolchain/stbgcc-4.8-1.5/bin ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+#################################ccache for Huawei##############################
+mkdir -p ${HOME}/ccache/huawei/ ; \
+cd ${HOME}/ccache/huawei/ ; \
+for i in $( (cd /export/dev-root/huawei_sdk/opt/RTOS/207.3.0/arm32A9le_4.4_ek_micro/gnu/bin/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
 ###################################ADD cgiweb to Yocto##########################
