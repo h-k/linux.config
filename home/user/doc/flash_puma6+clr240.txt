@@ -602,7 +602,7 @@ Type: "stm"    // save
 Type: "!reset"
 
 ###############ARRIS ATOM############################
-stty cols 152 rows 40;
+stty cols 152 rows 40;newgrp
 echo 8 > /proc/sys/kernel/printk
 /cl2400/scripts/ce_host.sh stop dual
 rmmod cfg80211 compat
@@ -629,6 +629,23 @@ tar xf cl2400.tar
 . /nvram/exports
 /tmp/build/scripts/ce_host.sh start dual
 /tmp/build/scripts/ce_host.sh reload_hostapd 24g
+/tmp/build/scripts/ce_host.sh start production # production mode
+/tmp/build/scripts/ce_host.sh update_hostapd # update /tmp/hostapd_wlan1_0.conf
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 2 # reconfigure bss2
+##################tx frames in production mode##################################
+iw wlan1_0 ATE stop
+iw wlan1_0 ATE start
+iw wlan1_0 ATE bw 0
+iw wlan1_0 ATE gi 0
+iw wlan1_0 ATE mcs 7
+iw wlan1_0 ATE mode 2
+iw wlan1_0 ATE txlen 1024
+iw wlan1_0 ATE txcnt 100
+iw wlan1_0 ATE channel 100
+iw wlan1_0 ATE ant 0
+iw wlan1_0 ATE TXFREQOFFSET 36
+iw wlan1_0 ATE pow 20 0 0 0
+iw wlan1_0 ATE txframe
 ############################## exports##########################################
 #######################ARRIS 4.7.x#############################
 export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
@@ -677,6 +694,11 @@ iw wlan0_0 cecli acs -c.1.2.1   ## set channel 1
 iw wlan1_0 cecli acs -s         ## start ACS
 iw wlan0_0 cecli acs -b         ## per bss stat
 ce_host.sh stop
+#####################wrs#######################################################
+iw dev wlan1_0 cecli wrs -f.0.0.8.2.0.1
+# [WRS] Station [0] was set to fixed rate - MCS[8], BW[2], NSS[1], GI[1]
+########################show mcs info for 0 Wcid################################
+iw dev wlan1_0 cecli wrs -s.0.15
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
 ######################ignore list###############################################
@@ -685,7 +707,18 @@ iw wlan1_0 cecli tx -b.0 # disable beacons and probe responses
 iw wlan0_0 cecli tx -b.0 # disable beacons and probe responses
 iw dev wlan1_0 cecli tx -a.64:cc:2e:d8:98:38.3000 # add mac to collect_list, 3000 ms timeout
 iw dev wlan1_0 cecli tx -a.d0:13:fd:4f:42:cd.30000
+iw dev wlan1_0 cecli tx -ac.0 # show stat for access category 0
+iw dev wlan1_0 cecli tx -s.1000 # start scan for 1000 milliseconds
+####################mcs#########################################################
+iw dev wlan1_0 cecli mcs -f.0.3.1.0.1 # [Mode Fix(1)/Auto(0)].[MCS].[BW].[NSS].[GI]
+##########################wireshark filer beacons###############################
 wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1c:51:f5:90:a7
+#######################hostapd: reconfigure per bss#############################
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure <bss_bitmask>
+#For example, reload configuration for BSS index: 0,1,3  at once (max BSS num = 8):
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 11
+#[ZY] Yes. 11 = [bits: 0000 1011] for BSS index: 0,1,3.
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 2 # reconfigure bss2
 ####################netlink logger enable#########################################
 echo 1 > /sys/module/CL2400_5g/parameters/ce_wl_event_logger_en
 ce_netlink
@@ -709,6 +742,8 @@ do
 #- Show the current settings : [ 5] Download>
 set
 ip 192.168.100.102
+//transportp 0 # TFTP
+//transportp 1 # HTTP
 #fi AR01.02.009ish.R5.4.5_ENG.arrsimg
 fi arris-base.4.6.92.8.20.0.arrsimg  //SDK 7.1.1
 fi AR01.02.036ish.4.6.92.8.34.3.arrsimg //SDK 7.1.1
@@ -743,7 +778,7 @@ scan 0
 /
 #5. - Go to nvram menu by Type:
 NVM
-#6. - to restore defaulte you board type:
+#6. - to restore default you board type:
 !resetdef
 #7. - wait a 2-3 minutes, if board does not reboots automaticaly then do it yourself
 #8. - repeat steps 1-5 to get to nvram menue
@@ -1170,8 +1205,15 @@ iw dev wlan1_0 cecli cls bs.-c # connected sta
 iw dev wlan1_0 cecli sb -p.1 # print blacklist
 ########################DSCPtoUP NVRAM##########################################
 ce_dscp_to_up0_7dec=0,3;8,5;16,5;24,1;32,1;40,0;48,2;56,2
-########################DSCPtoUP test with iperf################################
-iperf -c 192.168.100.117 -i1 -t1000 -p12345 -u -b 80k -S 224 # host
+########################DSCPtoUP test with iperf, for VO########################
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 80k -S 224 # host, (VO=0)
+########################DSCPtoUP test with iperf, for VI########################
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 80k -S 160 # host, (VI=1)
+########################DSCPtoUP test with iperf, for BK########################
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 80k -S 32 # host, (BK=3)
+########################DSCPtoUP test with iperf, for BE########################
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 80k -S 0 # host, (BE=2)
+
 iperf -s -i1 -p12345 -u # sta
 ########################DSCPtoUP, cmd iw########################################
 iw dev wlan1_0 cecli qos -s.? # will show set parameters for All BSS
@@ -1416,6 +1458,12 @@ XTENSAD_LICENSE_FILE=27000@dc2.celeno.com
 Then you compile as follows:
 
 make lmac-asic-B0
+#################################################################################
+xc copy xtensa xtensa-hk
+
+lxc start xtensa-hk
+
+lxc exec xtensa-hk -- sudo -i -u trego
 ####################BRCM3390 flashing the board#################################
 10. How to update brcm board to latest SDK image:
 
@@ -2777,6 +2825,7 @@ Weighted Rate Selection mechanism: {abcbdefghilmnopqrstuvwxyzG}
 -P  - print lut amsdu table
 ####################wrs.?########################################
 iwpriv rai0 cecli wrs.-f.1.0.8.2.1.1
+iw dev wdev1_0 cecli wrs.-f.0.0.8.2.1.1
 # [WRS] Station [1] was set to fixed mode - MCS[8], BW[2], NSS[1], GI[1]
 iwpriv rai0 cecli wrs.-f.1.0.7.2.1.0
 ############################Magic SysRq#########################################
@@ -3520,4 +3569,21 @@ cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=TRUE -DENABLE_KERBEROS
 ################################without gui wireshark###########################
 cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=FALSE -DENABLE_KERBEROS:BOOL=FALSE ../
 make
+############################cl2400 structs######################################
+struct ieee80211_sub_if_data *sdata = dev->priv;
+struct cl_vif *clvif = (struct cl_vif *)(dev->priv)->vif.drv_priv);
+
+struct ieee80211_sub_if_data *sdata;
+struct ieee80211_local *local = sdata->local;
+
+struct ieee80211_sub_if_data *local_to_sdata(struct ieee80211_local *local)
+{
+	return container_of(local, struct ieee80211_sub_if_data, local);
+}
+
+struct ieee80211_hw *hw;
+struct cl_hw *cl_hw = hw->priv;
+struct ieee80211_vif *vif;
+struct cl_vif *cl_vif = (struct cl_vif *)vif->drv_priv;
+
 ################################################################################
