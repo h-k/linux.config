@@ -20,6 +20,8 @@ cd celeno_clr_package_cl2400_HUMAX/
 #export PATH=/export/dev-root/huawei_sdk/opt/RTOS/207.3.0/arm32A9le_4.4_ek_micro/gnu/bin/:$PATH
 #sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = /home/alexander/ccache/huawei/arm-linux-musleabi-#' src/celeno.mk
 #export CCACHE_PATH=/export/dev-root/huawei_sdk/opt/RTOS/207.3.0/arm32A9le_4.4_ek_micro/gnu/bin:$PATH
+export YOCTO_DIR=/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce
+sed -i -e 's#/home/developer/Intel-6.1.1.21/r6.1.1-ga/build#'$YOCTO_DIR'#' src/celeno.mk
 
 make
 

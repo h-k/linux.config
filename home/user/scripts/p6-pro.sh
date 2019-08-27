@@ -129,6 +129,8 @@ cl2400_pre() {
 		echo "build host_package YOCTO_r6.1.5. Using ccache.."
 		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/work/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
 		export CCACHE_PATH=${SDK}/build-intelce/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/:$PATH
+		export YOCTO_DIR=/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce
+		sed -i -e 's#/home/developer/Intel-6.1.1.21/r6.1.1-ga/build#'$YOCTO_DIR'#' src/celeno.mk
 	else
 		echo "build host_package IntelCE. Using ccache.."
 		export CCACHE_PATH=$IntelCE_path/build_i686/i686-linux-elf/bin:/opt/buildroot-gcc342/bin:$PATH
@@ -1162,6 +1164,15 @@ proc_package()
 		export PACKAGE=cl2400
 		echo "Choosen module $PACKAGE"
 		export BRANCH=4.7.x_23_GA15
+		export CLR=$SRCDIR/$BRANCH
+		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
+		CL=CL2400
+		;;
+
+	cl2400_4.7.x_23_GA15_humax)
+		export PACKAGE=cl2400
+		echo "Choosen module $PACKAGE"
+		export BRANCH=4.7.x_23_GA15_humax
 		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL2400

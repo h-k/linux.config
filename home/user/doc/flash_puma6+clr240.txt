@@ -602,6 +602,9 @@ Type: "stm"    // save
 Type: "!reset"
 
 ###############ARRIS ATOM############################
+################remove printk `sh[13209]: AhncLog<src/gwMgrCommon.c:358>` when STA connected#####################
+dmcli eRT setv Device.X_ARRIS_COM_HNC.Enable bool false
+#####################################################
 stty cols 152 rows 40;newgrp
 echo 8 > /proc/sys/kernel/printk
 /cl2400/scripts/ce_host.sh stop dual
@@ -632,6 +635,11 @@ tar xf cl2400.tar
 /tmp/build/scripts/ce_host.sh start production # production mode
 /tmp/build/scripts/ce_host.sh update_hostapd # update /tmp/hostapd_wlan1_0.conf
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 2 # reconfigure bss2
+################################################################################
+nvram_set cl2400 ha_ssid1 5G_
+/tmp/build/scripts/ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+iw dev
 ##################tx frames in production mode##################################
 iw wlan1_0 ATE stop
 iw wlan1_0 ATE start
@@ -690,6 +698,8 @@ echo 0 > /proc/sys/kernel/printk
 iw wlan1_0 cecli acs -d         ## ACS configuration
 iw wlan1_0 cecli acs -c.36.2.1  ## set channel 36
 iw wlan1_0 cecli acs -c.149.2.1 ## set channel 149
+nvram_set cl2400 ha_channel 100
+iw wlan1_0 cecli acs -c.100.2.1 ## set channel 100
 iw wlan0_0 cecli acs -c.1.2.1   ## set channel 1
 iw wlan1_0 cecli acs -s         ## start ACS
 iw wlan0_0 cecli acs -b         ## per bss stat
@@ -708,10 +718,37 @@ iw wlan0_0 cecli tx -b.0 # disable beacons and probe responses
 iw dev wlan1_0 cecli tx -a.64:cc:2e:d8:98:38.3000 # add mac to collect_list, 3000 ms timeout
 iw dev wlan1_0 cecli tx -a.d0:13:fd:4f:42:cd.30000
 iw dev wlan1_0 cecli tx -ac.0 # show stat for access category 0
+#### AC_BK = 0 ##########
+#### AC_BE = 1 ##########
+#### AC_VI = 2 ##########
+#### AC_VO = 3 ##########
+#define CL_HWQ_BK                   0
+#define CL_HWQ_BE                   1
+#define CL_HWQ_VI                   2
+#define CL_HWQ_VO                   3
+#define CL_HWQ_BCN                  4
+
 iw dev wlan1_0 cecli tx -s.1000 # start scan for 1000 milliseconds
+################################################################################
+nvram_set cl2400 ha_channel 100
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+########################test DFS after reconfigure##############################
+1. Запускаем ce_host.sh start на ДФС канале
+2. Делаем детект радара
+iw dev wlan1_0 cecli dfs -f.1
+3. Оно переходит на 40 канал
+4. Меняем канал на другой ДФС
+5. делаем реконфигур
+nvram_set cl2400 ha_channel 64
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+iw dev wlan1_0 cecli dfs -p.1 # check
+6. Оно не должно делаться на канал, где был радар в течение 30 минут
 ####################mcs#########################################################
 iw dev wlan1_0 cecli mcs -f.0.3.1.0.1 # [Mode Fix(1)/Auto(0)].[MCS].[BW].[NSS].[GI]
 #######################Huawei board, how to#####################################
+# http://moon/wiki/index.php/Huawei_project
 #New Huawei board has no UART connection so it could be connected only via
 telnet 192.168.100.1
 
@@ -741,25 +778,78 @@ su
 
 #The board has no 'brctl' tool pre-installed so no traffic between host and client
 #But you can ping client from the board assigning IP address to wlan1_x.
+########################If kernel was crashed###################################
+Getlastinfo.sh
 ###########################alternate Huawei board###############################
+set timeout 255
+############disable auto boot####################################################
+set hardinfo value FT_WLAN_NO_BOOT_WIFI=1
+########################
+dmesg -n 8
+su
+
 cd /var/
 tftp -gl cl2400.tar 192.168.100.102
 tar xf cl2400.tar
 
-cd /mnt/jffs2/app/demo/
-. exports
+. /mnt/jffs2/exports
 
+/var/build/scripts/ce_host.sh start
+#######################SSID runtime change######################################
+nvram_set cl2400 ha_ssid1 H3
+/var/build/scripts/ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+iw dev
+/tmp/build/bin/hostapd -B -P /tmp/hostapd-wlan1_0.pid -t -f /tmp/hostapd-wlan1_0.log -d /tmp/hostapd-wlan1_0.conf
+##########################encryp, auth##########################################
+nvram_set cl2400 ha_auth_mode "SHARED;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "WEP;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+nvram_set cl2400 ce_wep_key0_1 1234567890123
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+
+nvram_set cl2400 ha_auth_mode "OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "NONE;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+
+nvram_set cl2400 ha_auth_mode "WPA2PSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "AES;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+##########################alternate quick encryption switch tests###############
+nvram_set cl2400 ha_auth_mode "SHARED;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "WEP;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+nvram_set cl2400 ha_wep_default_key "0;0;0;0;0;0;0;0"
+nvram_set cl2400 ce_wep_key0_1 aaaaaaaaaaaaa
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+
+nvram_set cl2400 ha_auth_mode "OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "NONE;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+
+nvram_set cl2400 ha_auth_mode "WPAPSKWPA2PSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "TKIPAES;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+nvram_set cl2400 ha_wpa_group_rekey "3600;0;0;0;0;0;0;0"
+nvram_set cl2400 ha_wps_state "2;0;0;0;0;0;0;0"
+nvram_set cl2400 ha_config_methods 9864
+nvram_set cl2400 ha_wpa_passphrase1 12345678
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+
+########################alternate config with disconnect########################
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 wps_config wifi_ssid WPA2PSK CCMP 12345678
+############################exports#############################################
 export cl2400_root=/var/build
 export clr_cfg_dir_cl2400=/mnt/jffs2/cl2400
-export clr_cfg_dir_cl2400_24g=/mnt/jffs2/cl2400_24g
 export clr_install_dir_cl2400=$cl2400_root
-export clr_install_dir_cl2400_24g=/var/build
 export clr_vlan_dir_cl2400=$clr_cfg_dir_cl2400
-export clr_vlan_dir_cl2400_24g=$clr_cfg_dir_cl2400_24g
 PATH=$cl2400_root/bin:$cl2400_root/scripts:$PATH
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$cl2400_root/lib
-dmesg -n 8
-su
+###################change ssid##################################################
+
 ##########################HUMAX#################################################
 #Console access:
 
@@ -784,21 +874,21 @@ ce_host.sh start triband
 
 #Load package from TFTP:
 
-#brctl addbr br0
+brctl addbr br0
 
-#brctl addif br0 eth0.0
-#brctl addif br0 eth1.0
-#brctl addif br0 eth2.0
-#brctl addif br0 eth3.0
-#brctl addif br0 eth4.0
+brctl addif br0 eth0.0
+brctl addif br0 eth1.0
+brctl addif br0 eth2.0
+brctl addif br0 eth3.0
+brctl addif br0 eth4.0
 
-#ifconfig eth0.0 0 up
-#ifconfig eth1.0 0 up
-#ifconfig eth2.0 0 up
-#ifconfig eth3.0 0 up
-#ifconfig eth4.0 0 up
+ifconfig eth0.0 0 up
+ifconfig eth1.0 0 up
+ifconfig eth2.0 0 up
+ifconfig eth3.0 0 up
+ifconfig eth4.0 0 up
 
-#ifconfig br0 192.168.1.1 up
+ifconfig br0 192.168.1.1 up
 
 #export clr_cfg_dir_cl2400='/data/nvram/cl2400/'
 #export clr_cfg_dir_cl2400_24g='/data/nvram/cl2400_24g/'
@@ -807,12 +897,11 @@ ce_host.sh start triband
 #export clr_install_dir_cl2400='/tmp/build'
 #export clr_install_dir_cl2400_5g_sec='/tmp/build'
 
-. /data/nvram/exports
-
 cd /tmp
 tftp -gr cl2400.tar 192.168.1.102
 tar xzf cl2400.tar
 
+. /data/nvram/exports
 /tmp/build/scripts/ce_host.sh start triband
 ################### Start WEB server:###########################################
 
@@ -832,7 +921,7 @@ ifconfig br0 hw ether $(cat /sys/class/net/wlan0_0/address | awk -F: '{prev="0x"
 #nvram_set cl2400_5g_sec ce_wds_en '1'
 #nvram_set cl2400_5g_sec ce_wds_eth_hdr_conv '1'
 #nvram_set cl2400_5g_sec ce_wds_bcast_filt_ageout '400'
-#nvram_set cl2400_5g_sec ce_wds_sta_host_ageout '5'
+#nvram_set cl2400_5g_sec ce_wds_sta_host_ageout '500'
 #ce_phys_mac_addr=00:1c:51:20:6c:0d
 
 #Configure repeater mode+agent (switch master to agent):
@@ -1200,14 +1289,25 @@ http://moon/wiki/index.php/Jio_CL1870_SDK
 ##########################man 1870 SDK##########################################
 http://moon/wiki/index.php/Create_external_SDK
 make cl1870 platform=CL2330_CL242 --check-symlink-times
+####################release 6.84.0xx_DeskAP_27##################################
+svn revert --recursive . # remove all diffs
+modify top_version
+# ~/gitsvn/svn_tools/svn.sh release cl1870
 #########################Compiling External SDK for BoosterAP1##################
 svn export http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
-export VERSION=006.084.28.4
+ce svn update 52528 # SDK 006.84.28.1
+cd sdk
+export VERSION=006.084.28.5
 vi ./Makefile
 SDK_CLASSES=cl1870
-#########Remove .svn dirctories##################
+make sdk platform=CL2330_CL242 SDK_NAME="CELENO-SDK-${VERSION}"
+#############################gettext issue######################################
+cd 6.84.0xx_DeskAP_27/sdk/lib/gettext-0.16.1
+svn revert -R .
+# try again###############################
+#################OR#############################################################
+svn co http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
 find . -name .svn -type d -exec rm -rf {} +
-###################################################
 make sdk platform=CL2330_CL242 SDK_NAME="CELENO-SDK-${VERSION}"
 ##########################DeskAp work with CL1870######################################
 http://moon/wiki/index.php/Booster_1
@@ -1595,11 +1695,18 @@ Then you compile as follows:
 
 make lmac-asic-B0
 #################################################################################
-xc copy xtensa xtensa-hk
+ssh alexander@gamma-server
+#lxc copy xtensa xtensa-hk
 
 lxc start xtensa-hk
 
 lxc exec xtensa-hk -- sudo -i -u trego
+rsync -ar --progress --exclude=.svn --exclude=.git -e ssh --delete-excluded alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/lmac_B0_4.7.x_23_GA15_Huawei .
+cd lmac_B0_4.7.x_23_GA15_Huawei/firmware
+make lmac-asic-B0 -j 6
+scp lmac/bin/lmacfw.bin.asic.B0 alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/firmware/B0/lmacfw.bin
+################printk in firmware##############################################
+CE_DEBUG_LOG_NO_FILTER("\n");
 ####################BRCM3390 flashing the board#################################
 10. How to update brcm board to latest SDK image:
 
@@ -2420,6 +2527,7 @@ svn propedit svn:log --revprop -r53494 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r53613 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
 svn propedit svn:log --revprop -r53617 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_27/sdk
 svn propedit svn:log --revprop -r53883 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_4_GA6/sdk
+svn propedit svn:log --revprop -r55042 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_23_GA15_Huawei
 ###########################Comtrend##############################################################
 svn propedit svn:log --revprop -r39532 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
 ###########################clusterd###############################################
@@ -3137,6 +3245,10 @@ sudo apt-get purge linux-image-`YOUR OLD VERSION`
 ###########################bash tricks##########################################
 #################find only matches in *.c files#################################
 grep -irn "\bint8_t\b" *.c
+################## list directory by size#######################################
+du -hs * | sort -hr
+#########################measure each line execution time#######################
+N=`date +%s%N`; export PS4='+[$(((`date +%s%N`-$N)/1000000))ms][${BASH_SOURCE}:${LINENO}]: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'; set -x;
 ############################4.6.x_CM/4.7.x compilation, in my PC ###############
 sudo apt-get install nfs-kernel-server nfs-common
 sudo vi /etc/exports
@@ -3254,10 +3366,21 @@ platformdb/CBN_P6_YOCTO_CL2330_CL242/__common__/Yocto/* to
 ##Edit
 /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/conf/local.conf
 ############or for r6.1.5#######################################################
-cd /opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce
+cd /opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga
 source yocto/oe-init-build-env build-intelce
-bitbake uimage -c cleanall
+bitbake uimage -c cleanall ## optional
 bitbake core-image-gateway
+bitbake uimage
+################################### build kernel######################
+Put file to opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/yocto/meta-intelce/recipes-kernel/linux/files/patches
+Add line to kernel_patches.scc
+rm -rf /opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce/tmp/work/intelce-poky-linux/linux-yocto-custom
+rm -rf /opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce/tmp/work/core2-32-poky-linux/uimage
+cd /opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/
+bitbake linux-yocto-custom -c cleansstate
+bitbake uimage -c cleansstate
+#bitbake linux-yocto-custom
+#bitbake core-image-gateway
 bitbake uimage
 ##Add lines to local.conf#####################################
 /opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce/build/conf/local.conf
@@ -3689,6 +3812,7 @@ ssh alexander@gamma-server
 password:123456
 lxc exec r6-1-5-ga-alexander -- sudo -i -u alexander
 password:111111
+#sudo mount -t nfs 172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei /home/alexander/4.7.x_23_GA15_Huawei
 #########################wireshark build########################################
 https://github.com/wireshark/wireshark.git
 sudo apt install qt5-default -y

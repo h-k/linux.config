@@ -12,6 +12,15 @@ svnrebase()
 	cd -
 }
 
+svnuprev()
+{
+	cd $1
+	echo "$1: up to rev $2 .."
+	svn up -r $2 .
+	echo "$1: up to rev $2 done"
+	cd -
+}
+
 git_reset()
 {
 	cd $1
@@ -137,51 +146,51 @@ do_deskap()
 	$2 .
 
 	cd CL2330
-	$2 cfg
-	$2 scripts
+	$2 cfg $3
+	$2 scripts $3
 	cd $SRC/$1
 
 	cd CL242
-	$2 cfg
-	$2 scripts
+	$2 cfg $3
+	$2 scripts $3
 	cd $SRC/$1
 
 	cd linux-2.6.36.x/drivers/net
-	$2 celeno_cb
-	$2 ce_cluster
-	$2 ceclass
+	$2 celeno_cb $3
+	$2 ce_cluster $3
+	$2 ceclass $3
 
 	cd wireless
-	$2 ce_atm
-	$2 ce_atm_classifier
-	$2 CL2330
+	$2 ce_atm $3
+	$2 ce_atm_classifier $3
+	$2 CL2330 $3
 	cd CL2330/driver/linux
-	$2 celeno_cb
-	$2 ce_cluster
-	$2 ce_wrs
+	$2 celeno_cb $3
+	$2 ce_cluster $3
+	$2 ce_wrs $3
 	cd ../../..
 
 	$2 CL242
 	cd CL242
-	$2 ce_wrs
+	$2 ce_wrs $3
 	cd ..
 
 	cd CL2200
-	$2 ce_wrs
+	$2 ce_wrs $3
 	cd ..
 
 	cd CLR260
-	$2 ce_wrs
+	$2 ce_wrs $3
 	cd ..
 
 	cd $SRC/$1
 	cd user
-	$2 hostapd-2.1
+	$2 hostapd-2.1 $3
 	cd $SRC/$1
 
 	repos+="${1}\n"
 
-	echo "REPO $1: DONE SVN $2"
+	echo "REPO $1: DONE SVN $2 $3"
 }
 
 do_bahamas_all()
@@ -192,7 +201,7 @@ do_bahamas_all()
 
 do_deskap_all()
 {
-	do_deskap 6.84.0xx_DeskAP_27 $1
+	do_deskap 6.84.0xx_DeskAP_27 $1 $2
 }
 
 update_all()
@@ -224,7 +233,7 @@ do_platform()
 		;;
 
 	deskap)
-		do_deskap_all $2
+		do_deskap_all $2 $3
 		;;
 
 	*)	;;
@@ -275,6 +284,10 @@ proc_short()
 
 	rebase)
 		do_platform $2 svnrebase
+		;;
+
+	uprev)
+		do_platform $2 svnuprev
 		;;
 
 	?)
