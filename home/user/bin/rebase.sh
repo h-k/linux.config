@@ -75,6 +75,7 @@ do_2330()
 	svnrebase celeno_cb
 	svnrebase ce_cluster
 	svnrebase ce_wrs
+	svnrebase ce_clouds
 	repos+="${1}\n"
 	echo "REPO $1: DONE SVN $2"
 }
@@ -95,6 +96,7 @@ do_242()
 	$2 ce_cluster
 	$2 ceclass
 	$2 ce_map
+	$2 ce_clouds
 
 	cd wireless
 	$2 ce_atm
@@ -136,9 +138,12 @@ do_bahamas()
 	echo "REPO $1: DONE SVN $2"
 }
 
+#1 - repo
+#2 - action
+#3 - revision
 do_deskap()
 {
-	echo "do_deskap: $1 $2"
+	echo "do_deskap: repo $1 action $2 revision $3"
 	cd $SRC/$1
 
 	echo "REPO $1: START SVN $2.."
@@ -201,6 +206,7 @@ do_bahamas_all()
 
 do_deskap_all()
 {
+	echo "do_deskap_all() 1=$1 2=$2 3=$s"
 	do_deskap 6.84.0xx_DeskAP_27 $1 $2
 }
 
@@ -233,6 +239,7 @@ do_platform()
 		;;
 
 	deskap)
+		echo "do_platform() 1=$1 2=$2 3=$3"
 		do_deskap_all $2 $3
 		;;
 

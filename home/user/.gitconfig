@@ -4,11 +4,10 @@
 	ui = auto
 [user]
 	name = Alexander Savchenko
-	email = oleksandr.savchenko@globallogic.com
+	email = oleksandr.savchenko@celeno.com
 [sendemail]
- from = "Alexander Savchenko <oleksandr.savchenko@globallogic.com>"
+ from = "Alexander Savchenko <oleksandr.savchenko@celeno.com>"
  thread = true
 [alias]
-	last = log -1 HEAD
 	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
 	lgr = log --color --reverse --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit

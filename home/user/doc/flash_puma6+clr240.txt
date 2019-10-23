@@ -111,6 +111,29 @@ wlan.fixed.action_code == 2
 wlan.fixed.action_code == 2 && wlan.addr == 40:b8:37:f7:24:3a
 wlan.fixed.action_code == 2 && wlan.addr == 00:09:B5:C7:AA:26
 wlan.fixed.action_code == 2 && wlan.addr == 00:05:9E:2F:82:9E
+###################Channel Switch Announcement, CSA#############################
+wlan.tag.number == 37
+######PLUME Channel switch, connect sta firts if you want to see CSA############
+iwscan cei00 push_radio_channel2 1 20 10 # 10 - chanel, 20 MHz, 11 - CSA
+iwscan cei00 push_radio_channel2 1 20 1
+iwscan wdev0 push_radio_channel2 64 20 10
+#########################plume_netlink##########################################
+group_set.0.0.0.1.3
+client_set.74:eb:80:95:73:a8.0.0.0.128.35.50.0.1
+client_set.7c:67:a2:55:6f:b8.0.0.0.128.35.50.0.1
+config_show
+config_test
+config_test_get
+config_test_set
+######################wireshark filter, assco, reassoc, etc
+auth                               deauth                            assoc response               assoc request                reassoc request
+((wlan.fc.type_subtype == 0x000b || wlan.fc.type_subtype == 0x000c || wlan.fc.type_subtype == 1 || wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 2) || eapol) 
+###########################fast git svn clone#####################################
+export url=`URL`
+export path=`PATH`
+first_rev="$(svn log -r 1:HEAD --stop-on-copy --limit 1 --stop-on-copy --xml "$url" | grep 'revision="[0-9]\+"' | head -n1 | sed 's/^.*revision="\([0-9]\+\)".*$/\1/')"
+git svn clone -r "$first_rev":HEAD "$url" "$path"
+###################PLUME########################################################
 ########CL242 24G###################
 wlan.addr == 38:43:7D:60:1B:0E
 wlan.addr == 00:1C:51:88:99:88 //CBN v1.0 5g
@@ -601,6 +624,7 @@ Type: "pies 1" // set mode: 1-gateway, 0-bridge
 Type: "stm"    // save
 Type: "!reset"
 
+wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1c:51:ce:b4:55
 ###############ARRIS ATOM############################
 ################remove printk `sh[13209]: AhncLog<src/gwMgrCommon.c:358>` when STA connected#####################
 dmcli eRT setv Device.X_ARRIS_COM_HNC.Enable bool false
@@ -616,6 +640,8 @@ rmmod cfg80211 compat
 #########################Download release#######################################
 ifconfig brlan0:factory down
 ifconfig brlan0 192.168.100.2
+#######################
+echo 0 > /proc/sys/kernel/printk
 #########################Comhem#################################################
 ifconfig eth0 0
 ifconfig eth0.4093:0 down
@@ -704,6 +730,41 @@ iw wlan0_0 cecli acs -c.1.2.1   ## set channel 1
 iw wlan1_0 cecli acs -s         ## start ACS
 iw wlan0_0 cecli acs -b         ## per bss stat
 ce_host.sh stop
+######################################MTU size##################################
+ip link set dev wlan1_0 mtu 1700
+######################################ARRIS ethernet MTU size###################
+ip link set dev nsgmii0 mtu 1650
+ip link set dev nrgmii2 mtu 1650
+ip link set dev nsgmii1 mtu 1650
+ip link set dev nmoca0 mtu 1650
+ip link set dev sw_1 mtu 1650
+ip link set dev sw_2 mtu 1650
+ip link set dev sw_3 mtu 1650
+ip link set dev sw_4 mtu 1650
+ip link set dev lbr0 mtu 1650
+ip link set dev wlan1_0 mtu 1650
+ip link set dev wlan1_1 mtu 1700
+ip link set dev wlan1_2 mtu 1700
+brctl addif brlan0 wlan1_1
+ip link set dev brlan0 mtu 1650
+###############CL2400 debug skb free############################################
+echo 10 > /sys/module/CL2400_5g/parameters/ce_rx_free_skb_dbg
+##################### ls bridge entries#########################################
+ls /sys/class/net/brlan0/brif/
+for i in $(cd /sys/class/net/brlan0/brif ; ls) ; do echo $i ; done
+################################
+iw wlan1_0 cecli mtu -m.1600 # set mtu to 1600
+iw wlan1_1 cecli mtu -m.1600
+iw wlan1_0 cecli mtu -a # get mtu for iface
+iw wlan1_1 cecli mtu -a
+
+#################################CBN 1.1########################################
+ip link set dev eth0 mtu 1700
+ip link set dev eth0.2 mtu 1700
+ip link set dev wlan1_0 mtu 1700
+ip link set dev cei00 mtu 1700
+#######################################PC MTU size##############################
+sudo ip link set dev p9p1 mtu 1600
 #####################wrs#######################################################
 iw dev wlan1_0 cecli wrs -f.0.0.8.2.0.1
 # [WRS] Station [0] was set to fixed rate - MCS[8], BW[2], NSS[1], GI[1]
@@ -714,9 +775,14 @@ iw dev wlan1_0 cecli sb -p.1 # print blaclist
 ######################ignore list###############################################
 iw wlan1_0 cecli il -a.d0:13:fd:4f:42:cd # add mac to ignore list
 iw wlan1_0 cecli tx -b.0 # disable beacons and probe responses
-iw wlan0_0 cecli tx -b.0 # disable beacons and probe responses
+iw wlan1_0 cecli tx -b.3 # enable beacons and probe responses
+iw wlan1_0 cecli tx -k.0 # disable beacon bkup
+iw wlan1_0 cecli tx -k.1 # enable beacon bkup
+########################REALTIME API###############################################
 iw dev wlan1_0 cecli tx -a.64:cc:2e:d8:98:38.3000 # add mac to collect_list, 3000 ms timeout
 iw dev wlan1_0 cecli tx -a.d0:13:fd:4f:42:cd.30000
+iw dev wlan1_0 cecli tx -a.f0:7d:68:71:41:33.30000
+
 iw dev wlan1_0 cecli tx -ac.0 # show stat for access category 0
 #### AC_BK = 0 ##########
 #### AC_BE = 1 ##########
@@ -729,6 +795,7 @@ iw dev wlan1_0 cecli tx -ac.0 # show stat for access category 0
 #define CL_HWQ_BCN                  4
 
 iw dev wlan1_0 cecli tx -s.1000 # start scan for 1000 milliseconds
+iw dev wlan1_0 cecli tx -s.30000
 ################################################################################
 nvram_set cl2400 ha_channel 100
 ce_host.sh update_hostapd
@@ -754,22 +821,27 @@ telnet 192.168.100.1
 
 Username: root
 Password: admin
+su
+shell
 
 #The board has no ssh installed, use tftp instead.
 #You can download s/w with:
-cd /mnt/jffs2/app/demo/
-rm /mnt/jffs2/app/demo/* -Rf
-tftp -g -r cl2400_host_pkg-4.7.25.0.0.4-Huawei.tar.bz2 192.168.100.15
-tar xf cl2400_host_pkg-4.7.25.0.0.4-Huawei.tar.bz2
+rm -rf /mnt/jffs2/app/cl2400_host_pkg/*
+cd /var
+tftp -gr cl2400.tar.bz2 192.168.100.102
+tar xf /var/cl2400.tar.bz2 -C /mnt/jffs2/app/cl2400_host_pkg/
 
 
 #Setting env vars:
-export cl2400_root=/mnt/jffs2/app/demo/cl2400_host_pkg-4.7.25.0.0.4-Huawei/cl2400
+export cl2400_root=/mnt/jffs2/app/cl2400_host_pkg/cl2400
 export clr_install_dir_cl2400=$cl2400_root
 export clr_cfg_dir_cl2400_24g=/mnt/jffs2/cl2400_24g
 export clr_cfg_dir_cl2400=/mnt/jffs2/cl2400
 export PATH=$cl2400_root/bin:$cl2400_root/scripts:$PATH
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$cl2400_root/lib
+################
+. /mnt/jffs2/exports
+###############
 dmesg -n 8
 su
 
@@ -785,16 +857,40 @@ set timeout 255
 ############disable auto boot####################################################
 set hardinfo value FT_WLAN_NO_BOOT_WIFI=1
 ########################
+su
+shell
 dmesg -n 8
 su
 
 cd /var/
-tftp -gl cl2400.tar 192.168.100.102
-tar xf cl2400.tar
+tftp -gl cl2400.tar.bz2 192.168.100.102
+tar xf cl2400.tar.bz2
 
-. /mnt/jffs2/exports
+#exports2
+export cl2400_root=/var/cl2400
+export clr_cfg_dir_cl2400=/mnt/jffs2/cl2400
+export clr_install_dir_cl2400=$cl2400_root
+export clr_vlan_dir_cl2400=$clr_cfg_dir_cl2400
+PATH=$cl2400_root/bin:$cl2400_root/scripts:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$cl2400_root/lib
+
+. /mnt/jffs2/exports2
 
 /var/build/scripts/ce_host.sh start
+##############configure bridge, SDK 176#########################################
+wlancmd ctpbind 4 # wlan1_0
+wlancmd ctpbind 5 # wlan1_1
+##################################################################################
+hostapd -B -P /tmp/hostapd-wlan1_0.pid /tmp/hostapd-wlan1_0.conf -t -f /tmp/hostapd-wlan1_0.log -d
+################################################################################
+iw dev wlan1_0 cecli igmp -s
+iw dev wlan1_0 cecli igmp -d.4
+####################Huawei GUI##################################################
+Username: telecomadmin
+Password: admintelecom
+
+Username: admin
+Password: @HuaweiHgw
 #######################SSID runtime change######################################
 nvram_set cl2400 ha_ssid1 H3
 /var/build/scripts/ce_host.sh update_hostapd
@@ -817,11 +913,18 @@ nvram_set cl2400 ha_auth_mode "WPA2PSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
 nvram_set cl2400 ha_encryp_type "AES;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
 ce_host.sh update_hostapd
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+nvram_set cl2400 ha_auth_mode "WPA2PSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "TKIP;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
 ##########################alternate quick encryption switch tests###############
 nvram_set cl2400 ha_auth_mode "SHARED;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
 nvram_set cl2400 ha_encryp_type "WEP;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
-nvram_set cl2400 ha_wep_default_key "0;0;0;0;0;0;0;0"
-nvram_set cl2400 ce_wep_key0_1 aaaaaaaaaaaaa
+nvram_set cl2400 ce_wep_key0_1 1234567890123
+nvram_set cl2400 ce_wep_key1_1 2234567890123
+nvram_set cl2400 ce_wep_key2_1 3234567890123
+nvram_set cl2400 ce_wep_key3_1 4234567890123
+nvram_set cl2400 ha_wep_default_key "0;1;1;1;1;1;1;1"
 ce_host.sh update_hostapd
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
 
@@ -839,8 +942,49 @@ nvram_set cl2400 ha_wpa_passphrase1 12345678
 ce_host.sh update_hostapd
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
 
+nvram_set cl2400 ha_auth_mode "WPAPSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "AES;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+
+nvram_set cl2400 ha_auth_mode "WPAPSKWPA2PSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "TKIPAES;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+
+nvram_set cl2400 ha_auth_mode "WPAPSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400 ha_encryp_type "TKIP;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
 ########################alternate config with disconnect########################
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 wps_config wifi_ssid WPA2PSK CCMP 12345678
+#############################################WPS##################################
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 wps_pbc
+################################  24G   ########################################
+nvram_set cl2400_24g ha_wpa_passphrase1 22345678
+ce_host.sh 24g update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan0_0 -i wlan0_0 reconfigure 1
+hostapd_cli -p /tmp/hostapd-wlan0_0 -i wlan0_0 wps_pbc
+
+nvram_set cl2400_24g ha_auth_mode "OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400_24g ha_encryp_type "NONE;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh 24g update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan0_0 -i wlan0_0 reconfigure 1
+
+nvram_set cl2400_24g ha_auth_mode "WPA2PSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400_24g ha_encryp_type "AES;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+ce_host.sh 24g update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan0_0 -i wlan0_0 reconfigure 1
+
+nvram_set cl2400_24g ha_auth_mode "SHARED;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
+nvram_set cl2400_24g ha_encryp_type "WEP;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
+nvram_set cl2400_24g ce_wep_key0_1 1234567890123
+nvram_set cl2400_24g ce_wep_key1_1 2234567890123
+nvram_set cl2400_24g ce_wep_key2_1 3234567890123
+nvram_set cl2400_24g ce_wep_key3_1 4234567890123
+nvram_set cl2400_24g ha_wep_default_key "0;1;1;1;1;1;1;1"
+ce_host.sh 24g update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan0_0 -i wlan0_0 reconfigure 1
 ############################exports#############################################
 export cl2400_root=/var/build
 export clr_cfg_dir_cl2400=/mnt/jffs2/cl2400
@@ -1356,7 +1500,7 @@ wlan.addr == 74:23:44:46:26:60 && wlan.fixed.category_code == 10//Meizu
 wlan.addr == 00:1C:51:B1:BA:98 && wlan.fc.type == 2
 ############RMM(RRM)##########################################################
 wlan.fixed.category_code == 5 || wlan.fixed.category_code == 10
-############wireshark filters###################################################
+############wirefinjeshark filters###################################################
 Frame type	 	Filter
 Management frames	wlan.fc.type == 0
 Control frames	 	wlan.fc.type == 1
@@ -1368,6 +1512,7 @@ Association response	wlan.fc.type_subtype == 1
 Probe request	 	wlan.fc.type_subtype == 4
 Probe response	 	wlan.fc.type_subtype == 5
 Beacon		 	wlan.fc.type_subtype == 8
+disassoc	 	wlan.fc.type_subtype == 10
 Authentication	 	wlan.fc.type_subtype == 11
 Deauthentication	wlan.fc.type_subtype == 12
 ####################fvpn########################################
@@ -2270,8 +2415,7 @@ iwpriv cei00 set DisConnectAllSta=2
 
 #PMF testing
 cat /etc/wpa_supplicant.conf
-ctrl_interface=/var/run/wpa_supplicant_wlan
-ctrl_interface_group=netdev
+ctrl_interface=/var/run/wpa_supplicant
 update_config=1
 
 network={
@@ -2284,11 +2428,25 @@ network={
         ieee80211w=2
 }
 
+#########build wpa_supplicant with PMF################
+sudo apt-get install libnl-genl-3-dev
+sudo apt-get install libpcap-dev
+###############edit hostapd/wpa_supplicant/.config##########
+cp defconfig .config
+CONFIG_LIBNL32=y
+CONFIG_IEEE80211W=y
+make
+######################################################
 sudo /sbin/wpa_supplicant -d -i wlan0 -c /etc/wpa_supplicant.conf
-
+#git clone git://w1.fi/srv/git/hostap.git
+#cd wlantest
+#make
+sudo ifconfig wlan1 down && sudo iwconfig wlan1 mode monitor && sudo ifconfig wlan1 up && sudo iwconfig wlan1 channel 36
+sudo ./wlantest -cd -i wlan1 -p 12345678
 sudo ./wlantest_cli
 #inject disassoc Unprotected STA <BSSID> <STA MAC>
-inject disassoc Unprotected STA 00:1C:54:0F:46:00 20:aa:4b:f8:6e:cc
+#inject disassoc Protected STA <BSSID> <STA MAC>
+inject disassoc unprotected STA 00:1C:54:0F:46:00 20:aa:4b:f8:6e:cc
 
 
 ################  CBN  CLR260 Alternate network  #############################
@@ -2541,6 +2699,7 @@ svn propedit svn:log --revprop -r39539 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r40307 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x
 svn propedit svn:log --revprop -r47061 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 svn propedit svn:log --revprop -r52332 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_v2.0.0_21_GA13_ocs
+svn propedit svn:log --revprop -r55791 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/ce_clouds
 ######################Edit externals###################################
 
 svn propedit svn:externals .
@@ -3847,3 +4006,20 @@ struct ieee80211_vif *vif;
 struct cl_vif *cl_vif = (struct cl_vif *)vif->drv_priv;
 
 ################################################################################
+sudo route add -net 224.0.0.0 netmask 240.0.0.0 dev enp2s0
+sudo ip route del 224.0.0.0/4
+
+vlc -vvv --repeat ~/Downloads/jellyfish-10-mbps-hd-h264.mkv --sout '#udp{mux=ts,dst=239.0.0.9}' --ttl 12
+
+server:	vlc -vvv --repeat /home/chepskaya/Downloads/Untitled/ahr/20Mbps-Formula_1_HD_Promotion_1080i.ts --sout '#udp{mux=ts,dst=239.0.0.9}' --ttl 12
+
+vlc -v ~/Downloads/0604.avi --sout '#standard{access=udp{ttl=15},mux=ts{tsid=22,pid-video=23,pid-audio=24,pid-pmt=25,use-key-frames},dst=239.0.0.9}'
+
+client:	udp://@239.0.0.9
+
+
+Settings to multicast testing traffic
+
+iperf -c 239.0.0.9 -u -T 32 -t 90 -i 1 -b 100M
+iperf -s -u -B 239.0.0.9 -i 1
+

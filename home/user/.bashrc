@@ -106,14 +106,8 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
-export CROSS_COMPILE=arm-eabi-
 export JAVA_HOME=/usr/java/default
-export PATH=$PATH:$HOME/bin/:$JAVA_HOME/bin:$HOME/opt/arm-eabi/bin:$HOME/opt/arm-2010q1/bin
-export MMC_BIN_REL_TABLET=${HOME}/work/mmc_release_tablet
-export MMC_BIN_REL_BLAZE=${HOME}/work/mmc_release_blaze
-export MMC_BIN_REL_OMAP5=${HOME}/work/mmc_omap5
-export MMC_BIN_REL_DRA7=${HOME}/work/mmc_dra7
+export PATH=$PATH:$HOME/bin/:$HOME/scripts/:$JAVA_HOME/bin
 export USER_REAL_NAME=Alexander Savchenko
-export TI_MAIL=oleksandr.savchenko@ti.com
 export TARGET_ARCH=arm
 export EDITOR=vim

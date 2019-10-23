@@ -417,7 +417,8 @@ usage()
 	echo "Ex.: ./p6-pro.sh Celeno_Demo_haier_cgiweb_android"
 	echo "Ex.: ./p6-pro.sh Celeno_Demo_cbn_cgiweb"
 	echo "Ex.: ./p6-pro.sh ARRIS"
-
+	echo "Ex.: ./p6-pro.sh cl2330_27 CBN_MERCURY_YOCTO_r6.1.5 cl242_27 CBN_INTELP6_YOCTO_r6.1.5"
+	echo "Ex.: ./p6-pro.sh cl2400_4.7.x_23_GA15 CBN_P6_YOCTO_r6.1.5 cl242_27 CBN_INTELP6_YOCTO_r6.1.5"
 }
 
 relink_sdk()
@@ -799,6 +800,7 @@ proc_platform()
 		echo "Ex.: ./p6-pro.sh Celeno_Demo_haier_cgiweb_android"
 		echo "Ex.: ./p6-pro.sh Celeno_Demo_cbn_cgiweb"
 		echo "Ex.: ./p6-pro.sh ARRIS"
+		echo "Ex.: ./p6-pro.sh cl2330_27 CBN_MERCURY_YOCTO_r6.1.5 cl242_27 CBN_INTELP6_YOCTO_r6.1.5"
 		exit
 		;;
 	esac
@@ -1186,7 +1188,7 @@ proc_package()
 		;;
 
 	*)	echo "Bad package name $1. Possible value: cl2330 clr240 cl242 clr260 clr250 cl2200"
-		echo "cl2330_25_new cl2400_4.6.x cl2400_4.6.x_92_GA4 cl2400_4.7.x"
+		echo "cl2330_25_new cl2330_27 cl242_27 cl2400_4.6.x cl2400_4.6.x_92_GA4 cl2400_4.7.x"
 		exit
 		;;
 	esac
