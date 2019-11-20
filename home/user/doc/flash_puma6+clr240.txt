@@ -876,6 +876,7 @@ wlancmd ctpbind 4
 #exports2
 export cl2400_root=/var/cl2400
 export clr_cfg_dir_cl2400=/mnt/jffs2/cl2400
+export clr_cfg_dir_cl2400_24g=/mnt/jffs2/cl2400_24g
 export clr_install_dir_cl2400=$cl2400_root
 export clr_vlan_dir_cl2400=$clr_cfg_dir_cl2400
 PATH=$cl2400_root/bin:$cl2400_root/scripts:$PATH
@@ -885,6 +886,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$cl2400_root/lib
 
 /var/build/scripts/ce_host.sh start
 ##############configure bridge, SDK 176#########################################
+wlancmd ctpbind 0 # wlan0_0
 wlancmd ctpbind 4 # wlan1_0
 wlancmd ctpbind 5 # wlan1_1
 ###############################add route for service multicast##################
@@ -1872,7 +1874,7 @@ lxc start xtensa-hk
 lxc exec xtensa-hk -- sudo -i -u trego
 rsync -ar --progress --exclude=.svn --exclude=.git -e ssh --delete-excluded alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/lmac_B0_4.7.x_23_GA15_Huawei .
 cd lmac_B0_4.7.x_23_GA15_Huawei/firmware
-make lmac-asic-B0 -j 6
+make clean ; make lmac-asic-B0 -j 6
 scp lmac/bin/lmacfw.bin.asic.B0 alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/firmware/B0/lmacfw.bin
 ################printk in firmware##############################################
 CE_DEBUG_LOG_NO_FILTER("\n");
@@ -2675,6 +2677,17 @@ http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_25_cmv2/
 http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_25_cmv2/sdk/
 http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx_cmv2/sdk/
 http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_cmv2/
+###########################svn repos 2019#######################################
+http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_23_GA15
+http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_23_GA15_Huawei
+http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x_23_GA15_humax
+http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27
+http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_26_freeze
+http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27/sdk
+http://moon/svn/celeno-swdb/target/branches/CL1860/6.85.0xx_comtrend_CM/sdk
+http://moon/svn/celeno-swdb/target/branches/CL1860/6.87.0xx/sdk
+http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx_mercury_27/sdk
+http://moon/svn/celeno-swdb/doc/SW_DOCS
 #######################  SVN tricks   ##################################
 #######################  show svn commit log message   ##################################
 svn propget svn:log --revprop -r30199 http://moon/svn/celeno-swdb/target/branches/CL1800/6.70.0xx/sdk
