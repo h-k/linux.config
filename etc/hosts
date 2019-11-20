@@ -1,0 +1,20 @@
+127.0.0.1	localhost
+127.0.1.1	alexander
+
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+192.168.110.253 moon
+192.168.110.252 moon2 cernd
+192.168.110.33  jupiter
+192.168.110.38  dc2.celeno.com
+192.168.110.74 reset-pwd-pc.celeno.com
+
+172.168.110.107 beta-server
+172.168.110.115 gamma-server
+172.168.110.102 devel
+172.168.110.122 beta
+172.168.110.123 gamma
+172.168.110.93  packman
