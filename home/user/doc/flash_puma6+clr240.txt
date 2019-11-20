@@ -656,14 +656,14 @@ cd /tmp
 tftp -gl cl2400.tar 192.168.100.102
 tar xf cl2400.tar
 . /nvram/exports
-/tmp/build/scripts/ce_host.sh start dual
-/tmp/build/scripts/ce_host.sh reload_hostapd 24g
-/tmp/build/scripts/ce_host.sh start production # production mode
-/tmp/build/scripts/ce_host.sh update_hostapd # update /tmp/hostapd_wlan1_0.conf
+/tmp/cl2400/scripts/ce_host.sh start dual
+/tmp/cl2400/scripts/ce_host.sh reload_hostapd 24g
+/tmp/cl2400/scripts/ce_host.sh start production # production mode
+/tmp/cl2400/scripts/ce_host.sh update_hostapd # update /tmp/hostapd_wlan1_0.conf
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 2 # reconfigure bss2
 ################################################################################
 nvram_set cl2400 ha_ssid1 5G_
-/tmp/build/scripts/ce_host.sh update_hostapd
+/tmp/cl2400/scripts/ce_host.sh update_hostapd
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
 iw dev
 ##################tx frames in production mode##################################
@@ -684,11 +684,11 @@ iw wlan1_0 ATE txframe
 #######################ARRIS 4.7.x#############################
 export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
 export clr_cfg_dir_cl2400=/nvram/cl
-export clr_install_dir_cl2400=/tmp/build
-export clr_install_dir_cl2400_24g=/tmp/build
+export clr_install_dir_cl2400=/tmp/cl2400
+export clr_install_dir_cl2400_24g=/tmp/cl2400
 export clr_vlan_dir_cl2400=/nvram/cl
 export clr_vlan_dir_cl2400_24g=/nvram/cl_24g
-PATH=/tmp/build/bin:/tmp/build/scripts:$PATH
+PATH=/tmp/cl2400/bin:/tmp/build/scripts:$PATH
 export LD_LIBRARY_PATH=/tmp/build/lib
 ####################################################
 /tmp/build/scripts/ce_host.sh stop dual
@@ -700,8 +700,8 @@ ce_phys_mac_addr=00:1c:51:8c:4a:d0
 iw wlan1_0 e2p get mac
 iw wlan1_0 e2p set mac <xx:xx:xx:xx:xx:xx>
 ################################################################################
-/tmp/build/scripts/ce_host.sh stop 24g
-/tmp/build/scripts/ce_host.sh stop
+/tmp/cl2400/scripts/ce_host.sh stop 24g
+/tmp/cl2400/scripts/ce_host.sh stop
 
 rmmod cfg80211 compat
 
@@ -733,20 +733,23 @@ ce_host.sh stop
 ######################################MTU size##################################
 ip link set dev wlan1_0 mtu 1700
 ######################################ARRIS ethernet MTU size###################
-ip link set dev nsgmii0 mtu 1650
-ip link set dev nrgmii2 mtu 1650
-ip link set dev nsgmii1 mtu 1650
-ip link set dev nmoca0 mtu 1650
-ip link set dev sw_1 mtu 1650
-ip link set dev sw_2 mtu 1650
-ip link set dev sw_3 mtu 1650
-ip link set dev sw_4 mtu 1650
-ip link set dev lbr0 mtu 1650
-ip link set dev wlan1_0 mtu 1650
-ip link set dev wlan1_1 mtu 1700
-ip link set dev wlan1_2 mtu 1700
+ifconfig nsgmii0 mtu 1544
+ifconfig nrgmii2 mtu 1544
+ifconfig nsgmii1 mtu 1544
+ifconfig nmoca0 mtu 1544
+ifconfig sw_1 mtu 1544
+ifconfig sw_2 mtu 1544
+ifconfig sw_3 mtu 1544
+ifconfig sw_4 mtu 1544
+ifconfig lbr0 mtu 1544
+ifconfig wlan0_0 mtu 1544
+ifconfig wlan0_0 mtu 1544
+ifconfig wlan1_0 mtu 1544
+ifconfig wlan1_1 mtu 1544
+ifconfig wlan1_2 mtu 1544
 brctl addif brlan0 wlan1_1
-ip link set dev brlan0 mtu 1650
+brctl addif brlan0 wlan1_2
+ifconfig brlan0 mtu 1544
 ###############CL2400 debug skb free############################################
 echo 10 > /sys/module/CL2400_5g/parameters/ce_rx_free_skb_dbg
 ##################### ls bridge entries#########################################
@@ -857,14 +860,18 @@ set timeout 255
 ############disable auto boot####################################################
 set hardinfo value FT_WLAN_NO_BOOT_WIFI=1
 ########################
-su
+su (admin)
 shell
-dmesg -n 8
-su
+su (admin)
 
+dmesg -n 8
+route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
 cd /var/
 tftp -gl cl2400.tar.bz2 192.168.100.102
 tar xf cl2400.tar.bz2
+. /mnt/jffs2/exports
+ce_host.sh start
+wlancmd ctpbind 4
 
 #exports2
 export cl2400_root=/var/cl2400
@@ -880,11 +887,21 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$cl2400_root/lib
 ##############configure bridge, SDK 176#########################################
 wlancmd ctpbind 4 # wlan1_0
 wlancmd ctpbind 5 # wlan1_1
+###############################add route for service multicast##################
+route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
 ##################################################################################
 hostapd -B -P /tmp/hostapd-wlan1_0.pid /tmp/hostapd-wlan1_0.conf -t -f /tmp/hostapd-wlan1_0.log -d
 ################################################################################
 iw dev wlan1_0 cecli igmp -s
 iw dev wlan1_0 cecli igmp -d.4
+##########################IGMP send query#######################################
+send_igmp_query -i wlan1_0 -d 224.0.0.1 -q3 -r 20
+#######################error/packet statistics in driver########################
+iw dev wlan1_0 cecli txq -a
+iw dev wlan1_0 cecli txq -m
+iw dev wlan1_0 cecli txq -d
+#######################error/packet statistics in FW########################
+iw dev wlan1_0 cecli fw_stats -r
 ####################Huawei GUI##################################################
 Username: telecomadmin
 Password: admintelecom
@@ -1111,8 +1128,8 @@ do
 #- Show the current settings : [ 5] Download>
 set
 ip 192.168.100.102
-//transportp 0 # TFTP
-//transportp 1 # HTTP
+transportp 0 # TFTP
+transportp 1 # HTTP
 #fi AR01.02.009ish.R5.4.5_ENG.arrsimg
 fi arris-base.4.6.92.8.20.0.arrsimg  //SDK 7.1.1
 fi AR01.02.036ish.4.6.92.8.34.3.arrsimg //SDK 7.1.1
@@ -1120,6 +1137,7 @@ fi AR01.02.037ish.R6.8.2.arrsimg //HP 4.7.x_12_GA14
 #or
 fi AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
 fi AR01.01.098.4.6.92.8.2.0.34XX.uefi.mono.arrsimg //SDK 7.0.1
+fi AR1.3.X_20190926_celeno_sdk7.2.NCS.34XX.mono.arrsimg //SDK 7.2.1
 #Return Status: 0
 #- Disable security
 #[ 8] Download>
@@ -1718,6 +1736,11 @@ key_mgmt=WPA-PSK
 psk="12345678"
 proto=RSN
 }
+###########################OPEN security conf####################################
+network={
+   ssid="my_ssid"
+   key_mgmt=NONE
+}
 #######################hostapd cmd##############################################
 /cl2400/bin/hostapd -B -P /tmp/hostapd-wlan1_0.pid /tmp/hostapd-wlan1_0.conf -f /tmp/hostapd-wlan1_0.log -ddd
 ################################################################################
@@ -1843,6 +1866,7 @@ make lmac-asic-B0
 ssh alexander@gamma-server
 #lxc copy xtensa xtensa-hk
 
+lxc list
 lxc start xtensa-hk
 
 lxc exec xtensa-hk -- sudo -i -u trego
@@ -2738,10 +2762,10 @@ cd ~/targetfs/cm-www-0.X
 git add -u
 git status
 git commit
-########## Auto fix whitespaces ###################
-git rebase --whitespace=fix
-
-# Create yocto source code archive
+########## Auto fix whitespaces ################################################
+git rebase --whitespace=fix HEAD~1
+################################################################################
+########## Create yocto source code archive
 (cd .. && tar czf cm-www-0.13.tar.gz --exclude-vcs cm-www-0.13  && cp -fv cm-www-0.13.tar.gz ~/QorIQ-SDK-V2.0-20160527-yocto/sources/meta-celeno/recipes-celeno/celeno/)
 # Clean old version archive and rename *.bb file (optional)
 cd ~/QorIQ-SDK-V2.0-20160527-yocto/sources/meta-celeno/recipes-celeno/celeno/
@@ -3230,7 +3254,7 @@ Weighted Rate Selection mechanism: {abcbdefghilmnopqrstuvwxyzG}
 iwpriv rai0 cecli wrs.-f.1.0.8.2.1.1
 iw dev wdev1_0 cecli wrs.-f.0.0.8.2.1.1
 # [WRS] Station [1] was set to fixed mode - MCS[8], BW[2], NSS[1], GI[1]
-iwpriv rai0 cecli wrs.-f.1.0.7.2.1.0
+iwpriv rai0 cecli wrs.-f.1.0.7.2.2.0
 ############################Magic SysRq#########################################
 echo "1" > /proc/sys/kernel/sysrq
 CTRL+A+F+'key'
@@ -3621,8 +3645,11 @@ pass GlobalLogic86
 
 First name : Celeno
 Second name: Celeno
-
+##################Win10 account##################################################
+login: Celeno
 pass: GlobalLogic86
+
+PIN:112233
 ####################celeno only kiev skype/google docs##########################
 celeno.kyiv@gmail.com
 pass: celeno.ky1v.the.be3t
@@ -3632,6 +3659,9 @@ pass:GlobalLogic86
 #########################Apple ID###############################################
 AppleID: gl.celeno.team@gmail.com
 Pass : GlobalLogic86
+###########################testrail readonly account############################
+L: public
+P: Qwerty1234
 ########################tips####################################################
 recuresive chmod for read/write for all in directory
 sudo chmod -R ugo+rw foldername
@@ -3972,6 +4002,7 @@ password:123456
 lxc exec r6-1-5-ga-alexander -- sudo -i -u alexander
 password:111111
 #sudo mount -t nfs 172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei /home/alexander/4.7.x_23_GA15_Huawei
+rsync -ar --progress --exclude=.svn --exclude=.git --delete --delete-excluded -e ssh alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/lmac_B0_4.7.x_23_GA15_Huawei ~/
 #########################wireshark build########################################
 https://github.com/wireshark/wireshark.git
 sudo apt install qt5-default -y

@@ -23,7 +23,8 @@ export CCACHE_PATH=/export/dev-root/34xx_7.1.1/build-arrisatom/tmp/sysroots/x86_
 
 make
 
-tar -czf cl2400.tar build
+mv build cl2400
+tar -czf cl2400.tar cl2400
 
 cp cl2400.tar /tftpboot/
 
