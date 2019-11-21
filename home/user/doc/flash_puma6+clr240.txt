@@ -3550,7 +3550,7 @@ done
 #################################ccache for Huawei##############################
 mkdir -p ${HOME}/ccache/huawei/ ; \
 cd ${HOME}/ccache/huawei/ ; \
-for i in $( (cd /export/dev-root/huawei_sdk/opt/RTOS/207.3.0/arm32A9le_4.4_ek_micro/gnu/bin/ ; ls * ) ) ; do \
+for i in $( (cd /export/dev-root/huawei_sdk/opt/RTOS/207.5.0/arm32A9le_4.4_ek_micro/gnu/bin/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
 ###################################ADD cgiweb to Yocto##########################

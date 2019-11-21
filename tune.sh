@@ -20,13 +20,13 @@ install_packages_x86()
 install_packages_x64()
 {
 	echo "install_packages_x86_64:"
-	sudo apt-get -y install gawk texlive-latex-extra pgf \
-	latex-xcolor latex-beamer git git-svn subversion g++ bison \
+	sudo apt-get -y install gawk texlive-latex-extra \
+	git git-svn subversion g++ bison \
 	flex gettext gperf libncurses5 texinfo fakeroot build-essential \
 	zlib1g-dev libncurses5-dev doxygen mc \
 	libstdc++5 wget diffstat unzip gcc-multilib \
 	chrpath socat libsdl1.2-dev curl unifdef iperf nfs-kernel-server nfs-common isc-dhcp-server atftpd \
-	vim exuberant-ctags automake libnl1 libnl-dev cscope openssh-server ccache minicom iotop nmap tftp\
+	vim exuberant-ctags automake cscope openssh-server ccache minicom iotop nmap tftp\
 	meld kate
 	echo "install_packages_x86_64: DONE"
 }
@@ -51,12 +51,13 @@ main() {
 
 	install_packages
 
-	cp -r $REPO/usr/* /usr/
+	sudo cp -r $REPO/usr/* /usr/
 
-	cp -r $REPO/home/user/.config/* $HOME/.config/
-	cp -r $REPO/home/user/.local/* $HOME/.local/
-	cp -r $REPO/home/user/.vim/* $HOME/.vim/
-	cp -r $REPO/home/user/.wireshark/* $HOME/.wireshark/
+	cp -r $REPO/home/user/* $HOME/
+#	cp -r $REPO/home/user/.config/* $HOME/.config/
+#	cp -r $REPO/home/user/.local/* $HOME/.local/
+#	cp -r $REPO/home/user/.vim/* $HOME/.vim/
+#	cp -r $REPO/home/user/.wireshark/* $HOME/.wireshark/
 
 	echo "Tuning done. This took $SECONDS seconds."
 }

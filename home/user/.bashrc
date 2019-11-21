@@ -109,5 +109,4 @@ fi
 export JAVA_HOME=/usr/java/default
 export PATH=$PATH:$HOME/bin/:$HOME/scripts/:$JAVA_HOME/bin
 export USER_REAL_NAME=Alexander Savchenko
-export TARGET_ARCH=arm
 export EDITOR=vim
