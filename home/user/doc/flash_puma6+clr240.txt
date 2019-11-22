@@ -1914,8 +1914,10 @@ Edit /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/conf/local.conf
     source yocto/oe-init-build-env
     bitbake uimage -c cleansstate
 ################################################################################
-    Rebuild uimage​
-
+    bitbake linux-yocto-custom
+    bitbake core-image-gateway
+    or
+    bitbake uimage
 
 The image will include gdb and strace binaries
 #########on board#######################################################################
@@ -3524,8 +3526,8 @@ cl2400_package/src/celeno.mk
 
 
 #################################ccache for yocto################################################################
-mkdir -p ${HOME}/work/yocto_p6_cache ; \
-cd ${HOME}/work/yocto_p6_ccache ; \
+mkdir -p ${HOME}/ccache/yocto_p6_ccache ; \
+cd ${HOME}/ccache/yocto_p6_ccache ; \
 for i in $( (cd /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
@@ -3609,10 +3611,11 @@ BBLAYERS += " /home/developer/Intel-6.1.1.21/r6.1.1-ga/yocto/meta-celeno"
 
 rm -rf /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/tmp/work/core2-32-poky-linux/uimage/
 cd /home/developer/Intel-6.1.1.21/r6.1.1-ga
+#####################full clean#################################################
 rm -rf build/tmp
 source yocto/oe-init-build-env
 bitbake core-image-gateway
-######################hotplug modules ######################################################################
+######################hotplug modules ##########################################
 ###оключить автостарт
 export clr_cfg_dir_cl2400=/nvram/cl2400
 export clr_install_dir_cl2400=/cl2400
@@ -3635,7 +3638,7 @@ export clr_install_dir_cl2400=/cl2400
 export PATH=$PATH:$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts
 ce_host.sh start
 
-##########################CTL steer iPhone7 ####################################################
+##########################CTL steer iPhone7 ####################################
 cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:0C:43:76:52:58
 cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:05:9E:2F:88:9E
 cmcli set steer_dot11v D0:C5:F3:E3:80:91 D8:B6:B7:2A:EC:44

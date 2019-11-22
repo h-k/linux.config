@@ -23,6 +23,8 @@ alias abort='git am --abort'
 alias stash='git stash'
 alias pop='git stash pop'
 alias gdiff='git diff'
+alias addu='git add -u'
+alias clone='git svn clone'
 alias externals='URL=`git svn info | grep URL | cut -d " " -f2` ; svn propget svn:externals $URL'
 alias lg="git log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
 alias lgr="git log --color --reverse --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
