@@ -24,8 +24,8 @@ export CCACHE_PATH=/export/dev-root/34xx_7.1.1/build-arrisatom/tmp/sysroots/x86_
 make
 
 mv build cl2400
-tar -czf cl2400.tar cl2400
+tar -czf cl2400.tar.bz2 cl2400
 
-cp cl2400.tar /tftpboot/
+cp cl2400.tar.bz2 /tftpboot/
 
 notify-send -i starred "host package $PACKAGE $BRANCH $PLATFORM" "build done in $SECONDS seconds"

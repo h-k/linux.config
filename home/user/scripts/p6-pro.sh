@@ -184,7 +184,7 @@ cl242_pre() {
 		export CCACHE_PATH=${SDK}/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux:$PATH
 	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
 		echo "build host_package YOCTO_r6.1.5. Using ccache.."
-		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/ccache/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
+		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/ccache/yocto_6.1.5_ccache/i586-poky-linux-#' src/celeno.mk
 		export CCACHE_PATH=${SDK}/build-intelce/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/:$PATH
 	else
 		echo "build host_package IntelCE. Using ccache.."
@@ -351,7 +351,7 @@ cl2330_pre() {
 		export CCACHE_PATH=${SDK}/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux:$PATH
 	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
 		echo "build host_package YOCTO_r6.1.5. Using ccache.."
-		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/ccache/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
+		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/ccache/yocto_6.1.5_ccache/i586-poky-linux-#' src/celeno.mk
 		export CCACHE_PATH=${SDK}/build-intelce/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/:$PATH
 	else
 		echo "build host_package non-yocto"

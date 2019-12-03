@@ -23,9 +23,8 @@ sed -i -e 's#^\s*DEF_CONF_LINUX_SRC\s*=.*$#DEF_CONF_LINUX_SRC = $(DEF_SDK_PATH)/
 export CCACHE_PATH=/export/dev-root/34xx_7.1.1/build-arrisatom/tmp/sysroots/x86_64-linux/usr/bin/core2-32-rdk-linux/:$PATH
 
 make
-
-tar -czf cl2400.tar build
-
-cp cl2400.tar /tftpboot/
+mv build cl2400
+tar -czf cl2400.tar.bz2 cl2400
+cp cl2400.tar.bz2 /tftpboot/
 
 notify-send -i starred "host package $PACKAGE $BRANCH $PLATFORM" "build done in $SECONDS seconds"

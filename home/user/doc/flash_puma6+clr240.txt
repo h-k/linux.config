@@ -481,6 +481,7 @@ portmap -l -i 192.168.254.253
 
 ###########
 clr_rev_rpc_wlan_config_server 192.168.254.253 &
+rpc_wlan_config_server 192.168.254.254 &
 
 iwpriv cei00 set ACLAddEntry="98:0c:82:e3:3f:35"
 
@@ -653,8 +654,8 @@ brctl delif br0 eth0
 brctl addif br0 eth0.2
 ################################################################################
 cd /tmp
-tftp -gl cl2400.tar 192.168.100.102
-tar xf cl2400.tar
+tftp -gl cl2400.tar.bz2 192.168.100.102
+tar xf cl2400.tar.bz2
 . /nvram/exports
 /tmp/cl2400/scripts/ce_host.sh start dual
 /tmp/cl2400/scripts/ce_host.sh reload_hostapd 24g
@@ -773,6 +774,7 @@ iw dev wlan1_0 cecli wrs -f.0.0.8.2.0.1
 # [WRS] Station [0] was set to fixed rate - MCS[8], BW[2], NSS[1], GI[1]
 ########################show mcs info for 0 Wcid################################
 iw dev wlan1_0 cecli wrs -s.0.15
+iwpriv cei00 cecli wrs.-s.1.15
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
 ######################ignore list###############################################
@@ -817,6 +819,12 @@ iw dev wlan1_0 cecli dfs -p.1 # check
 6. Оно не должно делаться на канал, где был радар в течение 30 минут
 ####################mcs#########################################################
 iw dev wlan1_0 cecli mcs -f.0.3.1.0.1 # [Mode Fix(1)/Auto(0)].[MCS].[BW].[NSS].[GI]
+
+###########################CL242 tmp############################################
+/nvram/exports
+export clr_rev_rpc_server_ip_address=192.168.254.254
+export clr_cfg_dir=/nvram
+export clr_install_dir=/tmp/cl242
 #######################Huawei board, how to#####################################
 # http://moon/wiki/index.php/Huawei_project
 #New Huawei board has no UART connection so it could be connected only via
@@ -3531,6 +3539,12 @@ cd ${HOME}/ccache/yocto_p6_ccache ; \
 for i in $( (cd /home/developer/Intel-6.1.1.21/r6.1.1-ga/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
+#################################ccache for yocto 6.1.5################################################################
+mkdir -p ${HOME}/ccache/yocto_6.1.5_ccache ; \
+cd ${HOME}/ccache/yocto_6.1.5_ccache ; \
+for i in $( (cd /opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/ ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
 #################################ccache for ARRIS_P7 yocto################################################################
 mkdir -p ${HOME}/ccache/arris_34xx/ ; \
 cd ${HOME}/ccache/arris_34xx/ ; \
@@ -3678,6 +3692,22 @@ Pass : GlobalLogic86
 ###########################testrail readonly account############################
 L: public
 P: Qwerty1234
+############################celeno mail##########################################
+oleksandr.savchenko@celeno.com
+###############POP Settings:#################
+Disabled
+###############IMAP Settings:#################
+Server name: outlook.office365.com
+Port: 993
+Encryption method: TLS
+###############SMTP Settings#####################################################
+Server name: smtp.office365.com
+Port: 587
+Encryption method: STARTTLS
+###########################Test Rail############################################
+https://celeno.testrail.io/index.php?/cases/view/1366
+login: svpetrov@gmail.com
+passw: Qwerty1234
 ########################tips####################################################
 recuresive chmod for read/write for all in directory
 sudo chmod -R ugo+rw foldername

@@ -35,18 +35,19 @@ do_2400()
 	cd $SRC/$1
 	echo "REPO $1: START SVN $2.."
 	git svn rebase
+	$2 ce_clouds
 #	$2 utils/clusterd
 #	$2 utils/mapd
 
-	cd kernel
+#	cd kernel
 
 #	$2 ce_atm
 #	$2 ce_atm_classifier
 #	$2 ce_lite_atm
-	$2 ce_cluster
-	$2 ce_map
+#	$2 ce_cluster
+#	$2 ce_map
 
-	cd cl_drv
+#	cd cl_drv
 
 #	$2 ce_wrs
 #	$2 celeno_cb
@@ -56,7 +57,8 @@ do_2400()
 
 do_2400_all()
 {
-	do_2400 4.7.x $1
+#	do_2400 4.7.x $1
+	do_2400 4.7.x_23_GA15 $1
 }
 
 do_2330()
@@ -69,13 +71,13 @@ do_2330()
 	svnrebase ce_atm_classifier
 	svnrebase ceclass
 	svnrebase clusterd
+	svnrebase ce_clouds
 
 	cd wlan-v7/driver/linux
 
 	svnrebase celeno_cb
 	svnrebase ce_cluster
 	svnrebase ce_wrs
-	svnrebase ce_clouds
 	repos+="${1}\n"
 	echo "REPO $1: DONE SVN $2"
 }
