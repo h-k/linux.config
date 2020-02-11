@@ -14,4 +14,4 @@ sudo apt-get install gawk texlive-latex-extra pgf \
     zlib1g-dev libncurses5-dev doxygen mc \
     libstdc++5 wget diffstat unzip gcc-multilib   \
     chrpath socat libsdl1.2-dev curl unifdef \
-    vim exuberant-ctags automake libnl1 libnl-dev cscope openssh-server ccache
+    vim exuberant-ctags automake libnl1 libnl-dev cscope openssh-server ccache libexpat1-dev

@@ -113,10 +113,104 @@ wlan.fixed.action_code == 2 && wlan.addr == 00:09:B5:C7:AA:26
 wlan.fixed.action_code == 2 && wlan.addr == 00:05:9E:2F:82:9E
 ###################Channel Switch Announcement, CSA#############################
 wlan.tag.number == 37
+###################g_iFirmwareStuck CL2330, CL242###############################
+http://moon/wiki/index.php/Watchdog_for_CL2330_on_PUMA6
+nvram: CeNlEn=1
+echo 1 > /sys/module/ap8x/parameters/g_iFirmwareStuck
+echo 1 > /sys/module/mt7603e_ap/parameters/g_iFirmwareStuck
 ######PLUME Channel switch, connect sta firts if you want to see CSA############
 iwscan cei00 push_radio_channel2 1 20 10 # 10 - chanel, 20 MHz, 11 - CSA
 iwscan cei00 push_radio_channel2 1 20 1
 iwscan wdev0 push_radio_channel2 64 20 10
+#########################sample client##########################################
+#########################scan channels##########################################
+startNeighborScan 1 3 200 4 36 40 48 52
+getRadioChannelStats 1 4
+startNeighborScan 1 3 500 2 36 40
+getRadioChannelStats 1 2
+#############################scan 24G###########################################
+sample_client
+wlan_api > init
+wlan_api > startNeighborScan 2 3 200 2 6 11
+wlan_api > getRadioChannelStats 2 6 11
+########################new format getRadioChannelStats########################
+getRadioChannelStats 1 36 40
+getRadioChannelStats 1 36 40 52 48
+getRadioChannelStats 1 36 40 44 48 52 56 60 64 100 104 108 112 116 120 124 128 132 136 140 144 149 153 157 161 165
+getRadioChannelStats 1 1 2 3 4 5 6 7 8 9 10 11 12 13
+getRadioChannelStats 1 8 36 40 44 48 52 56 60 64
+###########################statistics for associated stations###################
+getApAssociatedDeviceDiagnosticResult2 0
+getApAssociatedDeviceDiagnosticResult2 1
+getApAssociatedDeviceDiagnosticResult 1
+getApAssociatedDeviceDiagnosticResult2 1
+###########################statistics for associated station by mac#############
+getApAssociatedDeviceRxStats 1 44:91:60:54:84:37
+getApAssociatedDeviceTxStats 1 44:91:60:54:84:37
+getApAssociatedDeviceTidStatsResult 1 44:91:60:54:84:37
+getApAssociatedDeviceStats 1 44:91:60:54:84:37
+getApAssociatedDeviceRxStats 1 00:09:B5:C7:AA:26
+getApAssociatedDeviceTxStats 1 00:09:B5:C7:AA:26
+getApAssociatedDeviceTidStatsResult 1 00:09:B5:C7:AA:26
+getApAssociatedDeviceStats 1 00:09:B5:C7:AA:26
+getApAssociatedDeviceStats 1 8C:F5:A3:AC:55:B7
+getApAssociatedDeviceRxStats 1 8C:F5:A3:AC:55:B7
+#######################24G#####################################################
+getApAssociatedDeviceRxStats 0 44:91:60:54:84:37
+getApAssociatedDeviceTxStats 0 44:91:60:54:84:37
+getApAssociatedDeviceTidStatsResult 0 44:91:60:54:84:37
+getApAssociatedDeviceStats 0 44:91:60:54:84:37
+getApAssociatedDeviceRxStats 0 00:09:B5:C7:AA:26
+getApAssociatedDeviceTxStats 0 00:09:B5:C7:AA:26
+getApAssociatedDeviceTidStatsResult 00:09:B5:C7:AA:26
+getApAssociatedDeviceStats 0 00:09:B5:C7:AA:26
+getBSSTransitionActivation 1
+getNeighborReportActivation 1   # get Neighbor Report Activation status
+setNeighborReportActivation 1 1 # Neighbor Report Activation
+setNeighborReportActivation 1 0 # Neighbor Report DeActivation
+################################iwscan##########################################
+iwscan cei00 get_sta_details
+iwscan cei00 get_tid
+iwscan cei00 get_device_details 1
+iwscan cei00 save_sta_details /nvram/sta_details.txt
+iwscan cei00 set_sta_details /nvram/sta_details.txt
+iwscan cei00 save_sta_details
+iwscan cei00 set_sta_details
+iwscan cei00 get_wcid 8C:F5:A3:AC:55:B7
+iwscan cei00 save_sta_details /nvram/sta_details0.txt
+iwscan cei01 save_sta_details /nvram/sta_details1.txt
+iwscan cei00 set_sta_details /nvram/sta_details0.txt
+iwscan cei00 get_sta_details
+iwscan cei01 set_sta_details /nvram/sta_details1.txt
+iwscan cei01 get_sta_details
+###############################
+iwscan wdev0 get_sta_details
+iwscan wdev0 set_sta_details
+iwscan wdev0 set_csa_deauth 1 1
+######################stat stat#################################################
+iw dev wlan0_0 cecli stats -e.1
+iw dev wlan0_0 cecli stats -r.0
+###############################scan, sample_client#############################################
+startNeighborScan 1 3 200 4 36 40 48 52  # offchannel scan
+startNeighborScan 1 3 500 4 36 40 48 52
+getNeighboringWiFiStatus 1
+getRadioChannelStats 1 36 40
+startNeighborScan 0 3 200 2 6 11
+getRadioChannelStats 0 6 11
+getRadioChannelStats 2 6 11 # wrong radio index
+getRadioChannelStats 1 6 11 # wrong channels
+startNeighborScan 1 3 100 1 36
+startNeighborScan 1 3 100 1 40
+startNeighborScan 1 2 200 # onchannel scan
+################################################################################
+setApMacAddressControlMode 3 1
+setApMacAddressControlMode 0 1
+################################################################################
+setSSIDName 1 test2
+applyRadioSettings 1
+getSSIDName 1
+getSSIDNameStatus 1
+getApAssociatedDeviceRxStats 1 00:09:b5:c7:aa:26
 #########################plume_netlink##########################################
 group_set.0.0.0.1.3
 client_set.74:eb:80:95:73:a8.0.0.0.128.35.50.0.1
@@ -125,6 +219,63 @@ config_show
 config_test
 config_test_get
 config_test_set
+iwscan wdev0ap0 get_ap_res
+
+####################################plume_netlink 2.4G##########################
+plume_netlink
+register
+group_set.0.0.0.1.3
+client_set.00:09:b5:c7:aa:26.0.0.0.128.35.50.0.1
+client_set.8c:f5:a3:ac:55:b7.0.0.0.128.35.50.0.1
+
+disconnect.00:09:b5:c7:aa:26.2.2
+client_set.44:91:60:54:84:37.0.0.0.128.35.50.0.1
+disconnect.44:91:60:54:84:37.1.2
+
+group_set.0.2.3.2.3
+# mac address, Probe LWM, Probe HWM, Auth LWM, Auth HWM, Xing LWM, Xing HWM, Xing Inact, reject reason
+client_set.00:09:b5:c7:aa:26.20.70.20.70.20.70.0.0
+##########################BSS3##################################################
+change_index.0.2
+group_set.2.0.0.1.3
+client_set.00:09:b5:c7:aa:26.0.0.0.128.35.50.0.1
+disconnect.00:09:b5:c7:aa:26.2.2
+###################################BTM Request##################################
+plume_netlink
+register
+change_index.0.8
+set_btm_request <apIndex> <clientMac><target channel><candidateMAC><Phy mode>
+set_btm_request.8.00:09:b5:c7:aa:26.36.00:1c:51:56:bc:80.3
+set_rm_request.8.00:1c:51:56:bc:80.64
+set_rm_request.8.00:1c:51:56:bc:80.36
+set_rm_request.0.00:1c:51:56:bc:80.36
+#################wireshark BTM Request##########################################
+wlan.fixed.category_code == 10
+############################CL2330/CL2400+CL242 board, 5G#######################
+plume_netlink
+register
+change_index.0.8
+group_set.8.1.0.1.3
+client_set.00:09:b5:c7:aa:26.0.0.0.128.35.50.0.1
+disconnect.00:09:b5:c7:aa:26.2.2 # type deauth, reason 2
+disconnect.00:09:b5:c7:aa:26.1.2 # type disassoc, reason 2
+disconnect.00:09:b5:c7:aa:26.0.1 # type unknown, reason 1
+disconnect.00:09:b5:c7:aa:26.2.9
+client_remove.00:09:b5:c7:aa:26
+wlan.fc.type_subtype == 10 #   disassoc
+wlan.fc.type_subtype == 11 #   auth
+wlan.fc.type_subtype == 12 #   deauth
+########################################sample_client###########################
+sample_client
+init
+startNeighborScan 1 3 500 1 112
+getNeighboringWiFiStatus 1
+startNeighborScan 1 3 2000 2 64 100 # offcannel scan
+startNeighborScan 1 3 2000 1 64 # offcannel scan
+startNeighborScan 1 4 1000 2 64 100 # survey scan
+startNeighborScan 1 1 1000          # full scan
+startNeighborScan 1 2 1000          # onchan scan
+getNeighboringWiFiStatus 1
 ######################wireshark filter, assco, reassoc, etc
 auth                               deauth                            assoc response               assoc request                reassoc request
 ((wlan.fc.type_subtype == 0x000b || wlan.fc.type_subtype == 0x000c || wlan.fc.type_subtype == 1 || wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 2) || eapol) 
@@ -629,6 +780,24 @@ wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1c:51:ce:b4:55
 ###############ARRIS ATOM############################
 ################remove printk `sh[13209]: AhncLog<src/gwMgrCommon.c:358>` when STA connected#####################
 dmcli eRT setv Device.X_ARRIS_COM_HNC.Enable bool false
+###remove print `CcspPandMSsp[2356]: CosaUtilGetIfAddr IOCTL failure.: Cannot assign requested address`###
+systemctl stop CcspPandMSsp
+systemctl stop CcspEthAgent
+###################################DDoS protection disable########################
+There is short instruction, how to disable Intel's DDH (DDoS protection) feature.
+Sometimes it can drop some packets from ethernet.
+Try to disable it in case of low/unstable and no DL throughput as well (especially UDP DL). 
+##########
+
+ATOM shell :
+echo 8 > /proc/sys/kernel/printk
+cli
+sys
+pp
+ddhStats  [This should show that the Defensive Mode is Internal which indicates DDoS protection is on]
+setDefensiveMode 1
+setDefensiveState 0
+ddhStats  [This should now show that Defensive Mode is External, which indicates that DDoS protection of off]​
 #####################################################
 stty cols 152 rows 40;newgrp
 echo 8 > /proc/sys/kernel/printk
@@ -654,8 +823,8 @@ brctl delif br0 eth0
 brctl addif br0 eth0.2
 ################################################################################
 cd /tmp
-tftp -gl cl2400.tar.bz2 192.168.100.102
-tar xf cl2400.tar.bz2
+tftp -gl cl2400.tar.gz 192.168.100.102
+tar xf cl2400.tar.gz
 . /nvram/exports
 /tmp/cl2400/scripts/ce_host.sh start dual
 /tmp/cl2400/scripts/ce_host.sh reload_hostapd 24g
@@ -689,8 +858,8 @@ export clr_install_dir_cl2400=/tmp/cl2400
 export clr_install_dir_cl2400_24g=/tmp/cl2400
 export clr_vlan_dir_cl2400=/nvram/cl
 export clr_vlan_dir_cl2400_24g=/nvram/cl_24g
-PATH=/tmp/cl2400/bin:/tmp/build/scripts:$PATH
-export LD_LIBRARY_PATH=/tmp/build/lib
+PATH=/tmp/cl2400/bin:/tmp/cl2400/scripts:$PATH
+export LD_LIBRARY_PATH=/tmp/cl2400/lib
 ####################################################
 /tmp/build/scripts/ce_host.sh stop dual
 rmmod cfg80211 compat
@@ -819,7 +988,6 @@ iw dev wlan1_0 cecli dfs -p.1 # check
 6. Оно не должно делаться на канал, где был радар в течение 30 минут
 ####################mcs#########################################################
 iw dev wlan1_0 cecli mcs -f.0.3.1.0.1 # [Mode Fix(1)/Auto(0)].[MCS].[BW].[NSS].[GI]
-
 ###########################CL242 tmp############################################
 /nvram/exports
 export clr_rev_rpc_server_ip_address=192.168.254.254
@@ -840,7 +1008,11 @@ shell
 rm -rf /mnt/jffs2/app/cl2400_host_pkg/*
 cd /var
 tftp -gr cl2400.tar.bz2 192.168.100.102
-tar xf /var/cl2400.tar.bz2 -C /mnt/jffs2/app/cl2400_host_pkg/
+tar xf /var/cl2400.tar.bz2 -C /mnt/jffs2/app/demo/
+tar xf cl2400.tar.bz2
+tar xf /var/cl2400.tar.bz2 -C /mnt/jffs2/app/demo/
+#tar xf /var/cl2400.tar.bz2 -C /mnt/jffs2/app/cl2400_host_pkg/
+
 
 
 #Setting env vars:
@@ -873,13 +1045,15 @@ shell
 su (admin)
 
 dmesg -n 8
-route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
+# route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
 cd /var/
 tftp -gl cl2400.tar.bz2 192.168.100.102
 tar xf cl2400.tar.bz2
+tar xf cl2400.tar.bz2 -C /mnt/jffs2/app/demo/
 . /mnt/jffs2/exports
 ce_host.sh start
 wlancmd ctpbind 4
+wlancmd ctpbind 5
 
 #exports2
 export cl2400_root=/var/cl2400
@@ -910,6 +1084,31 @@ send_igmp_query -i wlan1_0 -d 224.0.0.1 -q3 -r 20
 iw dev wlan1_0 cecli txq -a
 iw dev wlan1_0 cecli txq -m
 iw dev wlan1_0 cecli txq -d
+#######################edca parameters##########################################
+iw wlan1_0 cecli edca -a
+ ---------------------------------------
+ | ac | aifsn | cw_min | cw_max | txop |
+ |----+-------+--------+--------+------|
+ | BE |     3 |      4 |      6 |    0 |
+ | BK |     7 |      4 |     10 |    0 |
+ | VI |     1 |      3 |      4 |   94 |
+ | VO |     1 |      2 |      3 |   47 |
+ ---------------------------------------
+
+iw wlan1_0 cecli edca -?
+ EDCA configuration:
+ -a : Print EDCA current configuration
+ -b : Set EDCA per AC [AC(0-BE/1-BK/2-VI/3-VO)].[aifsn].[cw_min].[cw_max].[txop]
+ -c : Set default aifsn [BE].[BK].[VI].[VO]
+ -d : Set default cw_min [BE].[BK].[VI].[VO]
+ -e : Set default cw_max [BE].[BK].[VI].[VO]
+ -f : Set default txop [BE].[BK].[VI].[VO]
+ -g : Set dynamic BE configuration [aifsn].[cw_min].[cw_max].[txop]
+ -i : Set burst BE configuration [aifsn].[cw_min].[cw_max].[txop]
+ -k : Set fixed EDCA configuration per AC [ac].[aifsn].[cw_min].[cw_max].[txop]
+ -n : Enable fixed mode EDCA. [0/1]
+
+iw wlan1_0 cecli edca -g.3.4.6.0
 #######################error/packet statistics in FW########################
 iw dev wlan1_0 cecli fw_stats -r
 ####################Huawei GUI##################################################
@@ -924,6 +1123,15 @@ nvram_set cl2400 ha_ssid1 H3
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
 iw dev
 /tmp/build/bin/hostapd -B -P /tmp/hostapd-wlan1_0.pid -t -f /tmp/hostapd-wlan1_0.log -d /tmp/hostapd-wlan1_0.conf
+########################BSS2####################################################
+nvram_set cl2400 ha_ssid2 H4
+/var/build/scripts/ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 2
+########################+BSS3####################################################
+nvram_set cl2400 ce_bss_num 3
+nvram_set cl2400 ce_bss_enabled "1;1;1;0;0;0;0;0"
+/var/build/scripts/ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 7
 ##########################encryp, auth##########################################
 nvram_set cl2400 ha_auth_mode "SHARED;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
 nvram_set cl2400 ha_encryp_type "WEP;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
@@ -2710,6 +2918,7 @@ svn propget svn:log --revprop -r47061 http://moon/svn/celeno-swdb/target/branche
 svn propget svn:log --revprop -r50358 http://moon/svn/celeno-swdb/target/branches/CE_WRS/1.2.0
 svn propget svn:log --revprop -r53616 http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
 svn propget svn:log --revprop -r53494 http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
+svn propget svn:log --revprop -r57164 http://moon/svn/celeno-swdb/target/branches/CE_CLASS/ce_clouds
 #######################  edit svn commit log message   ##################################
 svn propedit svn:log --revprop -r52460 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2330_NEW/5.2.x_mercury_27/CL2330
 svn propedit svn:log --revprop -r30295 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/1.0.0/celeno_cb
@@ -2746,7 +2955,7 @@ svn propedit svn:log --revprop -r39539 --editor-cmd vim http://moon/svn/celeno-s
 svn propedit svn:log --revprop -r40307 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.6.x
 svn propedit svn:log --revprop -r47061 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CL2400/hp/4.7.x
 svn propedit svn:log --revprop -r52332 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CM/CE_CM_v2.0.0_21_GA13_ocs
-svn propedit svn:log --revprop -r55791 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/ce_clouds
+svn propedit svn:log --revprop -r57164 --editor-cmd vim http://moon/svn/celeno-swdb/target/branches/CE_CLASS/ce_clouds
 ######################Edit externals###################################
 
 svn propedit svn:externals .
@@ -2787,6 +2996,8 @@ git status
 git commit
 ########## Auto fix whitespaces ################################################
 git rebase --whitespace=fix HEAD~1
+##########git cache your credentials ###########################################
+git config --global credential.helper 'cache --timeout 7200'
 ################################################################################
 ########## Create yocto source code archive
 (cd .. && tar czf cm-www-0.13.tar.gz --exclude-vcs cm-www-0.13  && cp -fv cm-www-0.13.tar.gz ~/QorIQ-SDK-V2.0-20160527-yocto/sources/meta-celeno/recipes-celeno/celeno/)
@@ -3569,6 +3780,12 @@ cd ${HOME}/ccache/huawei/ ; \
 for i in $( (cd /export/dev-root/huawei_sdk/opt/RTOS/207.5.0/arm32A9le_4.4_ek_micro/gnu/bin/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
+################################ccache for Huawei 2#############################
+mkdir -p ${HOME}/ccache/huawei/ ; \
+cd ${HOME}/ccache/huawei/ ; \
+for i in $( (cd /export/dev-root/huawei_sdk/SDK_Kernel4.4.185/opt/RTOS/207.5.0/arm32A9le_4.4_ek_micro/gnu/bin/ ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
 ###################################ADD cgiweb to Yocto##########################
 ###Copy folder
 platformdb/CBN_P6_YOCTO_CL2330_CL242/__common__/Yocto/* to
@@ -4081,7 +4298,10 @@ struct ieee80211_hw *hw;
 struct cl_hw *cl_hw = hw->priv;
 struct ieee80211_vif *vif;
 struct cl_vif *cl_vif = (struct cl_vif *)vif->drv_priv;
-
+struct wireless_dev *wdev = &sdata->wdev;                      
+struct net_device *netdev = wdev->netdev;                      
+struct wiphy *wiphy = wdev->wiphy;                             
+struct cfg80211_registered_device *rdev = wiphy_to_dev(wiphy); 
 ################################################################################
 sudo route add -net 224.0.0.0 netmask 240.0.0.0 dev enp2s0
 sudo ip route del 224.0.0.0/4
@@ -4099,4 +4319,52 @@ Settings to multicast testing traffic
 
 iperf -c 239.0.0.9 -u -T 32 -t 90 -i 1 -b 100M
 iperf -s -u -B 239.0.0.9 -i 1
+##########################printf format#########################################
+%c   --- char
+%hhd --- signed char (synomous with char)
+%hhu --- unsigned char
+%hhx --- unsigned char hex
+%h   --- short
+%hu  --- unsigned short
+%d   --- int
+%u   --- unsigned int
+%lu  --- unsigned long (including size_t, which is returned by sizeof())
+
+########################plume_netlink via bash 5G###############################
+plume_netlink
+register
+change_index.0.8
+group_set.8.1.0.1.3
+client_set.00:09:b5:c7:aa:26.0.0.0.128.35.50.0.1
+group_set.9.1.0.1.3
+client_set.00:09:b5:c7:aa:28.1.0.0.128.35.50.0.1
+
+echo -e "register\nchange_index.0.8\ngroup_set.8.1.0.1.3\nclient_set.00:09:b5:c7:aa:26.0.0.0.128.35.50.0.1\ngroup_set.9.1.0.1.3\nclient_set.00:09:b5:c7:aa:28.1.0.0.128.35.50.0.1" | plume_netlink
+
+echo -e "register\nchange_index.0.8\nconfig_save./nvram/bs_config_data_5g" | plume_netlink
+echo -e "register\nchange_index.0.8\nconfig_set./nvram/bs_config_data_5g" | plume_netlink
+echo -e "register\nchange_index.0.8\nconfig_show" | plume_netlink
+#####################plume_netlink via bash 24G#################################
+echo -e "register\nchange_index.0.0\ngroup_set.0.1.0.1.3\nclient_set.00:09:b5:c7:aa:26.0.0.0.128.35.50.0.1\ngroup_set.1.1.0.1.3\nclient_set.00:09:b5:c7:aa:28.1.0.0.128.35.50.0.1" | plume_netlink
+echo -e "register\nchange_index.0.0\nconfig_show" | plume_netlink
+
+
+#######################netgear###################################################
+172.168.110.88
+###############################celeno git#######################################
+https://titan.celeno.com/gerrit/celeno-swdb-CL2400-hp-4.7.x_23_GA15_Huawei
+git clone "https://titan.celeno.com/gerrit/celeno-swdb-CL2400-hp-4.7.x_23_GA15_Huawei" && (cd "celeno-swdb-CL2400-hp-4.7.x_23_GA15_Huawei" && mkdir -p .git/hooks && curl -Lo `git rev-parse --git-dir`/hooks/commit-msg https://titan.celeno.com/gerrit/tools/hooks/commit-msg; chmod +x `git rev-parse --git-dir`/hooks/commit-msg)
+
+1. Make your changes localy
+2. Stage your changes by the following command:
+git add <modified_files>
+3. Verified your staged files:
+git status
+4. git commit -s
+copy the ce_svn template to the commit log (until we will be set it automatically by git).
+5. Once you want to push your commit to the remote repository:
+git push origin HEAD:refs/for/master
+
+this command will output a link  - for example:
+https://titan.celeno.com/gerrit/c/celeno-swdb-CL2400-hp-4.7.x_23_GA15_Huawei/+/46
 
