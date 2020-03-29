@@ -908,7 +908,7 @@ proc_package()
 		export PACKAGE=cl2330
 		echo "Choosen module $PACKAGE v27"
 		export BRANCH=5.2.x_mercury_27
-		export CLR=$SRCDIR/$BRANCH/CL2330
+		export CLR=$SRCDIR/$BRANCH
 		export HP_LOCATION=$CLR/clr_package_release/$PACKAGE/$PLATFORM
 		CL=CL2330
 		;;

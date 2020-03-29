@@ -133,6 +133,16 @@ sample_client
 wlan_api > init
 wlan_api > startNeighborScan 2 3 200 2 6 11
 wlan_api > getRadioChannelStats 2 6 11
+pushRadioChannel2 1 116 80 25
+pushRadioChannel2 1 112 80 25
+iperf3 -c 192.168.100.146 -t 30 -P 10 -i 1 -w 256k # downstream traffic
+iw dev wlan1_0 cecli wrs -s.0.2
+iw wlan1_0 cecli acs -c.112.2.2 ## 112 channel, 80 MHz bw, 25 CSA count
+iw dev wlan1_0 cecli wrs -f.0.0.9.2.3.1 # fixed rate MCS[9], BW[2], NSS[3], GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.8.2.3.1 # fixed rate MCS[8], BW[2], NSS[3], GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.5.2.3.1 # fixed rate MCS[5], BW[2], NSS[3], GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.6.2.3.1 # fixed rate MCS[6], BW[2], NSS[3], GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.7.2.3.1 # fixed rate MCS[7], BW[2], NSS[3], GI[1]
 ########################new format getRadioChannelStats########################
 getRadioChannelStats 1 36 40
 getRadioChannelStats 1 36 40 52 48
@@ -280,6 +290,7 @@ getNeighboringWiFiStatus 1
 auth                               deauth                            assoc response               assoc request                reassoc request
 ((wlan.fc.type_subtype == 0x000b || wlan.fc.type_subtype == 0x000c || wlan.fc.type_subtype == 1 || wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 2) || eapol) 
 ###########################fast git svn clone#####################################
+sudo apt-get install libsvn-perl
 export url=`URL`
 export path=`PATH`
 first_rev="$(svn log -r 1:HEAD --stop-on-copy --limit 1 --stop-on-copy --xml "$url" | grep 'revision="[0-9]\+"' | head -n1 | sed 's/^.*revision="\([0-9]\+\)".*$/\1/')"
@@ -823,7 +834,7 @@ brctl delif br0 eth0
 brctl addif br0 eth0.2
 ################################################################################
 cd /tmp
-tftp -gl cl2400.tar.gz 192.168.100.102
+tftp -gl cl2400.tar.gz 192.168.100.102 -b 20000
 tar xf cl2400.tar.gz
 . /nvram/exports
 /tmp/cl2400/scripts/ce_host.sh start dual
@@ -852,12 +863,12 @@ iw wlan1_0 ATE pow 20 0 0 0
 iw wlan1_0 ATE txframe
 ############################## exports##########################################
 #######################ARRIS 4.7.x#############################
-export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
-export clr_cfg_dir_cl2400=/nvram/cl
+export clr_cfg_dir_cl2400_24g=/nvram/cl2400_24g
+export clr_cfg_dir_cl2400=/nvram/cl2400
 export clr_install_dir_cl2400=/tmp/cl2400
 export clr_install_dir_cl2400_24g=/tmp/cl2400
-export clr_vlan_dir_cl2400=/nvram/cl
-export clr_vlan_dir_cl2400_24g=/nvram/cl_24g
+export clr_vlan_dir_cl2400=/nvram/cl2400
+export clr_vlan_dir_cl2400_24g=/nvram/cl2400_24g
 PATH=/tmp/cl2400/bin:/tmp/cl2400/scripts:$PATH
 export LD_LIBRARY_PATH=/tmp/cl2400/lib
 ####################################################
@@ -890,10 +901,19 @@ brctl addif brlan0 wlan0_1
 ###########enable printk##########
 echo 8 > /proc/sys/kernel/printk
 echo 0 > /proc/sys/kernel/printk
+####################litepath debug###############################################
+cat /proc/lpal/db_stats
+cat /proc/net/pp/HAL/wifiFwData
+cli sys/pp/vpids
+cli sys/pp/devs
+cli sys/pp/pid
+echo 1 > /sys/modules/CL2400_5g/parameters/ce_litepath_debug
+echo 1 > /sys/modules/CL2400_24g/parameters/ce_litepath_debug
 #####################acs channel select###############################################
 iw wlan1_0 cecli acs -d         ## ACS configuration
 iw wlan1_0 cecli acs -c.36.2.1  ## set channel 36
 iw wlan1_0 cecli acs -c.149.2.1 ## set channel 149
+iw wlan1_0 cecli acs -c.112.2.1 ## set channel 112
 nvram_set cl2400 ha_channel 100
 iw wlan1_0 cecli acs -c.100.2.1 ## set channel 100
 iw wlan0_0 cecli acs -c.1.2.1   ## set channel 1
@@ -941,11 +961,21 @@ sudo ip link set dev p9p1 mtu 1600
 #####################wrs#######################################################
 iw dev wlan1_0 cecli wrs -f.0.0.8.2.0.1
 # [WRS] Station [0] was set to fixed rate - MCS[8], BW[2], NSS[1], GI[1]
+##############################stats_dump.sh #######################################
+iw dev wlan1_0 cecli stats -e.1
+iw dev wlan1_0 cecli envdet -d.2
+# run iperf
+./stats_dump.sh 5g all
+#reset stats_dump.sh 
+iw wlan1_0 cecli stats z.255
+iw wlan1_0 cecli txq r.255
+iw wlan1_0 cecli wrs -r.0.4
 ########################show mcs info for 0 Wcid################################
 iw dev wlan1_0 cecli wrs -s.0.15
 iwpriv cei00 cecli wrs.-s.1.15
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
+iw dev wlan1_0 cecli sb -j.02:00:22:33:44:55 # add mac to blacklist
 ######################ignore list###############################################
 iw wlan1_0 cecli il -a.d0:13:fd:4f:42:cd # add mac to ignore list
 iw wlan1_0 cecli tx -b.0 # disable beacons and probe responses
@@ -972,6 +1002,24 @@ iw dev wlan1_0 cecli tx -s.1000 # start scan for 1000 milliseconds
 iw dev wlan1_0 cecli tx -s.30000
 ################################################################################
 nvram_set cl2400 ha_channel 100
+ce_host.sh update_hostapd
+hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
+#########################ACL LIST###############################################
+nvram_set cl2400 ha_macaddr_acl_list1 "" # remove all
+nvram_set cl2400 ha_macaddr_acl_list1 34:14:5F:A0:2B:F1
+#########################ACL LIST, mode#########################################
+ACCEPT_UNLESS_DENIED = 0,   
+DENY_UNLESS_ACCEPTED = 1,   
+USE_EXTERNAL_RADIUS_AUTH = 2
+
+setApMacAddressControlMode 1 0:1:1:1:1:1:1:1 # DENY_UNLESS_ACCEPTED
+#########################ACL LIST, add mac to list##############################
+addApAclDevice 1 34:14:5F:A0:2B:F1
+delApAclDevice 1 34:14:5F:A0:2B:F1
+delApAclDevices 1
+getApAclDevices 1
+iwscan wdev0ap0 get_ap_acl_devices 1
+iwscan wdev0ap0 add_acl_device 1 34:14:5F:A0:2B:F1
 ce_host.sh update_hostapd
 hostapd_cli -p /tmp/hostapd-wlan1_0 -i wlan1_0 reconfigure 1
 ########################test DFS after reconfigure##############################
@@ -1109,6 +1157,32 @@ iw wlan1_0 cecli edca -?
  -n : Enable fixed mode EDCA. [0/1]
 
 iw wlan1_0 cecli edca -g.3.4.6.0
+####################fixed mode###################################################
+iw wlan1_0 cecli edca -k.0.3.4.6.0  # BE
+iw wlan1_0 cecli edca -k.1.7.4.10.0 # BK
+iw wlan1_0 cecli edca -k.2.1.3.7.90 # VI
+iw wlan1_0 cecli edca -k.3.1.2.5.40 # VO
+iw wlan1_0 cecli edca -n.1 # enabled fixed mode
+####################set aifsn###################################################
+iw wlan1_0 cecli edca -c.3.7.1.1
+####################set burst mode##############################################
+iw wlan1_0 cecli edca -i.2.3.6.140
+####################envdet clean################################################
+iw wlan1_0 cecli envdet -a.0 # CL_ENV_TYPE_CLEAN
+iw wlan1_0 cecli envdet -c # print configuration
+####################Test EDCA 5G################################################
+echo 4 > /sys/module/CL2400_5g/parameters/cl_edca_debug_level
+0. dynamic mode
+1. set ENV DET type CLEAN
+   iw wlan1_0 cecli envdet -a.0
+2. connect sta (sta_idx=0)
+3. set fixed wrs (high_rate) MCS[8], BW[2], NSS[1], GI[1]
+   iw dev wlan1_0 cecli wrs -f.0.0.8.2.1.1 
+4. check EDCA config
+   iw wlan1_0 cecli edca -a
+5. run traffic with throughput exceed TRAFFIC_ACTIVE_BYTES_THR_EDCA=2621440 (200mbit/sec)
+                                      24G TRAFFIC_ACTIVE_BYTES_THR_EDCA= 655360  // = 50mbit/sec
+   iperf -c 192.168.100.22 -i1 -m -t 100 -u -S 96 -b 210M
 #######################error/packet statistics in FW########################
 iw dev wlan1_0 cecli fw_stats -r
 ####################Huawei GUI##################################################
@@ -1573,7 +1647,9 @@ cmcli set steer_dot11v 50:82:D5:61:49:96 DC:53:7C:64:83:ED //to 5g CBN
 cmcli set steer_dot11v 50:82:D5:61:49:96 00:05:9E:2F:88:90 //to 5g Zinwell
 cmcli set steer_dot11v 50:82:D5:61:49:96 00:05:9E:2F:86:90 //to 24g Zinwell
 cmcli set steer_dot11v 50:82:D5:61:49:96 00:0C:43:76:52:58 // to 5g Comtrend3
-cmcli set steer_dot11v 50:82:D5:61:49:96 00:0C:43:76:22:28 // to 24g Comtrend3
+cmcli set steer_dot11v 50:82:D5:61:49:96 00:0C:43:76:22:28 // to Open up VLC Media Player.
+Go to View > Playlist [CTRL + L].
+On the left under Local Network, click on Universal Plug’n’Play.24g Comtrend3
 ##########################steer Meizu ####################################################
 cmcli set steer_dot11v 74:23:44:46:26:60 00:1C:51:B0:BA:98 //to 5g Comtrend
 cmcli set steer_dot11v 74:23:44:46:26:60 DC:53:7C:64:83:ED //to 5g CBN
@@ -1670,6 +1746,7 @@ http://moon/wiki/index.php/Jio_CL1870_SDK
 http://moon/wiki/index.php/Create_external_SDK
 make cl1870 platform=CL2330_CL242 --check-symlink-times
 ####################release 6.84.0xx_DeskAP_27##################################
+http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27/
 svn revert --recursive . # remove all diffs
 modify top_version
 # ~/gitsvn/svn_tools/svn.sh release cl1870
@@ -1686,7 +1763,9 @@ cd 6.84.0xx_DeskAP_27/sdk/lib/gettext-0.16.1
 svn revert -R .
 # try again###############################
 #################OR#############################################################
-svn co http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
+svn co http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_Open up VLC Media Player.
+Go to View > Playlist [CTRL + L].
+On the left under Local Network, click on Universal Plug’n’Play.DeskAP_27
 find . -name .svn -type d -exec rm -rf {} +
 make sdk platform=CL2330_CL242 SDK_NAME="CELENO-SDK-${VERSION}"
 ##########################DeskAp work with CL1870######################################
@@ -1732,7 +1811,9 @@ wlan.addr == B0:DF:3A:00:7E:A6 && wlan.fixed.category_code == 10
 wlan.addr == D0:C5:F3:E3:80:91 && wlan.fixed.category_code == 10 //iPhone7
 wlan.addr == 50:82:D5:61:49:96 && wlan.fixed.category_code == 10 //iPhone6
 wlan.addr == 74:23:44:46:26:60 && wlan.fixed.category_code == 10//Meizu
-##########################data frame################################
+##########################data frame################################Open up VLC Media Player.
+Go to View > Playlist [CTRL + L].
+On the left under Local Network, click on Universal Plug’n’Play.
 wlan.addr == 00:1C:51:B1:BA:98 && wlan.fc.type == 2
 ############RMM(RRM)##########################################################
 wlan.fixed.category_code == 5 || wlan.fixed.category_code == 10
@@ -1785,7 +1866,9 @@ export clr_cfg_dir_cl2400_24g=/nvram/cl2400_24g
 export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts${PATH+:}${PATH}
 export LD_LIBRARY_PATH=$clr_install_dir_cl2400/lib${LD_LIBRARY_PATH+:}${LD_LIBRARY_PATH}
 ########################################package load on Comhem##################
-export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
+export clr_cfg_dir_cl2400_24g=/nvram/cl_24gOpen up VLC Media Player.
+Go to View > Playlist [CTRL + L].
+On the left under Local Network, click on Universal Plug’n’Play.
 export clr_cfg_dir_cl2400=/nvram/cl
 export clr_install_dir_cl2400=/tmp/build
 export clr_install_dir_cl2400_24g=/tmp/build
@@ -2340,6 +2423,27 @@ linux-3.12.17/net/bridge/br_forward.c: br_dev_queue_push_xmit
 kernel/bp/net/mac80211/tx.c: ce_start_xmit()
 kernel/bp/net/mac80211/tx.c: __ce_start_xmit()
 kernel/bp/net/mac80211/tx.c: ieee80211_subif_start_xmit()
+###########################dhcp tx path #2##########################################
+[ 1607.383396] [ieee80211_rx_handlers][e4819ec0] BOOTREQUEST [0.0.0.0] --> [255.255.255.255]
+[ 1607.392659] [ieee80211_subif_start_xmit][d77debc0] BOOTREQUEST [0.0.0.0] --> [255.255.255.255]
+[ 1607.402372] [ieee80211_subif_start_xmit][d77debc0] BOOTREQUEST [0.0.0.0] --> [255.255.255.255]
+[ 1607.412989] [lite_path_start_xmit][d73ea180] BOOTREQUEST [0.0.0.0] --> [255.255.255.255]
+[ 1607.422122] [__ce_start_xmit][d73ea180] BOOTREQUEST [0.0.0.0] --> [255.255.255.255]
+[ 1607.430843] [ieee80211_subif_start_xmit][e49f9980] BOOTREPLY [192.168.100.102] --> [192.168.100.145]
+[ 1607.441076] your    [192.168.100.145]
+[ 1607.445176] server  [192.168.100.102]
+[ 1607.449282] [ieee80211_subif_start_xmit][e49f9980] BOOTREPLY [192.168.100.102] --> [192.168.100.145]
+[ 1607.459499] your    [192.168.100.145]
+[ 1607.463596] server  [192.168.100.102]
+[ 1607.468217] [lite_path_start_xmit][d70a28c0] BOOTREPLY [192.168.100.102] --> [192.168.100.145]
+[ 1607.477852] your    [192.168.100.145]
+[ 1607.481946] server  [192.168.100.102]
+[ 1607.486035] [__ce_start_xmit][d70a28c0] BOOTREPLY [192.168.100.102] --> [192.168.100.145]
+[ 1607.495178] your    [192.168.100.145]
+[ 1607.499272] server  [192.168.100.102]
+[ 1607.503406] [__ieee80211_tx][d70a28c0] BOOTREPLY [192.168.100.102] --> [192.168.100.145]
+[ 1607.512458] your    [192.168.100.145]
+[ 1607.516557] server  [192.168.100.102]
 ################################################################################
 br_dev_queue_push_xmit()
 if (!skb->cb[36])                                                
@@ -3486,8 +3590,7 @@ Weighted Rate Selection mechanism: {abcbdefghilmnopqrstuvwxyzG}
 -P  - print lut amsdu table
 ####################wrs.?########################################
 iwpriv rai0 cecli wrs.-f.1.0.8.2.1.1
-iw dev wdev1_0 cecli wrs.-f.0.0.8.2.1.1
-# [WRS] Station [1] was set to fixed mode - MCS[8], BW[2], NSS[1], GI[1]
+iw dev wlan1_0 cecli wrs.-f.0.0.8.2.1.1 # [WRS] Station [1] was set to fixed mode - MCS[8], BW[2], NSS[1], GI[1]
 iwpriv rai0 cecli wrs.-f.1.0.7.2.2.0
 ############################Magic SysRq#########################################
 echo "1" > /proc/sys/kernel/sysrq
@@ -4368,3 +4471,135 @@ git push origin HEAD:refs/for/master
 this command will output a link  - for example:
 https://titan.celeno.com/gerrit/c/celeno-swdb-CL2400-hp-4.7.x_23_GA15_Huawei/+/46
 
+
+###################save git credentials ########################################
+git config --global credential.helper store
+###############################repo#############################################
+curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+1. Make empty dir and cd into it
+$ mkdir 5.2.x_mercury_27.git
+$ cd 5.2.x_mercury_27.git
+
+2. Initialize repo with repo init -u https://titan.celeno.com/gerrit/celeno-swdb-repo-manifests -m <project>.xml
+$ repo init -u https://titan.celeno.com/gerrit/celeno-swdb-repo-manifests -m 5.2.x_mercury_27.xml
+Get https://gerrit.googlesource.com/git-repo/clone.bundle
+Get https://gerrit.googlesource.com/git-repo
+remote: Counting objects: 43, done
+remote: Finding sources: 100% (501/501)
+...
+repo has been initialized in /home/illia/svn/5.2.x_mercury_27.git
+
+3. Download git repositories with repo sync
+$ repo sync
+...
+Fetching projects: 100% (8/8), done.
+Checking out projects: 100% (8/8), done.
+repo sync has finished successfully.
+
+4. Set up all git repositories to master branch to make operations easier
+$ repo forall -c git checkout master
+...
+
+Now you can work with each git repository by
+cd
+into it, commit it with
+git commit
+or with
+ce_svn commit
+and upload it with
+git push origin HEAD:refs/for/master
+
+And after git commit the commits will have ChangeId field set automatically in description.
+
+
+Projects accessible by repo tool right now (and that their names could be used with repo init after -m switch):
+4.6.x_92_GA4.xml
+4.7.x_23_GA15_Huawei_TR6.xml
+4.7.x_23_GA15_Huawei.xml
+4.7.x_23_GA15.xml
+4.7.x_radar_sensing_r50973_freeze.xml
+4.7.x_radar_sensing.xml
+4.7.x.xml
+5.2.x_mercury_27.xml
+6.70.0xx_mercury_27.xml
+################################################################################
+ cat ~/.gitconfig
+[user]
+        name = Oleksandr Iefymenko
+        email = oleksandr.iefymenko@celeno.com
+[color]
+        diff = auto
+        status = auto
+        branch = auto
+        interactive = auto
+        ui = auto
+[pack]
+        threads = 0
+[diff]
+        renamelimit = 0
+[commit]
+
+[alias]
+    s = status
+    su = status -u
+    b = branch
+    ba = branch -a -v -v
+    bs = !git-branch-status
+    bsi = !git-branch-status -i
+    ci = commit
+    cia = commit --amend
+    co = checkout
+    au = add -u
+    a = add
+
+    d = diff -C
+    ds = diff -C --stat=200,150
+    dsp = diff -C --stat=200,150 -p
+    dw = diff -C --color-words
+
+    l = log -C --decorate
+    ls = log -C --stat=200,150 --decorate
+    lsp = log -C --stat=200,150 -p --decorate
+    lg = log --graph '--pretty=tformat:%C(blue bold)%h%Creset %Cgreen%ar%Creset %C(blue bold)%d%Creset %s'
+    lga = log --graph '--pretty=tformat:%C(blue bold)%h%Creset %Cgreen%ar%Creset %C(blue bold)%d%Creset %s' --all
+    l19 = log --graph '--pretty=tformat:%C(blue bold)%h%Creset %Cgreen%ar%Creset %C(blue bold)%d%Creset %s' --all -19
+    # для сложных ветвлений
+    lsd = log --graph '--pretty=tformat:%C(blue bold)%h%Creset %Cgreen%ar%Creset %C(blue bold)%d%Creset %s' --all --simplify-by-decoration
+    ru = remote update
+    sb = show-branch --sha1-name
+    ls-del = ls-files -d
+    ls-mod = ls-files -m # включая удалённые файлы
+    ls-new = ls-files --exclude-standard -o
+    ls-ign = ls-files --exclude-standard -o -i
+    ka = !gitk --all
+    kdo = !gitk --date-order
+    kado = !gitk --all --date-order
+    kasd = !gitk --all --simplify-by-decoration
+        fp = format-patch
+        pr = pull --rebase
+        p = pull
+        dt = difftool
+        g = grep
+        sr = svn rebase
+[merge]
+        tool = meld
+[mergetool "meld"]
+        # Choose one of these 2 lines (not both!) explained below.
+        cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
+        #cmd = meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"
+################################################################################
+#########################VPN Celeno, titan, etc#################################
+#####################download forticlient#######################################
+https://kb.arubacloud.com/files/tar-gz/forticlientsslvpn_linux_4-0-2281-tar.aspx # not working version
+http://www.niser.ac.in/docs/forticlientsslvpn_linux_4.4.2332.tar.gz              # working version
+sudo apt-get install lib32stdc++6
+./helper/setup.linux.sh
+#####################CELENO VPN, run #############use#########################
+ ./forticlientsslvpn_cli --server vpn.celeno.com:443 --vpnuser oleksandr,savchenko
+corporative password
+############################NEWXEL VPN##########################################
+name=celeno@asavchenko
+password=gHfyJzDAh9KjkK3exAFZK
+Type VPN=L2TP IPSec
+Server=office_rele.newxel.com
+IPsec Key=dAkd2sad21987s
