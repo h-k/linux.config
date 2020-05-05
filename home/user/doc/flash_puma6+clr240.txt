@@ -127,8 +127,54 @@ iwscan wdev0 push_radio_channel2 64 20 10
 startNeighborScan 1 3 200 4 36 40 48 52
 getRadioChannelStats 1 4
 startNeighborScan 1 3 500 2 36 40
-getRadioChannelStats 1 2
+getRadioChannelStats 1 36 40
+startNeighborScan 1 3 500 1 100
+getRadioChannelStats 1 100
+startNeighborScan 1 3 500 1 64
+getRadioChannelStats 1 64
+startNeighborScan 1 3 500 1 48
+getRadioChannelStats 1 48
+startNeighborScan 1 3 500 1 40
+getRadioChannelStats 1 40
+startNeighborScan 1 3 500 1 100
+startNeighborScan 1 3 200 1 100
+startNeighborScan 1 3 105 1 100
+startNeighborScan 1 3 60 1 100
+getRadioChannelStats 1 100
+startNeighborScan 1 3 200 1 36
+startNeighborScan 1 3 500 1 36
+startNeighborScan 1 3 100 1 36
+startNeighborScan 1 3 60 1 36
+
+startNeighborScan 1 3 500 1 116
+iw wlan1_0 cecli acs -c.100.2.2
+pushRadioChannel 1 48 5
+pushRadioChannel 1 116 80 5
+pushRadioChannel2 1 116 80 5
+pushRadioChannel2 1 40 80 5
+pushRadioChannel2 1 100 80 5
+pushRadioChannel2 1 112 80 5
+pushRadioChannel2 1 64 80 5
+pushRadioChannel2 1 36 80 5
+pushRadioChannel2 0 1 20 5
+pushRadioChannel2 0 11 20 5
+iw wlan1_0 cecli acs -c.116.2.2
+iw wlan1_0 cecli acs -c.48.2.2
+iw wlan1_0 cecli acs -c.36.2.2
 #############################scan 24G###########################################
+startNeighborScan 0 3 50 1 11 # off channel scan 11 channel
+startNeighborScan 0 3 300 1 11 # off channel scan 11 channel
+startNeighborScan 0 3 500 1 11 # off channel scan 11 channel
+startNeighborScan 0 3 500 1 1 # off channel scan 1 channel
+startNeighborScan 0 3 200 1 11
+startNeighborScan 0 3 100 1 11
+startNeighborScan 0 3 60 1 11
+getRadioChannelStats 0 11
+startNeighborScan 0 3 300 1 6 # off channel scan 11 channel
+getRadioChannelStats 0 6
+#enable debug in sample_client################
+touch /nvram/wlandbg
+##############################################
 sample_client
 wlan_api > init
 wlan_api > startNeighborScan 2 3 200 2 6 11
@@ -143,12 +189,25 @@ iw dev wlan1_0 cecli wrs -f.0.0.8.2.3.1 # fixed rate MCS[8], BW[2], NSS[3], GI[1
 iw dev wlan1_0 cecli wrs -f.0.0.5.2.3.1 # fixed rate MCS[5], BW[2], NSS[3], GI[1]
 iw dev wlan1_0 cecli wrs -f.0.0.6.2.3.1 # fixed rate MCS[6], BW[2], NSS[3], GI[1]
 iw dev wlan1_0 cecli wrs -f.0.0.7.2.3.1 # fixed rate MCS[7], BW[2], NSS[3], GI[1]
+####################################
+sample_client
+setSSIDEnable 3 1 # enable BSSID wlan1_1
+setSSIDEnable 2 1 # enable BSSID wlan0_1
+setSSIDEnable 4 1 # enable BSSID wlan0_2
 ########################new format getRadioChannelStats########################
 getRadioChannelStats 1 36 40
 getRadioChannelStats 1 36 40 52 48
 getRadioChannelStats 1 36 40 44 48 52 56 60 64 100 104 108 112 116 120 124 128 132 136 140 144 149 153 157 161 165
 getRadioChannelStats 1 1 2 3 4 5 6 7 8 9 10 11 12 13
 getRadioChannelStats 1 8 36 40 44 48 52 56 60 64
+##############iwscan scan#################################
+iwscan wdev0 start 1 500
+iwscan wdev0 get_channel 36 100
+iwscan wdev0 get_channel 36 100 21
+iwscan wdev0 get_channel 36
+iwscan wdev0 get_channel 36 36 48
+iwscan cei00 start 1 500
+iwscan cei00 get_channel 4 5 6 6
 ###########################statistics for associated stations###################
 getApAssociatedDeviceDiagnosticResult2 0
 getApAssociatedDeviceDiagnosticResult2 1
@@ -596,6 +655,8 @@ brctl addif br0 eth0.2
 brctl addif br0 wdev0ap0
 brctl addif br0 wdev0ap1
 brctl addif br0 wdev0ap2
+brctl addif br0 cei00
+brctl addif br0 cei01
 ifconfig br0 192.168.100.2 up
 
 export clr_cfg_dir_cl2330=/nvram
@@ -788,6 +849,19 @@ Type: "stm"    // save
 Type: "!reset"
 
 wlan.fc.type_subtype == 0x0008 && wlan.addr == 00:1c:51:ce:b4:55
+#####################CL2400 rm-non-distro.sh######################################
+cd ~/build/4.7.x_23_GA15
+##SDK 3.7.2.1, do not do sed for SDK 3.7.1.1#####################################
+sed -i 's#^\s*DEF_CONF_LINUX_SRC\s*=.*$#DEF_CONF_LINUX_SRC = $(DEF_SDK_PATH)/../linux-arrisatom-sdk7.2.1er4#' cl2400_package/src/celeno.mk
+##################################
+./tools/rm-non-distro.sh ARRIS_P7
+tar xf SOURCE_CODE_celeno_clr_package_cl2400_4.?.*_ARRIS_P7.tar.gz
+tar xf celeno_clr_package_cl2400_ARRIS_P7_extra.tar
+cd celeno_clr_package_cl2400_ARRIS_P7/
+make
+tar xf cl2400_host_pkg-4.7.*-ARRIS_P7.tar.bz2
+tar czf cl2400.tar.gz -C cl2400_host_pkg-4.7.*-ARRIS_P7 $(ls cl2400_host_pkg-*-ARRIS_P7/)
+tar cf cl2400.tar build
 ###############ARRIS ATOM############################
 ################remove printk `sh[13209]: AhncLog<src/gwMgrCommon.c:358>` when STA connected#####################
 dmcli eRT setv Device.X_ARRIS_COM_HNC.Enable bool false
@@ -973,6 +1047,18 @@ iw wlan1_0 cecli wrs -r.0.4
 ########################show mcs info for 0 Wcid################################
 iw dev wlan1_0 cecli wrs -s.0.15
 iwpriv cei00 cecli wrs.-s.1.15
+####################
+iw wlan1_0 cecli acs -c.116.2.10
+iw dev wlan1_0 cecli wrs -s.0.2 # STA MCS Rate
+iw dev wlan1_0 cecli wrs -s.0.4 # PER
+iw dev wlan0_0 cecli wrs -d  # sta capability
+iw dev wlan0_0 cecli wrs -c # config print
+iw dev wlan0_0 cecli wrs -t.3 # debug level trace
+iw dev wlan0_0 cecli wrs -t.4 # debug level info
+iw dev wlan1_0 cecli acs -s # run acs
+iw dev wlan1_0 cecli acs -g.1 # set debug level LOW
+iw dev wlan1_0 cecli acs -o # trigger an OCS based channel switch
+iw dev wlan1_0 cecli acs -b # report scan info
 #####################softblock###############################################
 iw dev wlan1_0 cecli sb -p.1 # print blaclist
 iw dev wlan1_0 cecli sb -j.02:00:22:33:44:55 # add mac to blacklist
@@ -1767,6 +1853,8 @@ svn co http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_Open up VLC M
 Go to View > Playlist [CTRL + L].
 On the left under Local Network, click on Universal Plug’n’Play.DeskAP_27
 find . -name .svn -type d -exec rm -rf {} +
+find . -name .git -type d -exec rm -rf {} +
+find . -name .repo -type d -exec rm -rf {} +
 make sdk platform=CL2330_CL242 SDK_NAME="CELENO-SDK-${VERSION}"
 ##########################DeskAp work with CL1870######################################
 http://moon/wiki/index.php/Booster_1
@@ -2175,6 +2263,22 @@ rsync -ar --progress --exclude=.svn --exclude=.git -e ssh --delete-excluded alex
 cd lmac_B0_4.7.x_23_GA15_Huawei/firmware
 make clean ; make lmac-asic-B0 -j 6
 scp lmac/bin/lmacfw.bin.asic.B0 alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/firmware/B0/lmacfw.bin
+########################4.7.x_23_GA15, PC via VPN###########################################
+# on packman
+mkdir -p /home/alexander/repo/4.7.x_23_GA15/lmac_B0_4.7.x_23_GA15
+# on PC
+cd /home/alexander/repo/4.7.x_23_GA15/lmac_B0_4.7.x_23_GA15
+rsync -ar --progress --exclude=.svn --exclude=.git -e ssh --delete-excluded . alexander@packman:/home/alexander/repo/4.7.x_23_GA15/lmac_B0_4.7.x_23_GA15
+# on xtensa-hk
+cd ~/repo/4.7.x_23_GA15
+rsync -ar --progress --exclude=.repo --exclude=.svn --exclude=.git --delete --delete-excluded -e ssh alexander@packman:/home/alexander/repo/4.7.x_23_GA15/lmac_B0_4.7.x_23_GA15 .
+cd lmac_B0_4.7.x_23_GA15/firmware
+make clean ; make lmac-asic-B0 -j 6
+## or run modified build_asic.sh
+scp lmac/bin/lmacfw.bin.asic.B0 alexander@packman:/home/alexander/repo/4.7.x_23_GA15/lmacfw.bin
+# on PC
+cd ~/repo/4.7.x_23_GA15/firmware/B0
+scp alexander@packman:/home/alexander/repo/4.7.x_23_GA15/lmacfw.bin lmacfw.bin
 ################printk in firmware##############################################
 CE_DEBUG_LOG_NO_FILTER("\n");
 ####################BRCM3390 flashing the board#################################
@@ -3980,54 +4084,6 @@ cmcli set steer_dot11v D0:C5:F3:E3:80:91 00:1C:51:B0:BA:98 //to 5g Comtrend
 cmcli set steer_dot11v D0:C5:F3:E3:80:91 DC:53:7C:64:83:ED //to 5g CBN
 #################################################################################
 
-
-##########################QC########################################################
-QC User:
-OleksandrSav
-Savc6&8
-############################QC Remmina##############################################
-192.168.110.156
-User:   Celeno\Newexl-QC
-passwd: AAbbcc34
-####################celeno skype##################################################
-gl.celeno.team@gmail.com
-pass GlobalLogic86
-
-First name : Celeno
-Second name: Celeno
-##################Win10 account##################################################
-login: Celeno
-pass: GlobalLogic86
-
-PIN:112233
-####################celeno only kiev skype/google docs##########################
-celeno.kyiv@gmail.com
-pass: celeno.ky1v.the.be3t
-####################celeno twitch###############################################
-login: glceleno
-pass:GlobalLogic86
-#########################Apple ID###############################################
-AppleID: gl.celeno.team@gmail.com
-Pass : GlobalLogic86
-###########################testrail readonly account############################
-L: public
-P: Qwerty1234
-############################celeno mail##########################################
-oleksandr.savchenko@celeno.com
-###############POP Settings:#################
-Disabled
-###############IMAP Settings:#################
-Server name: outlook.office365.com
-Port: 993
-Encryption method: TLS
-###############SMTP Settings#####################################################
-Server name: smtp.office365.com
-Port: 587
-Encryption method: STARTTLS
-###########################Test Rail############################################
-https://celeno.testrail.io/index.php?/cases/view/1366
-login: svpetrov@gmail.com
-passw: Qwerty1234
 ########################tips####################################################
 recuresive chmod for read/write for all in directory
 sudo chmod -R ugo+rw foldername
@@ -4587,19 +4643,93 @@ Projects accessible by repo tool right now (and that their names could be used w
         # Choose one of these 2 lines (not both!) explained below.
         cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
         #cmd = meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"
-################################################################################
-#########################VPN Celeno, titan, etc#################################
-#####################download forticlient#######################################
-https://kb.arubacloud.com/files/tar-gz/forticlientsslvpn_linux_4-0-2281-tar.aspx # not working version
-http://www.niser.ac.in/docs/forticlientsslvpn_linux_4.4.2332.tar.gz              # working version
-sudo apt-get install lib32stdc++6
-./helper/setup.linux.sh
-#####################CELENO VPN, run #############use#########################
- ./forticlientsslvpn_cli --server vpn.celeno.com:443 --vpnuser oleksandr,savchenko
-corporative password
-############################NEWXEL VPN##########################################
-name=celeno@asavchenko
-password=gHfyJzDAh9KjkK3exAFZK
-Type VPN=L2TP IPSec
-Server=office_rele.newxel.com
-IPsec Key=dAkd2sad21987s
+
+################git usage#######################################################
+# Init repo folder
+mkdir 4.7.x_23_GA15
+cd 4.7.x_23_GA15
+repo init -u https://titan.celeno.com/gerrit/celeno-swdb-repo-manifests -m 4.7.x_23_GA15.xml
+repo sync
+repo forall -c 'git checkout master'
+
+ Note: You may checkout git repository https://titan.celeno.com/gerrit/celeno-swdb-repo-manifests to see available manifests.
+Alternative way with web browser: https://titan.celeno.com/gerrit/plugins/gitiles/celeno-swdb-repo-manifests/+/refs/heads/master
+
+To put regular commit:
+# Usually I'm using separate branch for each JIRA issue
+git checkout -b cl1605 master
+# Edit files and commit changes to local repository in the branch cl1605
+git add <files>
+git commit
+# or
+git commit -a
+
+# Update master
+git checkout master
+git pull --rebase
+# Put one commit over top of the origin/master
+git cherry-pick cl1605
+# Prepare commit log message and push with command
+ce_git commit
+# Script will check changes in nvram files and documentation, add "Classes:" tag and show prepared commit message for review/update.
+# Finally the script will amend commit message in your local repository and push the commit to Gerrit.
+
+Note: In nested repository you should do a separate commit . E.g. 4.7.x_23_GA15 and ce_clouds are different repositories and require "ce_git commit" for each one
+
+To produce the release commit:
+repo forall -c 'git pull --rebase' # update all repositories to fresh version
+# Change version file and commit to local repository with any message
+# Edit cl2400_package/src/celeno.mk
+git commit -a -m "version change"
+ce_git release cl2400
+# Prepare release message and push to Gerrit
+# Approve and merge commit in Gerrit
+git pull --rebase
+ce_git add_tags cl2400
+
+
+Example usage for 4.7.x_23_GA15_RoW branch:
+# Init repo folder
+mkdir 4.7.x_23_GA15_RoW
+cd 4.7.x_23_GA15_RoW
+repo init -u https://titan.celeno.com/gerrit/celeno-swdb-repo-manifests -m 4.7.x_23_GA15_RoW.xml
+repo sync
+git checkout 4.7.x_23_GA15_RoW
+cd ce_clouds/
+git checkout ce_clouds_RoW
+cd ..
+
+To put regular commit:
+# Edit files and commit changes to local repository
+# Put one commit over top of the origin/<branch>
+# Prepare commit log message and push changes
+# Please use -b option
+ce_git commit -b 4.7.x_23_GA15_RoW # inside 4.7.x_23_GA15_RoW folder
+# or
+ce_git commit -b ce_clouds_RoW # inside 4.7.x_23_GA15_RoW/ce_clouds folder
+
+To produce the release commit:
+repo forall -c 'git pull --rebase' # update all repositories to fresh version
+# Change version file and commit to local repository with any message
+# Edit cl2400_package/src/celeno.mk
+git commit -a -m "version change"
+ce_git release -b 4.7.x_23_GA15_RoW cl2400
+# Prepare release message and push to Gerrit
+# Approve and merge commit in Gerrit
+git pull --rebase
+ce_git add_tags -b 4.7.x_23_GA15_RoW cl2400
+
+Note 1: Please do not forget to add platform name in commands "ce_git release" and "ce_git add_tags".
+Note 2: add_tags command support tags creation for earlier releases. Please use -t option.
+Example:
+ce_git add_tags -t 4.7.23.31.0.0 cl2400
+
+With tags you may checkout repo folder to specific release version.
+Example:
+# Get the list of all available tags
+git tag
+# Switch to version
+repo forall -c 'git checkout 4.7.23.32.0.0'
+# Move back to master
+repo forall -c 'git checkout master'
+
