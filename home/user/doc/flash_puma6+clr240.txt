@@ -124,7 +124,12 @@ iwscan cei00 push_radio_channel2 1 20 1
 iwscan wdev0 push_radio_channel2 64 20 10
 #########################sample client##########################################
 #########################scan channels##########################################
+startNeighborScan 1 1 500 # full scan
+startNeighborScan 1 1 1000 # full scan
 startNeighborScan 1 3 200 4 36 40 48 52
+startNeighborScan 1 3 200 5 36 40 48 52 56
+startNeighborScan 1 3 200 25 36 40 44 48 52 56 60 64 100 104 108 112 116 120 124 128 132 136 140 144 149 153 157 161
+startNeighborScan 1 3 500 19 36 40 44 48 52 56 60 64 100 104 108 112 116 120 124 128 132 136 140
 getRadioChannelStats 1 4
 startNeighborScan 1 3 500 2 36 40
 getRadioChannelStats 1 36 40
@@ -136,11 +141,18 @@ startNeighborScan 1 3 500 1 48
 getRadioChannelStats 1 48
 startNeighborScan 1 3 500 1 40
 getRadioChannelStats 1 40
+startNeighborScan 1 3 500 1 64
+startNeighborScan 1 3 5000 1 64
+getRadioChannelStats 1 64
 startNeighborScan 1 3 500 1 100
+startNeighborScan 1 3 5000 1 100
 startNeighborScan 1 3 200 1 100
 startNeighborScan 1 3 105 1 100
 startNeighborScan 1 3 60 1 100
+startNeighborScan 1 3 10 1 100
 getRadioChannelStats 1 100
+startNeighborScan 1 3 500 1 64
+getRadioChannelStats 1 64
 startNeighborScan 1 3 200 1 36
 startNeighborScan 1 3 500 1 36
 startNeighborScan 1 3 100 1 36
@@ -157,19 +169,32 @@ pushRadioChannel2 1 112 80 5
 pushRadioChannel2 1 64 80 5
 pushRadioChannel2 1 36 80 5
 pushRadioChannel2 0 1 20 5
+pushRadioChannel2 0 6 20 5
 pushRadioChannel2 0 11 20 5
 iw wlan1_0 cecli acs -c.116.2.2
 iw wlan1_0 cecli acs -c.48.2.2
 iw wlan1_0 cecli acs -c.36.2.2
 #############################scan 24G###########################################
+startNeighborScan 0 1 500 # full scan
 startNeighborScan 0 3 50 1 11 # off channel scan 11 channel
 startNeighborScan 0 3 300 1 11 # off channel scan 11 channel
 startNeighborScan 0 3 500 1 11 # off channel scan 11 channel
-startNeighborScan 0 3 500 1 1 # off channel scan 1 channel
+startNeighborScan 0 3 5000 1 11 # off channel scan 11 channel
+startNeighborScan 0 3 2000 1 11 # off channel scan 11 channel
+startNeighborScan 0 3 500 10 1 2 3 4 5 6 7 8 9 10
+startNeighborScan 0 3 500 4 1 2 3 4
+startNeighborScan 0 3 5000 4 1 2 3 4
+startNeighborScan 0 3 2000 1 11
+startNeighborScan 0 3 2000 1 6
+startNeighborScan 0 3 2000 1 1
 startNeighborScan 0 3 200 1 11
-startNeighborScan 0 3 100 1 11
+startNeighborScan 0 3 10 1 11
 startNeighborScan 0 3 60 1 11
 getRadioChannelStats 0 11
+startNeighborScan 0 3 500 1 1 # off channel scan 1 channel
+startNeighborScan 0 3 5000 1 1 # off channel scan 1 channel
+startNeighborScan 0 3 200 1 1 # off channel scan 1 channel
+getRadioChannelStats 0 1
 startNeighborScan 0 3 300 1 6 # off channel scan 11 channel
 getRadioChannelStats 0 6
 #enable debug in sample_client################
@@ -206,8 +231,13 @@ iwscan wdev0 get_channel 36 100
 iwscan wdev0 get_channel 36 100 21
 iwscan wdev0 get_channel 36
 iwscan wdev0 get_channel 36 36 48
+iwscan wdev0 get_channel 36 40 44 48 52 56 60 64  100 104 108 112 116 120 124 128 132 136 140
+iwscan wdev0 get_channel 36 40 44 48 52 56 60 64  100 104 108 112 116 120 124 128 132 136 140 144 149 153 157 161 165
+iwscan wdev0 get_channel 36 40 44 48 52 56 60 64  100 104 108 112 116 136 140
+
 iwscan cei00 start 1 500
 iwscan cei00 get_channel 4 5 6 6
+iwscan cei00 get_channel 1 2 3 4 5 6 7 8 9 10 11 12 13  9 10 11 12 13 14
 ###########################statistics for associated stations###################
 getApAssociatedDeviceDiagnosticResult2 0
 getApAssociatedDeviceDiagnosticResult2 1
@@ -863,6 +893,22 @@ tar xf cl2400_host_pkg-4.7.*-ARRIS_P7.tar.bz2
 tar czf cl2400.tar.gz -C cl2400_host_pkg-4.7.*-ARRIS_P7 $(ls cl2400_host_pkg-*-ARRIS_P7/)
 tar cf cl2400.tar build
 ###############ARRIS ATOM############################
+########################ARRIS watchdog##############################################
+Usage: watchdog [-t N[ms]] [-T N[ms]] [-F] DEV
+
+Periodically write to watchdog device DEV
+
+        -T N    Reboot after N seconds if not reset (default 60)
+        -t N    Reset every N seconds (default 30)
+        -F      Run in foreground
+
+Use 500ms to specify period in milliseconds
+Usage: watchdogd [OPTIONS]
+  -d, --debug    Start daemon in debug mode.
+  -t, --timeout  Set the timeout of watchdog.
+  -w, --wakeup   Set the wakeup time for watchdog.
+  -h, --help     Print this message.
+########################
 ################remove printk `sh[13209]: AhncLog<src/gwMgrCommon.c:358>` when STA connected#####################
 dmcli eRT setv Device.X_ARRIS_COM_HNC.Enable bool false
 ###remove print `CcspPandMSsp[2356]: CosaUtilGetIfAddr IOCTL failure.: Cannot assign requested address`###
@@ -1862,6 +1908,10 @@ nvram_set rtdev CeChangeAffinity 0
 #######################DeskAp restore defaults CL2330_CL242#####################
 celeno_init renew rtdev /etc_ro/Wireless/CL242AP/CL242_ap_default
 celeno_init renew 2860 /etc_ro/Wireless/CL2330AP/CL2330_ap_default
+#####################
+route del -net 239.0.0.0 netmask 255.0.0.0
+route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
+route add -net 239.0.0.0 netmask 255.0.0.0 dev br0
 ##########################show all svn externals in svn repo####################
 svn propget -R svn:externals . # show all externals
 
@@ -4733,3 +4783,7 @@ repo forall -c 'git checkout 4.7.23.32.0.0'
 # Move back to master
 repo forall -c 'git checkout master'
 
+##############################smile#############################################
+\¯\_(ツ)_/¯
+##############################fw requests######################################
+MM_SET_FILTER_REQ [14] MM_SET_CHANNEL_REQ [16] MM_BACKUP_BCN_EN_REQ [82] MM_FREEZE_TX_REQ [103] M_TEMPERATURE_READ_REQ [86]
