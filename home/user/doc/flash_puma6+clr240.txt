@@ -113,6 +113,9 @@ wlan.fixed.action_code == 2 && wlan.addr == 00:09:B5:C7:AA:26
 wlan.fixed.action_code == 2 && wlan.addr == 00:05:9E:2F:82:9E
 ###################Channel Switch Announcement, CSA#############################
 wlan.tag.number == 37
+###############################################################################
+iwpriv wdev0 setcmd "memdump ms 0x4f4c 20"
+iwpriv wdev0 setcmd "memdump ms 0x4f4c 32"
 ###################g_iFirmwareStuck CL2330, CL242###############################
 http://moon/wiki/index.php/Watchdog_for_CL2330_on_PUMA6
 nvram: CeNlEn=1
@@ -1022,6 +1025,7 @@ brctl addif brlan0 wlan0_1
 echo 8 > /proc/sys/kernel/printk
 echo 0 > /proc/sys/kernel/printk
 ####################litepath debug###############################################
+/export/dev-root/34xx_7.1.1/build-arrisatom/tmp/work/arrisatom-rdk-linux/puma-litepath/git+intelsdk-7.1.1ga-r0
 cat /proc/lpal/db_stats
 cat /proc/net/pp/HAL/wifiFwData
 cli sys/pp/vpids
@@ -1315,6 +1319,21 @@ echo 4 > /sys/module/CL2400_5g/parameters/cl_edca_debug_level
 5. run traffic with throughput exceed TRAFFIC_ACTIVE_BYTES_THR_EDCA=2621440 (200mbit/sec)
                                       24G TRAFFIC_ACTIVE_BYTES_THR_EDCA= 655360  // = 50mbit/sec
    iperf -c 192.168.100.22 -i1 -m -t 100 -u -S 96 -b 210M
+
+#########################################ARRIS, Ccsp* services##################
+https://github.com/rdkcmf/rdkb-CcspPandM
+https://github.com/rdkcmf/rdkb-CcspTr069Pa
+https://github.com/rdkcmf/rdkb-CcspCommonLibrary
+https://github.com/rdkcmf/rdkb-Utopia
+https://github.com/rdkcmf/rdkb-MeshAgent
+https://github.com/rdkcmf/rdkb-CcspWifiAgent
+https://github.com/rdkcmf/rdkb-CcspEthAgent
+
+https://github.com/rdkcmf/rdkb-webui
+https://github.com/rdkcmf/rdk-tools-tdk
+https://github.com/rdkcmf/rdk-wifi
+
+https://github.com/rdkcmf/rdkb-CcspWifiAgent/tree/rdk-next/source/WifiSsp
 #######################error/packet statistics in FW########################
 iw dev wlan1_0 cecli fw_stats -r
 ####################Huawei GUI##################################################
@@ -3603,6 +3622,8 @@ Usage: monitor -{mrt} [options]
 -m - Set mode [0-Forward/1-Bypass/2-Monitor]
 -r - Reset monitor counters
 -t - Print monitor counters
+###########################
+${clr_install_dir_cl2400}/scripts/MIB/mib_print.sh 24g
 #########################ce_atm queue#############################
 iwpriv atm5g cecli queue.?
 iwpriv atm24g cecli queue.?
@@ -4553,6 +4574,83 @@ echo -e "register\nchange_index.0.8\ngroup_set.8.1.0.1.3\nclient_set.00:09:b5:c7
 echo -e "register\nchange_index.0.8\nconfig_save./nvram/bs_config_data_5g" | plume_netlink
 echo -e "register\nchange_index.0.8\nconfig_set./nvram/bs_config_data_5g" | plume_netlink
 echo -e "register\nchange_index.0.8\nconfig_show" | plume_netlink
+
+##################################2000 bytes threshold, 5.2G, activity event####
+echo 1 > /sys/module/CL2400_5g/parameters/plume_trace_activity_event
+echo 1 > /sys/module/ap8x/parameters/plume_trace_activity_event
+plume_netlink
+register
+change_index.0.8
+group_set.8.0.0.10.60
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+5. Common step: Associate STA 5.2G
+6. Start streaming Internet traffic (eg. voice call)
+7. WIFI_STEERING_EVENT_CLIENT_ACTIVITY (active=true) should be reported
+8. Stop all traffic on STA (eg. put to sleep mode)
+9. WIFI_STEERING_EVENT_CLIENT_ACTIVITY (active=false) event reported not earlier than after 60 seconds
+##################################2000 bytes threshold, 2.4G, activity event####
+echo 1 > /sys/module/CL2400_24g/parameters/plume_trace_activity_event
+echo 1 > /sys/module/mt7603e_ap/parameters/plume_trace_activity_event
+plume_netlink
+register
+change_index.0.0
+group_set.0.0.0.10.60
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+Common step: Associate STA 5.2G
+5. Start streaming Internet traffic (eg. voice call)
+6. WIFI_STEERING_EVENT_CLIENT_ACTIVITY (active=true) should be reported
+7. Stop all traffic on STA (eg. put to sleep mode)
+8. WIFI_STEERING_EVENT_CLIENT_ACTIVITY (active=false) event reported not earlier than after 60 seconds
+##################################plume_netlink, steering event#################
+plume_netlink
+register
+group_set.0.0.0.10.60
+group_set.1.0.0.10.60
+change_index.0.0
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+change_index.0.1
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+btm_event_register.0
+btm_event_register.1
+get_assoc_req.1.8C:F5:A3:AC:55:B7
+get_assoc_req.0.8C:F5:A3:AC:55:B7
+-------------------------------------------------------------
+Associate client on 2.4g and steer it to 5g:
+change_index.0.0
+set_btm_request.0.8C:F5:A3:AC:55:B7.100.00:1c:51:ce:94:84.3
+disconnect.8C:F5:A3:AC:55:B7.2.3
+Disassociate STA 5G
+Start sniffer on 5GHz home AP channel
+Associate STA 5G and steer to 2.4g
+change_index.0.1
+set_btm_request.1.8C:F5:A3:AC:55:B7.11.00:1c:51:b8:8e:0d.3
+disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
+##################################plume_netlink, steering event, MV1.0##########
+plume_netlink
+register
+group_set.0.0.0.10.60
+group_set.8.0.0.10.60
+change_index.0.0
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+change_index.0.8
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+btm_event_register.0
+btm_event_register.8
+get_assoc_req.8.8C:F5:A3:AC:55:B7
+get_assoc_req.0.8C:F5:A3:AC:55:B7
+-------------------------------------------------------------
+Associate client on 2.4g and steer it to 5g:
+change_index.0.0
+set_btm_request.0.8C:F5:A3:AC:55:B7.100.DC:53:7C:48:92:E4.3
+disconnect.8C:F5:A3:AC:55:B7.2.3
+Disassociate STA 5G
+Start sniffer on 5GHz home AP channel
+Associate STA 5G and steer to 2.4g
+change_index.0.8
+set_btm_request.8.8C:F5:A3:AC:55:B7.11.00:0C:43:26:A5:A5.3
+disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
+#########wireshark##############################################################
+wlan.fixed.category_code == 10
 #####################plume_netlink via bash 24G#################################
 echo -e "register\nchange_index.0.0\ngroup_set.0.1.0.1.3\nclient_set.00:09:b5:c7:aa:26.0.0.0.128.35.50.0.1\ngroup_set.1.1.0.1.3\nclient_set.00:09:b5:c7:aa:28.1.0.0.128.35.50.0.1" | plume_netlink
 echo -e "register\nchange_index.0.0\nconfig_show" | plume_netlink
@@ -4580,6 +4678,8 @@ https://titan.celeno.com/gerrit/c/celeno-swdb-CL2400-hp-4.7.x_23_GA15_Huawei/+/4
 
 ###################save git credentials ########################################
 git config --global credential.helper store
+###################clear git credentials ########################################
+git credential-cache exit
 ###############################repo#############################################
 curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
 1. Make empty dir and cd into it
