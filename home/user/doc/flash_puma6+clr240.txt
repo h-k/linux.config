@@ -4901,7 +4901,13 @@ git tag
 repo forall -c 'git checkout 4.7.23.32.0.0'
 # Move back to master
 repo forall -c 'git checkout master'
-
+#########################################git branch create######################
+# Create a new branch:
+git checkout -b feature_branch_name
+#Push your branch to the remote repository:
+git push -u origin feature_branch_name
+#Also commit patch to feature_branch_name
+git push -u origin feature_branch_name
 ##############################smile#############################################
 \¯\_(ツ)_/¯
 ##############################fw requests######################################
@@ -4947,6 +4953,10 @@ qemu-system-i386 \
         -net nic \
         -net bridge,br=br0 \
         -device vfio-pci,host=02:00.0
+
+login:sin3t
+password:gfhjkm
+
 #########################################
 export cl2400_root=/home/sin3t/hostpkg/cl2400_host_pkg-4.7.23.33.0.0-CE_GENERAL/cl2400
 export clr_install_dir_cl2400=$cl2400_root
