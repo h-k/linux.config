@@ -4625,7 +4625,7 @@ Associate STA 5G and steer to 2.4g
 change_index.0.1
 set_btm_request.1.8C:F5:A3:AC:55:B7.11.00:1c:51:b8:8e:0d.3
 disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
-##################################plume_netlink, steering event, MV1.0##########
+##################################plume_netlink, steering event, old version#################
 plume_netlink
 register
 group_set.0.0.0.10.60
@@ -4636,7 +4636,26 @@ change_index.0.8
 client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
 btm_event_register.0
 btm_event_register.8
-get_assoc_req.8.8C:F5:A3:AC:55:B7
+-------------------------------------------------------------
+Associate client on 2.4g and steer it to 5g:
+change_index.0.0
+set_btm_request.0.8C:F5:A3:AC:55:B7.100.00:1c:51:ce:94:84.3
+Start sniffer on 5GHz home AP channel
+Associate STA 5G and steer to 2.4g
+change_index.0.8
+set_btm_request.8.8C:F5:A3:AC:55:B7.11.00:1c:51:b8:8e:0d.3
+##################################plume_netlink, steering event, MV1.0##########
+plume_netlink
+register
+group_set.0.0.0.10.60
+group_set.1.0.0.10.60
+change_index.0.0
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+change_index.0.1
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+btm_event_register.0
+btm_event_register.1
+get_assoc_req.1.8C:F5:A3:AC:55:B7
 get_assoc_req.0.8C:F5:A3:AC:55:B7
 -------------------------------------------------------------
 Associate client on 2.4g and steer it to 5g:
@@ -4646,8 +4665,8 @@ disconnect.8C:F5:A3:AC:55:B7.2.3
 Disassociate STA 5G
 Start sniffer on 5GHz home AP channel
 Associate STA 5G and steer to 2.4g
-change_index.0.8
-set_btm_request.8.8C:F5:A3:AC:55:B7.11.00:0C:43:26:A5:A5.3
+change_index.0.1
+set_btm_request.1.8C:F5:A3:AC:55:B7.11.00:0C:43:26:A5:A5.3
 disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
 #########wireshark##############################################################
 wlan.fixed.category_code == 10
@@ -4887,3 +4906,21 @@ repo forall -c 'git checkout master'
 \¯\_(ツ)_/¯
 ##############################fw requests######################################
 MM_SET_FILTER_REQ [14] MM_SET_CHANNEL_REQ [16] MM_BACKUP_BCN_EN_REQ [82] MM_FREEZE_TX_REQ [103] M_TEMPERATURE_READ_REQ [86]
+#####################qemu for CL2400#############################################
+echo "allow br0" > /etc/qemu/bridge.conf
+chown <USERNAME>:users /etc/qemu/bridge.conf
+
+###########add CL2400 to vfio-pci######################################
+/etc/modprobe.d/vfio.conf:
+options vfio-pci ids=1d69:2400
+
+################start qemu#################
+qemu-system-i386 \
+        -enable-kvm -cpu IvyBridge \
+        -smp 2 \
+        -boot order=c \
+        -m 4048 \
+        -drive file=/home/<USERNAME>/vm/ub14.04_i386 \
+        -net nic \
+        -net bridge,br=br0 \
+        -device vfio-pci,host=06:00.0
