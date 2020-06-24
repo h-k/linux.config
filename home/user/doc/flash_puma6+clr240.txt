@@ -4910,17 +4910,54 @@ MM_SET_FILTER_REQ [14] MM_SET_CHANNEL_REQ [16] MM_BACKUP_BCN_EN_REQ [82] MM_FREE
 echo "allow br0" > /etc/qemu/bridge.conf
 chown <USERNAME>:users /etc/qemu/bridge.conf
 
+sudo apt install bridge-utils
+
+#############global network works###############
+sudo ip link add name br0 type bridge
+sudo ip link set p3p1 master br0
+sudo ip link set br0 up
+sudo ip link set p2p1 up
+
+#############local network works###############
+sudo ip link add name br0 type bridge
+sudo ip link set p2p1 master br0
+sudo ip link set br0 up
+sudo ip link set p3p1 up
+
 ###########add CL2400 to vfio-pci######################################
+/etc/modules:
+pci_stub
+vfio
+vfio_iommu_type1
+vfio_pci
+kvm
+kvm_intel
+
 /etc/modprobe.d/vfio.conf:
 options vfio-pci ids=1d69:2400
 
 ################start qemu#################
+sudo apt install qemu-system-x86
 qemu-system-i386 \
         -enable-kvm -cpu IvyBridge \
         -smp 2 \
         -boot order=c \
         -m 4048 \
-        -drive file=/home/<USERNAME>/vm/ub14.04_i386 \
+        -drive file=/home/alexander/qemu/ub14.04_i386.qcow2 \
         -net nic \
         -net bridge,br=br0 \
-        -device vfio-pci,host=06:00.0
+        -device vfio-pci,host=02:00.0
+#########################################
+export cl2400_root=/home/sin3t/hostpkg/cl2400_host_pkg-4.7.23.33.0.0-CE_GENERAL/cl2400
+export clr_install_dir_cl2400=$cl2400_root
+export clr_cfg_dir_cl2400_24g=/tmp/cl2400_24g
+export clr_cfg_dir_cl2400=/tmp/cl2400
+export PATH=$cl2400_root/bin:$cl2400_root/scripts:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$cl2400_root/lib
+
+restore_defaults.sh all
+
+ce_udma_enabled=0
+ce_vendor_id=0x1d69
+ce_device_id=0x2400
+ce_ssid1=AA
