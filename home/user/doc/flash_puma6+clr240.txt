@@ -131,6 +131,7 @@ startNeighborScan 1 1 500 # full scan
 startNeighborScan 1 1 1000 # full scan
 startNeighborScan 1 3 200 4 36 40 48 52
 startNeighborScan 1 3 200 5 36 40 48 52 56
+getRadioChannelStats 1 36 40 48 52 56
 startNeighborScan 1 3 200 25 36 40 44 48 52 56 60 64 100 104 108 112 116 120 124 128 132 136 140 144 149 153 157 161
 startNeighborScan 1 3 500 19 36 40 44 48 52 56 60 64 100 104 108 112 116 120 124 128 132 136 140
 getRadioChannelStats 1 4
@@ -160,7 +161,10 @@ startNeighborScan 1 3 200 1 36
 startNeighborScan 1 3 500 1 36
 startNeighborScan 1 3 100 1 36
 startNeighborScan 1 3 60 1 36
-
+startNeighborScan 1 3 200 2 100 116
+getRadioChannelStats 1 100 116
+startNeighborScan 1 3 500 2 100 116
+getRadioChannelStats 1 100 116
 startNeighborScan 1 3 500 1 116
 iw wlan1_0 cecli acs -c.100.2.2
 pushRadioChannel 1 48 5
@@ -177,6 +181,15 @@ pushRadioChannel2 0 11 20 5
 iw wlan1_0 cecli acs -c.116.2.2
 iw wlan1_0 cecli acs -c.48.2.2
 iw wlan1_0 cecli acs -c.36.2.2
+
+pushRadioChannel2 1 100 80 0
+pushRadioChannel2 1 116 80 5
+pushRadioChannel2 1 36 80 5
+pushRadioChannel2 1 36 80 21
+pushRadioChannel2 1 36 80 0
+pushRadioChannel2 1 100 80 20
+pushRadioChannel2 1 112 80 5
+getApAssociatedDeviceDiagnosticResult 1 # show station connected to 5G
 #############################scan 24G###########################################
 startNeighborScan 0 1 500 # full scan
 startNeighborScan 0 3 50 1 11 # off channel scan 11 channel
@@ -185,12 +198,20 @@ startNeighborScan 0 3 500 1 11 # off channel scan 11 channel
 startNeighborScan 0 3 5000 1 11 # off channel scan 11 channel
 startNeighborScan 0 3 2000 1 11 # off channel scan 11 channel
 startNeighborScan 0 3 500 10 1 2 3 4 5 6 7 8 9 10
+getRadioChannelStats 0 1 2 3 4 5 6 7 8 9 10
+startNeighborScan 0 3 500 9 2 3 4 5 6 7 8 9 10
+getRadioChannelStats 0 2 3 4 5 6 7 8 9 10
 startNeighborScan 0 3 500 4 1 2 3 4
 startNeighborScan 0 3 5000 4 1 2 3 4
 startNeighborScan 0 3 2000 1 11
 startNeighborScan 0 3 2000 1 6
 startNeighborScan 0 3 2000 1 1
-startNeighborScan 0 3 200 1 11
+startNeighborScan 0 3 200 2 1 11
+getRadioChannelStats 0 1 11
+getRadioChannelStats 0 1
+getRadioChannelStats 0 11
+startNeighborScan 0 3 200 2 6 11
+getRadioChannelStats 0 6 11
 startNeighborScan 0 3 10 1 11
 startNeighborScan 0 3 60 1 11
 getRadioChannelStats 0 11
@@ -200,6 +221,9 @@ startNeighborScan 0 3 200 1 1 # off channel scan 1 channel
 getRadioChannelStats 0 1
 startNeighborScan 0 3 300 1 6 # off channel scan 11 channel
 getRadioChannelStats 0 6
+##############
+startNeighborScan 1 2 200 # onchannel scan
+startNeighborScan 0 2 200
 #enable debug in sample_client################
 touch /nvram/wlandbg
 ##############################################
@@ -242,10 +266,11 @@ iwscan cei00 start 1 500
 iwscan cei00 get_channel 4 5 6 6
 iwscan cei00 get_channel 1 2 3 4 5 6 7 8 9 10 11 12 13  9 10 11 12 13 14
 ###########################statistics for associated stations###################
-getApAssociatedDeviceDiagnosticResult2 0
-getApAssociatedDeviceDiagnosticResult2 1
+getApAssociatedDeviceDiagnosticResult2 0 1
+getApAssociatedDeviceDiagnosticResult2 1 0
 getApAssociatedDeviceDiagnosticResult 1
-getApAssociatedDeviceDiagnosticResult2 1
+getApAssociatedDeviceDiagnosticResult 0
+getApAssociatedDeviceDiagnosticResult2 1 0
 ###########################statistics for associated station by mac#############
 getApAssociatedDeviceRxStats 1 44:91:60:54:84:37
 getApAssociatedDeviceTxStats 1 44:91:60:54:84:37
@@ -313,6 +338,7 @@ applyRadioSettings 1
 getSSIDName 1
 getSSIDNameStatus 1
 getApAssociatedDeviceRxStats 1 00:09:b5:c7:aa:26
+getApAssociatedDeviceRxStats 1 8c:f5:a3:ac:55:b7
 #########################plume_netlink##########################################
 group_set.0.0.0.1.3
 client_set.74:eb:80:95:73:a8.0.0.0.128.35.50.0.1
@@ -375,7 +401,9 @@ getNeighboringWiFiStatus 1
 startNeighborScan 1 3 2000 2 64 100 # offcannel scan
 startNeighborScan 1 3 2000 1 64 # offcannel scan
 startNeighborScan 1 4 1000 2 64 100 # survey scan
-startNeighborScan 1 1 1000          # full scan
+startNeighborScan 1 1 1000          # full scan 5g
+startNeighborScan 0 1 500          # full scan 24g
+getRadioChannelStats 0 1 2 3 4 5 6 7 8 9 10 11 12 13
 startNeighborScan 1 2 1000          # onchan scan
 getNeighboringWiFiStatus 1
 ######################wireshark filter, assco, reassoc, etc
@@ -896,6 +924,16 @@ tar xf cl2400_host_pkg-4.7.*-ARRIS_P7.tar.bz2
 tar czf cl2400.tar.gz -C cl2400_host_pkg-4.7.*-ARRIS_P7 $(ls cl2400_host_pkg-*-ARRIS_P7/)
 tar cf cl2400.tar build
 ###############ARRIS ATOM############################
+export clr_cfg_dir_cl2400_24g=/nvram/cl2400_24g
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export clr_install_dir_cl2400=/cl2400
+export clr_install_dir_cl2400_24g=/cl2400
+export clr_vlan_dir_cl2400=/nvram/cl2400
+export clr_vlan_dir_cl2400_24g=/nvram/cl2400_24g
+stty cols 152 rows 40;newgrp
+echo 8 > /proc/sys/kernel/printk
+/cl2400/scripts/ce_host.sh stop dual
+rmmod cfg80211 compat
 ########################ARRIS watchdog##############################################
 Usage: watchdog [-t N[ms]] [-T N[ms]] [-F] DEV
 
@@ -911,13 +949,18 @@ Usage: watchdogd [OPTIONS]
   -t, --timeout  Set the timeout of watchdog.
   -w, --wakeup   Set the wakeup time for watchdog.
   -h, --help     Print this message.
+
 ########################
 ################remove printk `sh[13209]: AhncLog<src/gwMgrCommon.c:358>` when STA connected#####################
 dmcli eRT setv Device.X_ARRIS_COM_HNC.Enable bool false
 ###remove print `CcspPandMSsp[2356]: CosaUtilGetIfAddr IOCTL failure.: Cannot assign requested address`###
+systemctl stop CcspAHNCSsp
 systemctl stop CcspPandMSsp
 systemctl stop CcspEthAgent
-###################################DDoS protection disable########################
+systemctl stop CcspWifiSsp
+# killall CcspWifiSsp
+# ccsp_bus_client_tool eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool false
+###################################DDoS protection disable, erorr DoS Attack Fragment-Flooding####
 There is short instruction, how to disable Intel's DDH (DDoS protection) feature.
 Sometimes it can drop some packets from ethernet.
 Try to disable it in case of low/unstable and no DL throughput as well (especially UDP DL). 
@@ -932,10 +975,36 @@ ddhStats  [This should show that the Defensive Mode is Internal which indicates 
 setDefensiveMode 1
 setDefensiveState 0
 ddhStats  [This should now show that Defensive Mode is External, which indicates that DDoS protection of off]​
+########################################custom telnet###########################
+/cernd/_Users/viktor.barna/debugging_utils
+    /p6_utils/
+    └── iperf_atomp6
+    /p7_utils/
+    ├── strace
+    └── utelnetd
+#####################
+Way 1. Telnet (custom binary) usage at ARRIS (P7), it is recommended to start the daemon after doing exports setting - then the telnet CLI will be started with parent env exports:
+###########Flush all iptables rules
+iptables -F
+iptables -X
+iptables -t nat -F
+iptables -t nat -X
+iptables -t mangle -F
+iptables -t mangle -X
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+##########Download utelnetd binary:
+cd /nvram; tftp -gr utelnetd 192.168.100.100
+#########Set exec rights:
+chmod a+x /utelnetd
+#######Start telnetd:
+/nvram/utelnetd -p23 -d
 #####################################################
+# killall CcspWifiSsp
 stty cols 152 rows 40;newgrp
 echo 8 > /proc/sys/kernel/printk
-/cl2400/scripts/ce_host.sh stop dual
+/cl2400/scripts/cst.sh stop dual
 rmmod cfg80211 compat
 ############### or #############################################################
 /cl2400/scripts/ce_host.sh stop
@@ -1021,6 +1090,27 @@ brctl addif brlan0 wlan1_0
 brctl addif brlan0 wlan1_1
 brctl addif brlan0 wlan0_0
 brctl addif brlan0 wlan0_1
+########################How to check the DSP version############################
+# Check the register base address – cat /var/run/cl2400.ini
+export CL2400_PCIID=0x1d69:0x2400
+export CL2400_SYS_DEV_PATH=/sys/bus/pci/devices/0000:03:00.0
+export CL2400_PCI_BASE_ADDR=0xBF000000
+export CL2400_PCI_LAST_ADDR=0xBF7FFFFF
+export ASIC_VERX=0xB0
+export ASIC_VER=B0
+export CL_BAND=5g
+export BAND=5g
+export clr_install_dir_cl2400=/etc/Wireless/cl2400/
+export clr_cfg_dir_cl2400=/nvram/cl2400
+export PATH=/etc/Wireless/cl2400/scripts/B0:/etc/Wireless/cl2400/bin:/etc/Wireless/cl2400/scripts:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/scripts
+export CL_PATHX=/etc/Wireless/cl2400/scripts/B0:/etc/Wireless/cl2400/bin:/etc/Wireless/cl2400/scripts
+export CL2400_SUFFIX=
+export CL2400_DEBUGFS_PATH=/sys/kernel/debug/ieee80211/phy0/cl
+export CL2400_IFNAME=wlan1_0
+export CL2400_KMOD=CL2400_5g.ko
+# Add to the address offset of 0x600040 – in the example above 0xbf000000 + 0x600040
+# Read the DSP version register – mem 0xbf600040
+# The 3 LSB chars are the DSP version – for example B0ABC3DA
 ###########enable printk##########
 echo 8 > /proc/sys/kernel/printk
 echo 0 > /proc/sys/kernel/printk
@@ -1335,7 +1425,11 @@ https://github.com/rdkcmf/rdk-wifi
 
 https://github.com/rdkcmf/rdkb-CcspWifiAgent/tree/rdk-next/source/WifiSsp
 #######################error/packet statistics in FW########################
-iw dev wlan1_0 cecli fw_stats -r
+
+iw dev wlan1_0 cecli fw_stats -r # FW RX debug data (packet received, AMSDU count, overflow etc.)
+iw dev wlan1_0 cecli fw_stats -p # FW Power Save debug data statistics
+iw dev wlan1_0 cecli fw_stats -b # Beacon debug data(average time, flushed count etc.)
+
 ####################Huawei GUI##################################################
 Username: telecomadmin
 Password: admintelecom
@@ -1576,6 +1670,8 @@ transportp 1 # HTTP
 #fi AR01.02.009ish.R5.4.5_ENG.arrsimg
 fi arris-base.4.6.92.8.20.0.arrsimg  //SDK 7.1.1
 fi AR01.02.036ish.4.6.92.8.34.3.arrsimg //SDK 7.1.1
+fi AR01.02.065.09.X_05.26.2020_6.9.31_eng.arrsimg //new version SDK 3.7.1.1
+fi AR01.02.065.11ish_20200628_6.9.33_hotfix.arrsimg # CommScope, plume branch 6.9.33, SDK 3.7.1.1
 fi AR01.02.037ish.R6.8.2.arrsimg //HP 4.7.x_12_GA14
 #or
 fi AR01.01.098.4.6.91.6.4.0.34XX.uefi.mono.arrsimg
@@ -1607,7 +1703,7 @@ scan 0
 #4. - Go to main menu by Type:
 /
 #5. - Go to nvram menu by Type:
-NVM
+nvm
 #6. - to restore default you board type:
 !resetdef
 #7. - wait a 2-3 minutes, if board does not reboots automaticaly then do it yourself
@@ -1619,6 +1715,16 @@ stmfg
 #11. - reset the board by type:
 !reset
 #now you should be able to load a new image on ARRIS boards
+###### Set in pies 1 mode (in pies 1 mode drivers auto start), if you are get error ###############
+Switch into pies 1 mode:
+Type: "nvm"
+Type: "dmp"
+Type: "pies 0" // set mode: 1-gateway, 0-bridge
+#pies 0 - autoboot modules disabled
+#pies 1 - autoboot modules enabled
+Type: "stm"    // save
+Type: "!reset"
+#########after reboot, write image, and move back `pies 1`##########################
 ######################AR01.02.037ish.R6.8.2.arrsimg, board TG3442############################################
 You can use the following to restore defaults:
 syscfg set factory_reset y
@@ -1914,9 +2020,8 @@ cd 6.84.0xx_DeskAP_27/sdk/lib/gettext-0.16.1
 svn revert -R .
 # try again###############################
 #################OR#############################################################
-svn co http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_Open up VLC Media Player.
-Go to View > Playlist [CTRL + L].
-On the left under Local Network, click on Universal Plug’n’Play.DeskAP_27
+svn co http://moon/svn/celeno-swdb/target/branches/CL1860/6.84.0xx_DeskAP_27
+#############clean version control tags########################
 find . -name .svn -type d -exec rm -rf {} +
 find . -name .git -type d -exec rm -rf {} +
 find . -name .repo -type d -exec rm -rf {} +
@@ -1968,9 +2073,7 @@ wlan.addr == B0:DF:3A:00:7E:A6 && wlan.fixed.category_code == 10
 wlan.addr == D0:C5:F3:E3:80:91 && wlan.fixed.category_code == 10 //iPhone7
 wlan.addr == 50:82:D5:61:49:96 && wlan.fixed.category_code == 10 //iPhone6
 wlan.addr == 74:23:44:46:26:60 && wlan.fixed.category_code == 10//Meizu
-##########################data frame################################Open up VLC Media Player.
-Go to View > Playlist [CTRL + L].
-On the left under Local Network, click on Universal Plug’n’Play.
+##########################data frame################################
 wlan.addr == 00:1C:51:B1:BA:98 && wlan.fc.type == 2
 ############RMM(RRM)##########################################################
 wlan.fixed.category_code == 5 || wlan.fixed.category_code == 10
@@ -2023,9 +2126,7 @@ export clr_cfg_dir_cl2400_24g=/nvram/cl2400_24g
 export PATH=$clr_install_dir_cl2400/bin:$clr_install_dir_cl2400/scripts${PATH+:}${PATH}
 export LD_LIBRARY_PATH=$clr_install_dir_cl2400/lib${LD_LIBRARY_PATH+:}${LD_LIBRARY_PATH}
 ########################################package load on Comhem##################
-export clr_cfg_dir_cl2400_24g=/nvram/cl_24gOpen up VLC Media Player.
-Go to View > Playlist [CTRL + L].
-On the left under Local Network, click on Universal Plug’n’Play.
+export clr_cfg_dir_cl2400_24g=/nvram/cl_24g
 export clr_cfg_dir_cl2400=/nvram/cl
 export clr_install_dir_cl2400=/tmp/build
 export clr_install_dir_cl2400_24g=/tmp/build
@@ -2065,13 +2166,26 @@ ce_dscp_to_up0_7dec=0,3;8,5;16,5;24,1;32,1;40,0;48,2;56,2
 ########################DSCPtoUP test with iperf, for VO########################
 iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 80k -S 224 # host, (VO=0)
 ########################DSCPtoUP test with iperf, for VI########################
-iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 80k -S 160 # host, (VI=1)
+iperf -c 192.168.100.126 -i1 -t1000 -p12345 -u -b 80k -S 160 # host, (VI=1)
 ########################DSCPtoUP test with iperf, for BK########################
-iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 80k -S 32 # host, (BK=3)
+iperf -c 192.168.100.126 -i1 -t1000 -p12345 -u -b 80k -S 32 # host, (BK=3)
 ########################DSCPtoUP test with iperf, for BE########################
 iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 80k -S 0 # host, (BE=2)
 
 iperf -s -i1 -p12345 -u # sta
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 40k -S 0   # (BE=2), tid = 0
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 40k -S 32  # (VI=1), tid = 1
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 40k -S 64  # (BE=2), tid = 2
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 40k -S 96  # (BK=3), tid = 3
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 40k -S 128 #  (BE=2), tid = 4
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 40k -S 160 #  (BE=2), tid = 5
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 40k -S 192 #  (BE=2), tid = 6 ??
+iperf -c 192.168.100.141 -i1 -t1000 -p12345 -u -b 40k -S 224 #  (BE=2), tid = 7 ??
+#################Block Ack Rsp##################################################
+wlan.fc.subtype == 9 && wlan.fc.type == 1
+#################Block Ack Req##################################################
+wlan.fc.subtype == 8 && wlan.fc.type == 1
+wlan.ra == 00:1c:51:77:87:02 && (wlan.fc.subtype == 8 || wlan.fc.subtype == 9) && wlan.fc.type == 1
 ########################DSCPtoUP, cmd iw########################################
 iw dev wlan1_0 cecli qos -s.? # will show set parameters for All BSS
 iw dev wlan1_0 cecli qos -a."0,3;8,5;16,5;24,1;32,1;40,0;48,2;56,2"
@@ -2322,16 +2436,25 @@ Then you compile as follows:
 make lmac-asic-B0
 #################################################################################
 ssh alexander@gamma-server
+password:123456
+lxc exec yocto-6-1-5-hk
+lxc exec yocto-6-1-5-hk -- sudo -i -u developer
+lxc stop yocto-6-1-5-hk
+###########################################################
+ssh alexander@gamma-server
 #lxc copy xtensa xtensa-hk
 
 lxc list
 lxc start xtensa-hk
 
 lxc exec xtensa-hk -- sudo -i -u trego
-rsync -ar --progress --exclude=.svn --exclude=.git -e ssh --delete-excluded alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/lmac_B0_4.7.x_23_GA15_Huawei .
-cd lmac_B0_4.7.x_23_GA15_Huawei/firmware
+rsync -ar --progress --exclude=.svn --exclude=.git -e ssh --delete-excluded alexander@172.168.110.12:/home/alexander/repo/4.7.x_23_GA15/lmac_B0_4.7.x_23_GA15 .
+cd lmac_B0_4.7.x_23_GA15/firmware
 make clean ; make lmac-asic-B0 -j 6
 scp lmac/bin/lmacfw.bin.asic.B0 alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/firmware/B0/lmacfw.bin
+##########################sdk container 3.7.1.1##############################
+lxc start arris-p7-hk
+lxc exec arris-p7-hk -- sudo -i -u dev-root
 ########################4.7.x_23_GA15, PC via VPN###########################################
 # on packman
 mkdir -p /home/alexander/repo/4.7.x_23_GA15/lmac_B0_4.7.x_23_GA15
@@ -4515,7 +4638,8 @@ make
 ############################cl2400 structs######################################
 struct ieee80211_sub_if_data *sdata = dev->priv;
 struct cl_vif *clvif = (struct cl_vif *)(dev->priv)->vif.drv_priv);
-
+#or
+struct cl_vif *clvif = (struct cl_vif *)(sdata->vif.drv_priv);
 struct ieee80211_sub_if_data *sdata;
 struct ieee80211_local *local = sdata->local;
 
@@ -4532,6 +4656,32 @@ struct wireless_dev *wdev = &sdata->wdev;
 struct net_device *netdev = wdev->netdev;                      
 struct wiphy *wiphy = wdev->wiphy;                             
 struct cfg80211_registered_device *rdev = wiphy_to_dev(wiphy); 
+
+struct ethhdr *ehdr = eth_hdr(skb);
+struct cl_hw *cl_hw = sdata->local->hw.priv;
+struct cl_vif *cl_vif = (struct cl_vif *)sdata->vif.drv_priv;
+struct ieee80211_vif *vif = &sdata->vif;
+struct ieee80211_sub_if_data *vif_to_sdata(struct ieee80211_vif *p)
+{
+	return container_of(p, struct ieee80211_sub_if_data, vif);
+}
+
+struct sta_info *sta = sta_info_get(sdata, ehdr->h_source);
+struct cl_sta *cl_sta = (struct cl_sta *)sta->sta.drv_priv;
+
+struct ieee80211_vif *vif = &sdata->vif;
+struct cl_vif *cl_vif = (struct cl_vif *)vif->drv_priv;
+struct net_device *dev = cl_vif->dev;
+
+struct sta_info *sta = cl_sta_info_get(wcid);
+
+if (sta && sta->sdata->bss)
+{
+    struct ieee80211_sta *ieee_sta = &sta->sta;
+    struct cl_sta * cl_sta = (struct cl_sta *)ieee_sta->drv_priv;
+}
+
+struct sta_info *cl_sta_info_get(ceu8 wcid)
 ################################################################################
 sudo route add -net 224.0.0.0 netmask 240.0.0.0 dev enp2s0
 sudo ip route del 224.0.0.0/4
@@ -4593,7 +4743,7 @@ echo 1 > /sys/module/CL2400_24g/parameters/plume_trace_activity_event
 echo 1 > /sys/module/mt7603e_ap/parameters/plume_trace_activity_event
 plume_netlink
 register
-change_index.0.0
+change_index.0.1
 group_set.0.0.0.10.60
 client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
 Common step: Associate STA 5.2G
@@ -4604,70 +4754,125 @@ Common step: Associate STA 5.2G
 ##################################plume_netlink, steering event#################
 plume_netlink
 register
-group_set.0.0.0.10.60
-group_set.1.0.0.10.60
 change_index.0.0
+group_set.0.0.0.10.60
 client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
 change_index.0.1
+group_set.1.0.0.10.60
 client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
 btm_event_register.0
 btm_event_register.1
-get_assoc_req.1.8C:F5:A3:AC:55:B7
-get_assoc_req.0.8C:F5:A3:AC:55:B7
+change_index.0.2
+group_set.1.0.0.10.60
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+client_set.E0:75:7D:9E:28:C4.0.128.0.128.0.128.0.0
 -------------------------------------------------------------
 Associate client on 2.4g and steer it to 5g:
-change_index.0.0
+#change_index.0.0
 set_btm_request.0.8C:F5:A3:AC:55:B7.100.00:1c:51:ce:94:84.3
-disconnect.8C:F5:A3:AC:55:B7.2.3
-Disassociate STA 5G
+get_assoc_req.1.8C:F5:A3:AC:55:B7
 Start sniffer on 5GHz home AP channel
 Associate STA 5G and steer to 2.4g
-change_index.0.1
 set_btm_request.1.8C:F5:A3:AC:55:B7.11.00:1c:51:b8:8e:0d.3
+get_assoc_req.0.8C:F5:A3:AC:55:B7
 disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
-##################################plume_netlink, steering event, old version#################
+disconnect.8C:F5:A3:AC:55:B7.2.1 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
+########################client_set via sample_client###########################
+wifi_chan_eventRegister
+wifi_steering_setGroup 0 0 0 10 60
+wifi_steering_clientSet 0 8C:F5:A3:AC:55:B7 0 128 0 128 0 128 0 0
+ce_wifi_getConfig_show 0
+wifi_steering_setGroup 1 0 0 10 60
+wifi_steering_clientSet 1 8C:F5:A3:AC:55:B7 0 128 0 128 0 128 0 0
+ce_wifi_getConfig_show 1
+
+pushRadioChannel2 1 112 80 5
+pushRadioChannel2 1 124 80 5
+pushRadioChannel2 1 36 80 5
+
+wifi_chan_eventUnregister
+##################################plume_netlink, steering event BSS2############
 plume_netlink
 register
-group_set.0.0.0.10.60
-group_set.8.0.0.10.60
+group_set.2.0.0.10.60
+group_set.3.0.0.10.60
+change_index.0.2
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+change_index.0.3
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+btm_event_register.2
+btm_event_register.3
+-------------------------------------------------------------
+Associate client on 2.4g and steer it to 5g:
+set_btm_request.2.8C:F5:A3:AC:55:B7.100.02:1c:51:ce:94:84.3
+get_assoc_req.3.8C:F5:A3:AC:55:B7
+Start sniffer on 5GHz home AP channel
+Associate STA 5G and steer to 2.4g
+set_btm_request.3.8C:F5:A3:AC:55:B7.11.02:1c:51:b8:8e:0d.3
+get_assoc_req.2.8C:F5:A3:AC:55:B7
+####
+disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
+#################plume_netlink, steering event, old version and MV1.0##########
+plume_netlink
+register
 change_index.0.0
+group_set.0.0.0.10.60
 client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
 change_index.0.8
+group_set.8.0.0.10.60
 client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+change_index.0.9
+group_set.9.0.0.10.60
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+change_index.0.10
+group_set.10.0.0.10.60
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+
+change_index.0.10
+group_set.10.5.10.5.30
+client_set.8C:F5:A3:AC:55:B7.20.70.20.70.20.70.0.0
+
 btm_event_register.0
 btm_event_register.8
 -------------------------------------------------------------
 Associate client on 2.4g and steer it to 5g:
 change_index.0.0
-set_btm_request.0.8C:F5:A3:AC:55:B7.100.00:1c:51:ce:94:84.3
+set_btm_request.0.8C:F5:A3:AC:55:B7.108.00:1c:51:ce:94:84.3
 Start sniffer on 5GHz home AP channel
 Associate STA 5G and steer to 2.4g
 change_index.0.8
-set_btm_request.8.8C:F5:A3:AC:55:B7.11.00:1c:51:b8:8e:0d.3
-##################################plume_netlink, steering event, MV1.0##########
+set_btm_request.8.8C:F5:A3:AC:55:B7.1.00:1c:51:b8:8e:0d.3
+disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
+config_show
+get_radio_dfs_support
+get_radio_dfs_enable
+set_radio_dfs_enable.0 # disable DFS, nvram_set cl2330 IEEE80211H 1
+set_radio_dfs_enable.1 # enable DFS, nvram_set cl2330 IEEE80211H 0
+######disconnect issue##########################################################
 plume_netlink
 register
 group_set.0.0.0.10.60
+change_index.0.0
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+client_set.00:09:B5:C7:AA:26.0.128.0.128.0.128.0.0
 group_set.1.0.0.10.60
-change_index.0.0
-client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
 change_index.0.1
 client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
-btm_event_register.0
-btm_event_register.1
-get_assoc_req.1.8C:F5:A3:AC:55:B7
-get_assoc_req.0.8C:F5:A3:AC:55:B7
--------------------------------------------------------------
-Associate client on 2.4g and steer it to 5g:
-change_index.0.0
-set_btm_request.0.8C:F5:A3:AC:55:B7.100.DC:53:7C:48:92:E4.3
-disconnect.8C:F5:A3:AC:55:B7.2.3
-Disassociate STA 5G
-Start sniffer on 5GHz home AP channel
-Associate STA 5G and steer to 2.4g
-change_index.0.1
-set_btm_request.1.8C:F5:A3:AC:55:B7.11.00:0C:43:26:A5:A5.3
+client_set.00:09:B5:C7:AA:26.0.128.0.128.0.128.0.0
+
+change_index.0.3
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+
 disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
+disconnect.00:09:B5:C7:AA:26.2.3
+#######wireshark rule, filter CSA element#######################################
+###############################################################################
+getApAssociatedDeviceRxStats 1 00:09:B5:C7:AA:26
+getApAssociatedDeviceTxStats 1 00:09:B5:C7:AA:26
+getApAssociatedDeviceRxStats 1 8C:F5:A3:AC:55:B7
+getApAssociatedDeviceTxStats 1 8C:F5:A3:AC:55:B7
+getApAssociatedDeviceStats 1 00:09:B5:C7:AA:26
+getApAssociatedDeviceStats 1 8C:F5:A3:AC:55:B7
 #########wireshark##############################################################
 wlan.fixed.category_code == 10
 #####################plume_netlink via bash 24G#################################
@@ -4690,6 +4895,8 @@ git status
 copy the ce_svn template to the commit log (until we will be set it automatically by git).
 5. Once you want to push your commit to the remote repository:
 git push origin HEAD:refs/for/master
+############################non-master branch#################################
+git push origin HEAD:refs/for/CS_4.7.23.34.0.3
 
 this command will output a link  - for example:
 https://titan.celeno.com/gerrit/c/celeno-swdb-CL2400-hp-4.7.x_23_GA15_Huawei/+/46
@@ -4908,10 +5115,29 @@ git checkout -b feature_branch_name
 git push -u origin feature_branch_name
 #Also commit patch to feature_branch_name
 git push -u origin feature_branch_name
+#####################Renaming git granch#############################
+# Follow the steps below to rename a Local and Remote Git Branch:
+# Start by switching to the local branch which you want to rename:
+git checkout <old_name>
+# Rename the local branch by typing:
+git branch -m <new_name>
+# At this point, you have renamed the local branch.
+# If you’ve already pushed the <old_name> branch to the remote repository, perform the next steps to rename the remote branch.
+# Push the <new_name> local branch and reset the upstream branch:
+git push origin -u <new_name>
+# Delete the <old_name> remote branch:
+git push origin --delete <old_name>
+# That’s it. You have successfully renamed the local and remote git branch.
+###################git tag create/delete########################################
+git tag <tag_name>         # locally create local tag <tag_name> on current commit
+git tag <tag_name> <hash>  # locally create local tag <tag_name> on <hash> commit
+git tag -d <tag_name>      # locally delete tag <tag_name>
+git push origin <tag_name> # push tag <tag_name> to remote server
 ##############################smile#############################################
 \¯\_(ツ)_/¯
 ##############################fw requests######################################
 MM_SET_FILTER_REQ [14] MM_SET_CHANNEL_REQ [16] MM_BACKUP_BCN_EN_REQ [82] MM_FREEZE_TX_REQ [103] M_TEMPERATURE_READ_REQ [86]
+txl_cntrl_bcn_late_handler - handler for sending backuped beacons
 #####################qemu for CL2400#############################################
 echo "allow br0" > /etc/qemu/bridge.conf
 chown <USERNAME>:users /etc/qemu/bridge.conf
@@ -4957,7 +5183,7 @@ qemu-system-i386 \
 login:sin3t
 password:gfhjkm
 
-#########################################
+################################################################################
 export cl2400_root=/home/sin3t/hostpkg/cl2400_host_pkg-4.7.23.33.0.0-CE_GENERAL/cl2400
 export clr_install_dir_cl2400=$cl2400_root
 export clr_cfg_dir_cl2400_24g=/tmp/cl2400_24g
@@ -4971,3 +5197,4 @@ ce_udma_enabled=0
 ce_vendor_id=0x1d69
 ce_device_id=0x2400
 ce_ssid1=AA
+################################################################################

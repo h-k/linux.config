@@ -29,3 +29,4 @@ tar -czf cl2400.tar.gz cl2400
 cp cl2400.tar.gz /tftpboot/
 
 notify-send -i starred "host package $PACKAGE $BRANCH $PLATFORM" "build done in $SECONDS seconds"
+date
