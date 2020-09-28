@@ -113,6 +113,11 @@ wlan.fixed.action_code == 2 && wlan.addr == 00:09:B5:C7:AA:26
 wlan.fixed.action_code == 2 && wlan.addr == 00:05:9E:2F:82:9E
 ###################Channel Switch Announcement, CSA#############################
 wlan.tag.number == 37
+###################VHT NDP Announcement########################################
+wlan.fc.type_subtype == 0x0015
+###################response######################################################
+wlan.fixed.category_code == 21 # VHT
+wlan.vht.action == 0 # VHT Compressed Beamforming
 ###############################################################################
 iwpriv wdev0 setcmd "memdump ms 0x4f4c 20"
 iwpriv wdev0 setcmd "memdump ms 0x4f4c 32"
@@ -4619,6 +4624,13 @@ lxc exec r6-1-5-ga-alexander -- sudo -i -u alexander
 password:111111
 #sudo mount -t nfs 172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei /home/alexander/4.7.x_23_GA15_Huawei
 rsync -ar --progress --exclude=.svn --exclude=.git --delete --delete-excluded -e ssh alexander@172.168.110.12:/home/alexander/gitsvn/4.7.x_23_GA15_Huawei/lmac_B0_4.7.x_23_GA15_Huawei ~/
+##########################ssh save credentials for remote server################
+https://www.shellhacks.com/ru/ssh-login-without-password/
+#on client:
+ssh-keygen
+ssh-copy-id -i ~/.ssh/id_rsa.pub UserName@RemoteServer
+#####################optional, saving key for ssh-agent#########################
+ssh-add
 #########################wireshark build########################################
 https://github.com/wireshark/wireshark.git
 sudo apt install qt5-default -y
@@ -4682,6 +4694,20 @@ if (sta && sta->sdata->bss)
 }
 
 struct sta_info *cl_sta_info_get(ceu8 wcid)
+
+struct cl_vif *netdev_to_vif(struct net_device *dev)
+{
+	struct ieee80211_sub_if_data *sdata = NULL;
+
+	if (!dev)
+		return NULL;
+
+	sdata = netdev_priv(dev);
+
+	return sdata ? (struct cl_vif *)sdata->vif.drv_priv : NULL;
+}
+
+struct cl_vif *cl_vif = netdev_to_vif(skb->dev);
 ################################################################################
 sudo route add -net 224.0.0.0 netmask 240.0.0.0 dev enp2s0
 sudo ip route del 224.0.0.0/4
@@ -4897,6 +4923,7 @@ copy the ce_svn template to the commit log (until we will be set it automaticall
 git push origin HEAD:refs/for/master
 ############################non-master branch#################################
 git push origin HEAD:refs/for/CS_4.7.23.34.0.3
+git push origin HEAD:refs/for/CS_4.7.23.34.0.3_GA
 
 this command will output a link  - for example:
 https://titan.celeno.com/gerrit/c/celeno-swdb-CL2400-hp-4.7.x_23_GA15_Huawei/+/46
