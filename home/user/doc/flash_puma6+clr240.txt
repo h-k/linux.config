@@ -241,11 +241,11 @@ pushRadioChannel2 1 112 80 25
 iperf3 -c 192.168.100.146 -t 30 -P 10 -i 1 -w 256k # downstream traffic
 iw dev wlan1_0 cecli wrs -s.0.2
 iw wlan1_0 cecli acs -c.112.2.2 ## 112 channel, 80 MHz bw, 25 CSA count
-iw dev wlan1_0 cecli wrs -f.0.0.9.2.3.1 # fixed rate MCS[9], BW[2], NSS[3], GI[1]
-iw dev wlan1_0 cecli wrs -f.0.0.8.2.3.1 # fixed rate MCS[8], BW[2], NSS[3], GI[1]
-iw dev wlan1_0 cecli wrs -f.0.0.5.2.3.1 # fixed rate MCS[5], BW[2], NSS[3], GI[1]
-iw dev wlan1_0 cecli wrs -f.0.0.6.2.3.1 # fixed rate MCS[6], BW[2], NSS[3], GI[1]
-iw dev wlan1_0 cecli wrs -f.0.0.7.2.3.1 # fixed rate MCS[7], BW[2], NSS[3], GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.9.2.3.1 # fixed rate MCS[9], BW[2], NSS 4, GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.8.2.3.1 # fixed rate MCS[8], BW[2], NSS 4, GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.5.2.3.1 # fixed rate MCS[5], BW[2], NSS 4, GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.6.2.3.1 # fixed rate MCS[6], BW[2], NSS 4, GI[1]
+iw dev wlan1_0 cecli wrs -f.0.0.7.2.3.1 # fixed rate MCS[7], BW[2], NSS 4, GI[1]
 ####################################
 sample_client
 setSSIDEnable 3 1 # enable BSSID wlan1_1
@@ -344,6 +344,7 @@ getSSIDName 1
 getSSIDNameStatus 1
 getApAssociatedDeviceRxStats 1 00:09:b5:c7:aa:26
 getApAssociatedDeviceRxStats 1 8c:f5:a3:ac:55:b7
+getApAssociatedDeviceTxStats 1 8c:f5:a3:ac:55:b7
 #########################plume_netlink##########################################
 group_set.0.0.0.1.3
 client_set.74:eb:80:95:73:a8.0.0.0.128.35.50.0.1
@@ -411,9 +412,11 @@ startNeighborScan 0 1 500          # full scan 24g
 getRadioChannelStats 0 1 2 3 4 5 6 7 8 9 10 11 12 13
 startNeighborScan 1 2 1000          # onchan scan
 getNeighboringWiFiStatus 1
-######################wireshark filter, assco, reassoc, etc
+######################wireshark filter, assoc, reassoc, etc
 auth                               deauth                            assoc response               assoc request                reassoc request
 ((wlan.fc.type_subtype == 0x000b || wlan.fc.type_subtype == 0x000c || wlan.fc.type_subtype == 1 || wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 2) || eapol) 
+#######################wireshark filter, multicast addr############################
+(wlan.da[:1] & 01) && !(wlan.addr == ff:ff:ff:ff:ff:ff)
 ###########################fast git svn clone#####################################
 sudo apt-get install libsvn-perl
 export url=`URL`
@@ -4648,6 +4651,9 @@ cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=TRUE -DENABLE_KERBEROS
 cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=FALSE -DENABLE_KERBEROS:BOOL=FALSE ../
 make
 ############################cl2400 structs######################################
+struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(sw_txhdr->skb);
+struct cl_vif *cl_vif = (struct cl_vif *)tx_info->control.vif->drv_priv;
+
 struct ieee80211_sub_if_data *sdata = dev->priv;
 struct cl_vif *clvif = (struct cl_vif *)(dev->priv)->vif.drv_priv);
 #or
@@ -4708,6 +4714,69 @@ struct cl_vif *netdev_to_vif(struct net_device *dev)
 }
 
 struct cl_vif *cl_vif = netdev_to_vif(skb->dev);
+################################################################################
+cl_tx_amsdu_set
+
+struct cl_amsdu_txhdr *amsdu_txhdr = NULL;
+struct cl_sw_txhdr *sw_hdr_anchor  = cl_sta->amsdu_anchor[tid].sw_txhdr;
+struct lmacapi *umacdesc_anchor    = &sw_hdr_anchor->host_txdesc.umacdesc;
+u8 packet_idx = cl_sta->amsdu_anchor[tid].packet_cnt;
+----->>>>
+umacdesc_anchor->packet_len [idx] = cpu_to_le16(len);
+umacdesc_anchor->packet_addr[idx] = cpu_to_le32(dma_addr);
+umacdesc_anchor->amsdu_info.packet_cnt++;
+
+list_add_tail(&amsdu_txhdr->list, &sw_hdr_anchor->amsdu_anchor.list );
+
+struct cl_sw_txhdr *sw_txhdr = list_first_entry(&agg_q->head, struct cl_sw_txhdr, cfm_list);
+struct sk_buff *skb = sw_txhdr->skb;
+struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+dma_addr_t dma_addr = 0;
+
+dma_addr = cpu_to_le32(sw_txhdr->host_txdesc.umacdesc.packet_addr[0]);
+dma_unmap_single(cl_hw->dev, dma_addr, sw_txhdr->map_len, DMA_TO_DEVICE);
+
+if (cl_tx_ctrl_is_amsdu(tx_info))
+{
+    // if amsdu list not empty
+    // free sub MSDU frames first, including cl_amsdu_txhdr
+    if (!list_empty(&sw_txhdr->amsdu_anchor.list))
+    {
+         cl_agg_cfm_amsdu_free(cl_hw, sw_txhdr);
+    }
+}
+
+static void cl_agg_cfm_amsdu_free(struct cl_hw *cl_hw, struct cl_sw_txhdr *sw_txhdr)
+{
+    struct cl_amsdu_txhdr *amsdu_txhdr = NULL;
+    struct cl_amsdu_txhdr *tmp = NULL;
+    struct sk_buff *sub_skb = NULL;
+    struct ieee80211_tx_info *tx_info_sub_skb = NULL;
+
+    list_for_each_entry_safe(amsdu_txhdr, tmp, &sw_txhdr->amsdu_anchor.list, list)
+    {
+        sub_skb = amsdu_txhdr->skb;
+        if (unlikely(sub_skb == NULL))
+        {
+            CL_DBG(LVL_ERROR, "sub_skb == NULL\n");
+            break;
+        }
+
+        tx_info_sub_skb = IEEE80211_SKB_CB(sub_skb);
+        WARN_ON(!cl_tx_ctrl_is_amsdu(tx_info_sub_skb));
+        ce_list_del(&amsdu_txhdr->list);
+
+        dma_unmap_single(cl_hw->dev, amsdu_txhdr->dma_addr, (size_t)sub_skb->len, DMA_TO_DEVICE);
+        cl_dev_kfree_tx_skb_any(sub_skb);
+        kmem_cache_free(cl_hw->amsdu_txhdr_cache, amsdu_txhdr);
+    }
+}
+
+
+struct cl_sw_txhdr *sw_txhdr = list_first_entry(&agg_q->head, struct cl_sw_txhdr, cfm_list);
+struct sk_buff *skb = sw_txhdr->skb;
+struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+
 ################################################################################
 sudo route add -net 224.0.0.0 netmask 240.0.0.0 dev enp2s0
 sudo ip route del 224.0.0.0/4
@@ -4891,6 +4960,27 @@ client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
 
 disconnect.8C:F5:A3:AC:55:B7.2.3 # deauth, reason = WLAN_REASON_DEAUTH_LEAVING
 disconnect.00:09:B5:C7:AA:26.2.3
+################
+echo 1 > /sys/module/CL2400_5g/parameters/plume_trace_activity_event
+plume_netlink
+change_index.0.1
+group_set.1.5.10.5.30
+client_set.8C:F5:A3:AC:55:B7.30.70.20.70.20.70.0.0
+get_assoc_req.1.8C:F5:A3:AC:55:B7
+group_remove
+config_show
+change_index.0.1
+group_set.1.5.10.5.30
+client_set.B0:DF:3A:00:7E:A6.30.70.20.70.20.70.0.0
+client_remove.B0:DF:3A:00:7E:A6
+get_assoc_req.1.B0:DF:3A:00:7E:A6
+######################GA branch(old style index)#################################
+echo 1 > /sys/module/CL2400_5g/parameters/plume_trace_activity_event
+plume_netlink
+change_index.0.8
+group_set.8.5.10.5.30
+client_set.8C:F5:A3:AC:55:B7.30.70.20.70.20.70.0.0
+group_remove
 #######wireshark rule, filter CSA element#######################################
 ###############################################################################
 getApAssociatedDeviceRxStats 1 00:09:B5:C7:AA:26
@@ -5089,7 +5179,7 @@ ce_git release cl2400
 # Approve and merge commit in Gerrit
 git pull --rebase
 ce_git add_tags cl2400
-
+ce_git add_tags -b master cl2400
 
 Example usage for 4.7.x_23_GA15_RoW branch:
 # Init repo folder
@@ -5156,12 +5246,13 @@ git push origin -u <new_name>
 git push origin --delete <old_name>
 # That’s it. You have successfully renamed the local and remote git branch.
 ###################git tag create/delete########################################
+http://moon/wiki/index.php/Ce_git_script
 git tag <tag_name>         # locally create local tag <tag_name> on current commit
 git tag <tag_name> <hash>  # locally create local tag <tag_name> on <hash> commit
 git tag -d <tag_name>      # locally delete tag <tag_name>
 git push origin <tag_name> # push tag <tag_name> to remote server
 ##############################smile#############################################
-\¯\_(ツ)_/¯
+¯\_(ツ)_/¯
 ##############################fw requests######################################
 MM_SET_FILTER_REQ [14] MM_SET_CHANNEL_REQ [16] MM_BACKUP_BCN_EN_REQ [82] MM_FREEZE_TX_REQ [103] M_TEMPERATURE_READ_REQ [86]
 txl_cntrl_bcn_late_handler - handler for sending backuped beacons

@@ -127,7 +127,7 @@ cl2400_pre() {
 		export CCACHE_PATH=${SDK}/build/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux:$PATH
 	elif [ "$sdktype" = "YOCTO_r6.1.5" ]; then
 		echo "build host_package YOCTO_r6.1.5. Using ccache.."
-		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/ccache/yocto_p6_ccache/i586-poky-linux-#' src/celeno.mk
+		sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(HOME)/ccache/yocto_6.1.5_ccache/i586-poky-linux-#' src/celeno.mk
 		export CCACHE_PATH=${SDK}/build-intelce/tmp/sysroots/x86_64-linux/usr/bin/core2-32-poky-linux/:$PATH
 		export YOCTO_DIR=/opt/intel/puma6-r6.1.5-ga/puma6-build-thirdpartywifi/thirdpartywifi_r6.1.5-ga/build-intelce
 		sed -i -e 's#/home/developer/Intel-6.1.1.21/r6.1.1-ga/build#'$YOCTO_DIR'#' src/celeno.mk
