@@ -2435,6 +2435,16 @@ iw dev wlan1_0 cecli wds -n.[STA MAC].[HOST MAC] - add new entry into it;
 iw dev wlan1_0 cecli wds -d.[HOST MAC]           - delete new entry into it;
 iw dev wlan1_0 cecli wds -f                      - clear hash  table;
 ########################firmware lmac###########################################
+########################firmware lmac debug filters#############################
+http://moon/wiki/index.php/Projects:CL2400/Lmac_debug_prints
+http://moon/wiki/index.php/Projects:CL2400/cl_drv_debugfs
+
+######enabled debug level DBG_BF_FRAME######
+## DBG_BF_FRAME bit 7
+######### 7 is 128 in drc#############
+root@kabelbox:/tmp# echo 128 > /sys/module/CL2400_5g/parameters/ce_lmac_dbg_severity
+root@kabelbox:/tmp# echo 0 0 > /sys/kernel/debug/cl2400_5g/5g/cl/cl2400/general_debug 
+################################################################################
 ftp://oleksandr.savchenko@cernd/cernd/_Users/ilya/xtensa.tar.bz2
 You need to untar it into /home/trego/cl2400 and add the following line to ~/.flexlmrc:
 XTENSAD_LICENSE_FILE=27000@dc2.celeno.com
@@ -4776,7 +4786,20 @@ static void cl_agg_cfm_amsdu_free(struct cl_hw *cl_hw, struct cl_sw_txhdr *sw_tx
 struct cl_sw_txhdr *sw_txhdr = list_first_entry(&agg_q->head, struct cl_sw_txhdr, cfm_list);
 struct sk_buff *skb = sw_txhdr->skb;
 struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+##########################
+BF_DB_MAX [16] = 0b1000;
+BF_DB_IDX_MASK = 0b1111;
 
+max = 8 (0b1000)
+mask = 15 (0xb1111)
+
+#define INT32_TO_BIT_MASK(x) ((uint32_t)(x << 1) - 1)  # only for x power of 2
+
+#################### cl2400 fw defines #########################################
+iw dev wlan1_0 cecli fw_stats -m.0
+lmac_5g CFG_STA_MAX [129] STA_MAX [145] INVALID_STA_IDX [255] BF_DB_IDX_INVALID [31] NON_BUFFABLE_STA_IDX [128] NX_REMOTE_STA_MAX [129]
+lmac_5g BF_DB_MAX [16] MAX_STA_BITMAP32_LEN [5] NON_BUFFABLE_STA_IDX [128] IS_VALID_STA_IX(NON_BUFFABLE_STA_IDX) [1] 
+fw memory: used [96] bytes in [1] (calculated 1) blocks. available [8352/8448] bytes
 ################################################################################
 sudo route add -net 224.0.0.0 netmask 240.0.0.0 dev enp2s0
 sudo ip route del 224.0.0.0/4
@@ -4952,7 +4975,7 @@ client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
 client_set.00:09:B5:C7:AA:26.0.128.0.128.0.128.0.0
 group_set.1.0.0.10.60
 change_index.0.1
-client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0
+client_set.8C:F5:A3:AC:55:B7.0.128.0.128.0.128.0.0http://moon/svn/celeno-sys/Project/CL3000/802.11ax/
 client_set.00:09:B5:C7:AA:26.0.128.0.128.0.128.0.0
 
 change_index.0.3
@@ -5253,6 +5276,8 @@ git tag -d <tag_name>      # locally delete tag <tag_name>
 git push origin <tag_name> # push tag <tag_name> to remote server
 ##############################smile#############################################
 ¯\_(ツ)_/¯
+###############################CL2400, fw docs###################################
+http://moon/wiki/index.php/MAC-FW_Training
 ##############################fw requests######################################
 MM_SET_FILTER_REQ [14] MM_SET_CHANNEL_REQ [16] MM_BACKUP_BCN_EN_REQ [82] MM_FREEZE_TX_REQ [103] M_TEMPERATURE_READ_REQ [86]
 txl_cntrl_bcn_late_handler - handler for sending backuped beacons
@@ -5315,4 +5340,48 @@ ce_udma_enabled=0
 ce_vendor_id=0x1d69
 ce_device_id=0x2400
 ce_ssid1=AA
-################################################################################
+###################################CL2800#######################################
+####################################doc#########################################
+http://moon/svn/celeno-sys/Project/CL3000/802.11ax/
+###################################HK6030 PCIe gen 3############################
+Please follow the below steps to make your step A Everest work with PCIe gen3 on HK6030 board:
+1. ce_host.sh start
+2. configure eeprom:
+iwcl wlan0_0 e2p set addr 0x0 0x0
+iwcl wlan0_0 e2p set addr 0x1 0x24
+iwcl wlan0_0 e2p set addr 0x2 0x94
+iwcl wlan0_0 e2p set addr 0x3 0xc1
+iwcl wlan0_0 e2p set addr 0x4 0x7c
+iwcl wlan0_0 e2p set addr 0x5 0xf9
+iwcl wlan0_0 e2p set addr 0x6 0x0
+iwcl wlan0_0 e2p set addr 0x7 0x0
+iwcl wlan0_0 e2p set addr 0x8 0x0
+iwcl wlan0_0 e2p set addr 0x9 0x38
+iwcl wlan0_0 e2p set addr 0xa 0xcb
+iwcl wlan0_0 e2p set addr 0xb 0x7c
+iwcl wlan0_0 e2p set addr 0xc 0x08
+iwcl wlan0_0 e2p set addr 0xd 0x0
+iwcl wlan0_0 e2p set addr 0xe 0x0
+iwcl wlan0_0 e2p set addr 0xf 0x0
+iwcl wlan0_0 e2p set addr 0x10 0x0
+iwcl wlan0_0 e2p set addr 0x11 0x0
+3. Make sure:
+iwcl wlan0_0 e2p get hexdump
+[  0]00 [  1]24 [  2]94 [  3]c1 [  4]7c [  5]f9 [  6]00 [  7]00 [  8]00 [  9]38 [  a]cb [  b]7c [  c]08 [  d]00 [  e]00 [  f]00
+[ 10]00 [ 11]00 [ 12]ff [ 13]ff [ 14]ff [ 15]ff [ 16]ff [ 17]ff [ 18]ff [ 19]ff [ 1a]ff [ 1b]ff [ 1c]ff [ 1d]ff [ 1e]ff [ 1f]ff
+4. ce_host.sh start.
+5. make sure the below values:
+iwcl wlan0_0 cecli reg -r.0x7cc194
+0x000000f9
+iwcl wlan0_0 cecli reg -r.0x7ccb38
+0x00000008
+6. upgrade the image to \\moon2\cernd\sw\_SDK_HK6030\Celeno_B4_firmware_ls1046ardb_uboot_qspiboot.img
+7. make sure gen 3 on uboot:
+PCIe0: pcie@3400000 Root Complex: no link
+PCIe1: pcie@3500000 Root Complex: no link
+PCIe2: pcie@3600000 Root Complex: x2 gen3
+8. ce_host.sh start
+9.  make sure gen 3 speed:
+lspci -s 0002:01:00.0 -vvv
+..
+LnkSta: Speed 8GT/s, Width x2, TrErr- Train- SlotClk+ DLActive- BWMgmt- ABWMgmt-
