@@ -2,7 +2,7 @@
 set -e
 
 pauze=1
-NAME=/tftpboot/notify.txt
+NAME=/tmp/notify.txt
 NAME_TMP=/tmp/notify_tmp.txt
 
 main()
@@ -29,6 +29,7 @@ main()
 				local str=`cat $NAME`
 				notify-send -i starred "$str"
 
+				# add line ex. `START DRIVER BUILD#4.7.x_23_GA15=yocto_3.7.1.1` for auto-start compilation
 				local build=`grep "START DRIVER BUILD" $NAME`
 				if [ "$build" = "" ] ; then
 					echo "build not catched"
