@@ -118,6 +118,7 @@ wlan.fc.type_subtype == 0x0015
 ###################response######################################################
 wlan.fixed.category_code == 21 # VHT
 wlan.vht.action == 0 # VHT Compressed Beamforming
+wlan.fc.type_subtype == 0x0015 || wlan.fixed.category_code == 21
 ###############################################################################
 iwpriv wdev0 setcmd "memdump ms 0x4f4c 20"
 iwpriv wdev0 setcmd "memdump ms 0x4f4c 32"
