@@ -52,15 +52,15 @@ main()
 
 				case $branch in
 					4.7.x_23_GA15)
-						echo "4.7.x_23_GA15 matched"
 						case $sdk in
 							yocto_3.7.1.1)
 							if [ "nofify_level" = "ALL" ]; then
 								notify-send -i starred "run ~/repo/4.7.x_23_GA15/build_arris_3.7.1.1.sh"
 							fi
 							cd ~/repo/4.7.x_23_GA15/
+							echo "<<<<<<<<<<<<<<<<<<<<<< 4.7.x_23_GA15 SDK yocto_3.7.1.1 >>>>>>>>>>>>>>>>>>>>>"
 							~/repo/4.7.x_23_GA15/build_arris_3.7.1.1.sh
-							cd -
+							cd - > /dev/null
 							;;
 
 							*)	echo "Bad SDK version name $sdk"

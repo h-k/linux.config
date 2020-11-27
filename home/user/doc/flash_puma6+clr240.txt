@@ -115,7 +115,7 @@ wlan.fixed.action_code == 2 && wlan.addr == 00:05:9E:2F:82:9E
 wlan.tag.number == 37
 ###################VHT NDP Announcement########################################
 wlan.fc.type_subtype == 0x0015
-###################response######################################################
+###################req/response linux/MacBook###################################
 wlan.fixed.category_code == 21 # VHT
 wlan.vht.action == 0 # VHT Compressed Beamforming
 wlan.fc.type_subtype == 0x0015 || wlan.fixed.category_code == 21
@@ -969,6 +969,11 @@ systemctl stop CcspEthAgent
 systemctl stop CcspWifiSsp
 # killall CcspWifiSsp
 # ccsp_bus_client_tool eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool false
+######################DHCP disabling on ARRIS ARM, ATOM console cmd#############
+# You can try the command below to disable DHCP server in ATOM console:
+dmcli eRT setv Device.DHCPv4.Server.Enable bool false
+# You also can check if the DHCP server has been enabled with the command below:
+dmcli eRT getv Device.DHCPv4.Server.Enable
 ###################################DDoS protection disable, erorr DoS Attack Fragment-Flooding####
 There is short instruction, how to disable Intel's DDH (DDoS protection) feature.
 Sometimes it can drop some packets from ethernet.
@@ -1276,6 +1281,57 @@ iw dev wlan1_0 cecli mcs -f.0.3.1.0.1 # [Mode Fix(1)/Auto(0)].[MCS].[BW].[NSS].[
 export clr_rev_rpc_server_ip_address=192.168.254.254
 export clr_cfg_dir=/nvram
 export clr_install_dir=/tmp/cl242
+########################CL8000, HK6030##########################################
+######################### repo/git #############################################
+https://titan.celeno.com/gerrit/admin/repos/celeno-swdb-CL8000-hp
+git clone "https://titan.celeno.com/gerrit/celeno-swdb-CL8000-hp" && (cd "celeno-swdb-CL8000-hp" && mkdir -p .git/hooks && curl -Lo `git rev-parse --git-dir`/hooks/commit-msg https://titan.celeno.com/gerrit/tools/hooks/commit-msg; chmod +x `git rev-parse --git-dir`/hooks/commit-msg)
+###### inside packman server
+lxc exec hk6030-igor -- sudo -i -u developer
+###### inside container
+sudo chmod a+w /dev/stdout
+cd scripts
+./build_cl8000.bash -s igor@172.168.110.220:~/celeno-swdb-cl8000-hp/8.0.x
+##### copy host package to PC
+scp cl8000_host_pkg-*-HK6030.tar.bz2 alexander@172.168.110.230:~/tftpboot/
+##### board, nvram config
+login: root
+##### /nvram/exports
+export cl_cfg_dir=/nvram/cl8000
+export cl_install_dir=/cl8000
+export PATH=$cl_install_dir/bin:$cl_install_dir/scripts:$PATH
+export LD_LIBRARY_PATH=$cl_install_dir/lib:$LD_LIBRARY_PATH
+
+###### eth 0,1,2,3 1G ?
+###### eth 4,5 10G ?
+ifconfig eth5 192.168.100.1 netmask 255.255.255.0 # eth 4,5 10G?
+
+########## 5G : wlan0_0 ... wlan0_N ##############
+########## 24G: wlan1_0 ... wlan1_N ###########
+/nvram/cl8000/cl_tcv0.dat # 5G
+/nvram/cl8000/cl_tcv1.dat # 24G
+####### multiple bss activation
+ha_ssid1=CL8000_AP_5G_1
+ha_ssid2=CL8000_AP_5G_2
+ce_bss_num=2                 
+ce_iface_type=3,3,0,0,0,0,0,0
+###########
+5G: wlan0_0 ... wlan0_N
+24G: wlan1_0 ... wlan1_N
+ce_host.sh start
+ce_host.sh reload
+####### bss isolation example
+####### ce_bss_isolation_enabled
+iwcl wlan0_0 cecli bss_isolation -a.0
+iwcl wlan0_0 cecli bss_isolation -a.1
+####### ce_no_forwarding
+iwcl wlan0_0 cecli bss_isolation -b.0
+iwcl wlan0_0 cecli bss_isolation -b.1
+####### ce_net_type
+iwcl wlan0_0 cecli bss_isolation -c.0
+iwcl wlan0_0 cecli bss_isolation -c.1
+
+# user space iwcl source code, commands list
+celeno-swdb-CL8000-hp/8.0.x/utils/iwcl/cecli.c
 #######################Huawei board, how to#####################################
 # http://moon/wiki/index.php/Huawei_project
 #New Huawei board has no UART connection so it could be connected only via
@@ -2492,6 +2548,7 @@ cd ~/repo/4.7.x_23_GA15/firmware/B0
 scp alexander@packman:/home/alexander/repo/4.7.x_23_GA15/lmacfw.bin lmacfw.bin
 ################printk in firmware##############################################
 CE_DEBUG_LOG_NO_FILTER("\n");
+CE_DEBUG_LOG_NO_FILTER("[bf_ctrl_sta_add] CE_HW_VERSION = %d\n", CE_HW_VERSION); # 1
 ####################BRCM3390 flashing the board#################################
 10. How to update brcm board to latest SDK image:
 

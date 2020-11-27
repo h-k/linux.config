@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 set -e
 
 SECONDS=0
@@ -8,8 +8,6 @@ PLATFORM=ARRIS_P7
 PACKAGE=cl2400
 
 BRANCH=`basename $(pwd)`
-
-echo "BRANCH=$BRANCH"
 
 rm -rf celeno_clr_package_*/  SOURCE_CODE_*.tar.bz || true
 ./make_CL2400_release.sh -p ${PLATFORM}
@@ -30,3 +28,4 @@ cp cl2400.tar.gz /tftpboot/
 
 notify-send -i starred "host package $PACKAGE $BRANCH $PLATFORM" "build done in $SECONDS seconds"
 date
+echo "$PACKAGE $PLATFORM $BRANCH COMPILATION SUCCESS"
