@@ -932,6 +932,8 @@ make
 tar xf cl2400_host_pkg-4.7.*-ARRIS_P7.tar.bz2
 tar czf cl2400.tar.gz -C cl2400_host_pkg-4.7.*-ARRIS_P7 $(ls cl2400_host_pkg-*-ARRIS_P7/)
 tar cf cl2400.tar build
+############tar ls##################
+tar -ztvf flexbuild_lsdk1812.tar.gz
 ###############ARRIS ATOM############################
 export clr_cfg_dir_cl2400_24g=/nvram/cl2400_24g
 export clr_cfg_dir_cl2400=/nvram/cl2400
@@ -1286,11 +1288,13 @@ export clr_install_dir=/tmp/cl242
 https://titan.celeno.com/gerrit/admin/repos/celeno-swdb-CL8000-hp
 git clone "https://titan.celeno.com/gerrit/celeno-swdb-CL8000-hp" && (cd "celeno-swdb-CL8000-hp" && mkdir -p .git/hooks && curl -Lo `git rev-parse --git-dir`/hooks/commit-msg https://titan.celeno.com/gerrit/tools/hooks/commit-msg; chmod +x `git rev-parse --git-dir`/hooks/commit-msg)
 ###### inside packman server
-lxc exec hk6030-igor -- sudo -i -u developer
+
+lxc start hk6030-hk
+lxc exec hk6030-hk -- sudo -i -u developer
 ###### inside container
 sudo chmod a+w /dev/stdout
 cd scripts
-./build_cl8000.bash -s igor@172.168.110.220:~/celeno-swdb-cl8000-hp/8.0.x
+./build_cl8000.bash -s alexander@172.168.110.230:~/repo/celeno-swdb-CL8000-hp/8.0.x
 ##### copy host package to PC
 scp cl8000_host_pkg-*-HK6030.tar.bz2 alexander@172.168.110.230:~/tftpboot/
 ##### board, nvram config
@@ -4219,8 +4223,6 @@ sed -i \
 -e 's#^\s*DEF_INTEL_SDK_PATH.*$#DEF_INTEL_SDK_PATH = $(IntelCE_path)#' \
 -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = $(DEF_INTEL_SDK_PATH)/../ccache_sdk/i686-cm-linux-#' \
 cl2400_package/src/celeno.mk
-
-
 #################################ccache for yocto################################################################
 mkdir -p ${HOME}/ccache/yocto_p6_ccache ; \
 cd ${HOME}/ccache/yocto_p6_ccache ; \
@@ -4263,6 +4265,27 @@ cd ${HOME}/ccache/huawei/ ; \
 for i in $( (cd /export/dev-root/huawei_sdk/SDK_Kernel4.4.185/opt/RTOS/207.5.0/arm32A9le_4.4_ek_micro/gnu/bin/ ; ls * ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
+#################################ccache for HK6030 ################################################################
+mkdir -p ${HOME}/ccache/cl8000/ ; \
+cd ${HOME}/ccache/cl8000/ ; \
+for i in $( (cd /usr/bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+########################ccache for HK6030, on PC v.1##################################
+mkdir -p ${HOME}/ccache/cl8000/ ; \
+cd ${HOME}/ccache/cl8000/ ; \
+for i in $( (cd /home/developer/flexbuild_lsdk1812/build/rfs/rootfs_buildroot_LS_arm64_tiny/host/opt/ext-toolchain/bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+########################ccache for HK6030, on PC v.2##################################
+mkdir -p ${HOME}/ccache/cl8000/ ; \
+cd ${HOME}/ccache/cl8000/ ; \
+for i in $( (cd /home/developer/flexbuild_lsdk1812/aarch64_bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+##Host Package CL8000 ##########################
+sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = /home/alexander/ccache/cl8000/aarch64-linux-gnu-#' src/celeno.mk
+export CCACHE_PATH=/usr/bin/:$PATH
 ###################################ADD cgiweb to Yocto##########################
 ###Copy folder
 platformdb/CBN_P6_YOCTO_CL2330_CL242/__common__/Yocto/* to
