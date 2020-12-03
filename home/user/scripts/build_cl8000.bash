@@ -6,38 +6,24 @@ set -o pipefail
 
 export COV_DIR=cov-$(date +%F)
 
-PLATFORM=HK6030
 PACKAGE=cl8000 
 
 readonly ME="${0##*/}"
 readonly BUILDSCRIPT="make_cl_release.sh"
-readonly HPDIR="celeno_package_cl8000_HK6030"
-readonly BASE_HP_CONFIG="cl_hp_build.sh"
-readonly CELENOMK="src/celeno.mk"
 
-#param 1 - dir for deleting
-rm_rf()
-{
-	if [ "$1" != "" ]; then
-		mkdir empty_dir
-		rsync -a --delete empty_dir/ $1
-		rm -rf empty_dir
-		rm -rf $1
-	fi
-}
 
 die() {
-    echo "ERROR: $1" >&2
-    exit "${2:-1}"
+	echo "ERROR: $1" >&2
+	exit "${2:-1}"
 }
 
 info() {
-    echo "$ME: $@" >&2
+	echo "$ME: $@" >&2
 }
 
 edo() {
-    info "$@"
-    "$@" || die "$* failed"
+	info "$@"
+	"$@" || die "$* failed"
 }
 
 print_help() {
@@ -67,34 +53,54 @@ sync_sources() {
 	rsync -ar --progress --exclude=.repo --exclude=.svn --exclude=.git --exclude=.cscope --delete --delete-excluded -e ssh $ssh_src $dst &>/dev/null
 }
 
+#param 1 - dir for deleting
+rm_rf()
+{
+	if [ "$1" != "" ]; then
+		mkdir empty_dir
+		rsync -a --delete empty_dir/ $1
+		rm -rf empty_dir
+		rm -rf $1
+	fi
+}
+
 build() {
 	local src="$1"
-	local plt="$2"
+	local PLATFORM="$2"
+	local _PWD=$PWD
 
 	cd $src
 
-	#    rm -rf celeno_package_cl8000_HK6030
-	rm_rf celeno_package_cl8000_HK6030
-	./"$BUILDSCRIPT" -p "$plt"
+	rm_rf celeno_package_${PACKAGE}_${PLATFORM}
 
-	tar xf SOURCE_CODE_celeno_package_cl8000_*_${PLATFORM}.tar.gz
-	cd celeno_package_cl8000_HK6030/
+	./"$BUILDSCRIPT" -p "${PLATFORM}" 1>/dev/null
+
+	tar xf SOURCE_CODE_celeno_package_${PACKAGE}_*_${PLATFORM}.tar.gz
+	cd celeno_package_${PACKAGE}_${PLATFORM}
 
 	sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = /home/developer/ccache/cl8000/aarch64-linux-gnu-#' src/celeno.mk
 	export CCACHE_PATH=/usr/bin:$PATH
 
-	make
+	echo "[START COMPILATION ${PACKAGE} ${PLATFORM}}"
 
-	cd -
+	make 1>/dev/null
+
+	mv build cl8000 1>/dev/null
+	tar -czf cl8000.tar.bz2 cl8000 1>/dev/null
+       
+	cd ${_PWD}
+
+	mv ${src}/celeno_package_${PACKAGE}_${PLATFORM}/cl8000.tar.bz2 . 1>/dev/null
 }
 
 main() {
 	local ssh_src=
+	local remote_src=
         local src=
         local dst=
         local plat=
 
-	while getopts "hs:d:p:e:" opt; do
+	while getopts "hs:d:p:e:r:" opt; do
 		case "$opt" in
 			s)
 				src="$OPTARG"
@@ -111,37 +117,53 @@ main() {
 			e)
 				ssh_src="$OPTARG"
 				;;
+			r)
+				remote_src="$OPTARG"
+				;;
 		esac
 	done
 
 	if [ -z "$ssh_src" ] ; then
-		ssh_src=alexander@172.168.110.230:/home/alexander/repo/celeno-swdb-CL8000-hp/8.0.x
+		#ssh_src=alexander@172.168.110.230:/home/alexander/repo/celeno-swdb-CL8000-hp/8.0.x
+		ssh_src=alexander@172.168.110.230
 	fi
+	echo "SYNC          : $ssh_src"
+
+	if [ -z "$remote_src" ] ; then
+		remote_src=/home/alexander/repo/celeno-swdb-CL8000-hp/8.0.x
+	fi
+	echo "REMOTE_SRC    : $remote_src"
 
 	if [ -z "$src" ] ; then
 		src=/home/developer/8.0.x
 	fi
+	echo "LOCAL SOURCES : $src"
 
 	if [ -z "$dst" ]; then
-		info "The source path is not specified. The default path will be used."
 		dst="."
+	echo "BUILD DIR     : $src"
+	else
+	echo "BUILD DIR     : $dst"
 	fi
 
-#	shift $(($OPTIND - 1))
+	if [ -z "$plat" ]; then
+		plat=HK6030
+	fi
+	echo "PLATFORM      : $plat"
 
-	echo "main ssh=$ssh_src src=$src dst=$dst"
+	sync_sources "$ssh_src:$remote_src" $src $dst
 
-	sync_sources $ssh_src $src $dst
+	build $src $plat
 
-	build $src ${plat:-HK6030}
-
-	echo `ls -l ${src}/celeno_package_cl8000_HK6030/cl8000_host_pkg-*-${PLATFORM}.tar.bz2`
-	scp ${src}/celeno_package_cl8000_HK6030/cl8000_host_pkg-*-${PLATFORM}.tar.bz2 alexander@172.168.110.230:/tftpboot/cl8000.tar
+	scp cl8000.tar.bz2 alexander@172.168.110.230:/tftpboot/cl8000.tar.bz2 1>/dev/null
 
 	dat=`date`
 	echo "packman: $dat cl8000: compilation DONE." > notify.txt
-	scp notify.txt alexander@172.168.110.230:/tmp/notify.txt
-	rm -rf notify.txt
+	cat ./notify.txt
+
+	scp ./notify.txt alexander@172.168.110.230:/tmp/notify.txt 1>/dev/null
+
+	rm -rf ./notify.txt 1>/dev/null
 }
 
 

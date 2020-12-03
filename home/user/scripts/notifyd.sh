@@ -13,6 +13,15 @@ usage()
 	echo "default: notifyd.sh 1"
 }
 
+# param 1 - string
+log()
+{
+	echo $1
+	if [ "nofify_level" = "ALL" ]; then
+		notify-send -i starred $1
+	fi
+}
+
 # param 1 - branch
 # param 2 - sdk version
 build_branch_sdk()
@@ -24,12 +33,10 @@ build_branch_sdk()
 	4.7.x_23_GA15)
 		case $sdk in
 		yocto_3.7.1.1)
-			if [ "nofify_level" = "ALL" ]; then
-				notify-send -i starred "run ~/repo/4.7.x_23_GA15/build_arris_3.7.1.1.sh"
-			fi
+			log "run ~/repo/4.7.x_23_GA15/build_arris_3.7.1.1.sh"
 			cd ~/repo/4.7.x_23_GA15/
 
-			echo "<<<<<<<<<<<<<<<<<<<<<< 4.7.x_23_GA15 SDK yocto_3.7.1.1 >>>>>>>>>>>>>>>>>>>>>"
+			log "<<<<<<<<<<<<<<<<<<<<<< 4.7.x_23_GA15 SDK yocto_3.7.1.1 >>>>>>>>>>>>>>>>>>>>>"
 
 			~/repo/4.7.x_23_GA15/build_arris_3.7.1.1.sh
 			cd - > /dev/null
@@ -65,9 +72,7 @@ main()
 			local _dd=`diff -q $NAME $NAME_TMP`
 			if [ -n "$_dd" ] ; then
 				local str=`cat $NAME`
-				if [ "nofify_level" = "ALL" ]; then
-					notify-send -i starred "$str"
-				fi
+				log "$str"
 
 				# add line ex. `START DRIVER BUILD#4.7.x_23_GA15=yocto_3.7.1.1` for auto-start compilation
 				local build=`grep "START DRIVER BUILD" $NAME`
@@ -84,7 +89,6 @@ main()
 					continue
 				fi
 
-				echo " build=$ build must_build=$must_build"
 				if [ "$must_build" = "1" ] ; then
 					local str1=${str#*#}
 					branch=$(echo $str1 | cut -f1 -d=)
@@ -93,29 +97,6 @@ main()
 
 
 				build_branch_sdk $branch $sdk
-#				case $branch in
-#					4.7.x_23_GA15)
-#						case $sdk in
-#							yocto_3.7.1.1)
-#							if [ "nofify_level" = "ALL" ]; then
-#								notify-send -i starred "run ~/repo/4.7.x_23_GA15/build_arris_3.7.1.1.sh"
-#							fi
-#							cd ~/repo/4.7.x_23_GA15/
-#							echo "<<<<<<<<<<<<<<<<<<<<<< 4.7.x_23_GA15 SDK yocto_3.7.1.1 >>>>>>>>>>>>>>>>>>>>>"
-#							~/repo/4.7.x_23_GA15/build_arris_3.7.1.1.sh
-#							cd - > /dev/null
-#							;;
-
-#							*)	echo "Bad SDK version name $sdk"
-#							;;
-#						esac
-
-#					;;
-
-#					*)	echo "Bad branch name $branch"
-#					;;
-#				esac
-
 			fi
 
 			cp $NAME $NAME_TMP

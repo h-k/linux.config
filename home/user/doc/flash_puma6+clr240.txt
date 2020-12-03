@@ -1336,6 +1336,8 @@ iwcl wlan0_0 cecli bss_isolation -c.1
 
 # user space iwcl source code, commands list
 celeno-swdb-CL8000-hp/8.0.x/utils/iwcl/cecli.c
+kernel/bp-v5.8.18/drivers/net/wireless/celeno/cl8000/cl_vendor_cmd.c:cl_vendor_cecli_handler
+kernel/bp-v5.8.18/drivers/net/wireless/celeno/cl8000/cl_cecli.c:cl_cecli_acs/cl_acs_cli
 #######################Huawei board, how to#####################################
 # http://moon/wiki/index.php/Huawei_project
 #New Huawei board has no UART connection so it could be connected only via
