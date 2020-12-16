@@ -18,7 +18,7 @@ log()
 {
 	echo $1
 	if [ "nofify_level" = "ALL" ]; then
-		notify-send -i starred $1
+		notify-send -u critical -i starred $1
 	fi
 }
 
@@ -56,7 +56,7 @@ main()
 {
 	numargs=$#
 
-	if [[ $numargs == 1 ]] ; then
+	if [ $numargs = "1" ] ; then
 		if [ "$1" = "-h" ] ; then
 			usage
 			exit
@@ -68,9 +68,12 @@ main()
 	while true
 	do
 		sleep $pauze
+		echo "NAME=$NAME"
 		if [ -f $NAME ] ; then
-			local _dd=`diff -q $NAME $NAME_TMP`
-			if [ -n "$_dd" ] ; then
+			echo "ddd=$dd2"
+			dd2=`diff -q ${NAME} ${NAME_TMP}`
+			echo "2 ddd=$dd2"
+			if [ -n "$ddd" ] ; then
 				local str=`cat $NAME`
 				log "$str"
 
@@ -83,8 +86,10 @@ main()
 					must_build=1
 				fi
 
+				echo "must_build=$must_build"
 				if [ "$must_build" != "1" ] ; then
-					notify-send -i starred "$str"
+					echo "$str"
+					notify-send -u critical -i starred "$str"
 					cp $NAME $NAME_TMP
 					continue
 				fi
@@ -100,6 +105,8 @@ main()
 			fi
 
 			cp $NAME $NAME_TMP
+		else
+			echo "NAME=$NAME not -f ??"
 		fi
 
 	done

@@ -1130,8 +1130,9 @@ export CL2400_KMOD=CL2400_5g.ko
 ###########enable printk##########
 echo 8 > /proc/sys/kernel/printk
 echo 0 > /proc/sys/kernel/printk
-####################litepath debug###############################################
+####################litepath debug, puma lpal###############################################
 /export/dev-root/34xx_7.1.1/build-arrisatom/tmp/work/arrisatom-rdk-linux/puma-litepath/git+intelsdk-7.1.1ga-r0
+/export/dev-root/34xx_7.1.1/build-arrisatom/tmp/work/arrisatom-rdk-linux/linux-yocto-cougarmountain-external/3.12.59+gitAUTOINC+0fd090c8b6-r0
 cat /proc/lpal/db_stats
 cat /proc/net/pp/HAL/wifiFwData
 cli sys/pp/vpids
@@ -1338,6 +1339,28 @@ iwcl wlan0_0 cecli bss_isolation -c.1
 celeno-swdb-CL8000-hp/8.0.x/utils/iwcl/cecli.c
 kernel/bp-v5.8.18/drivers/net/wireless/celeno/cl8000/cl_vendor_cmd.c:cl_vendor_cecli_handler
 kernel/bp-v5.8.18/drivers/net/wireless/celeno/cl8000/cl_cecli.c:cl_cecli_acs/cl_acs_cli
+#################################################
+[cl8000][cl_power_tables_update] channel [36]
+[cl8000][cl_power_tables_update_ofdm][MCS 0] pwr_auto_resp_ofdm [50]
+[cl8000][cl_power_tables_update_ofdm][MCS 1] pwr_auto_resp_ofdm [48]
+[cl8000][cl_power_tables_update_ofdm][MCS 2] pwr_auto_resp_ofdm [46]
+[cl8000][cl_power_tables_update_ofdm][MCS 3] pwr_auto_resp_ofdm [44]
+[cl8000][cl_power_tables_update_ofdm][MCS 4] pwr_auto_resp_ofdm [42]
+[cl8000][cl_power_tables_update_ofdm][MCS 5] pwr_auto_resp_ofdm [40]
+[cl8000][cl_power_tables_update_ofdm][MCS 6] pwr_auto_resp_ofdm [38]
+[cl8000][cl_power_tables_update_ofdm][MCS 7] pwr_auto_resp_ofdm [36]
+[cl8000][cl_power_tables_update_he][MCS 0] pwr_auto_resp_he [50]
+[cl8000][cl_power_tables_update_he][MCS 1] pwr_auto_resp_he [48]
+[cl8000][cl_power_tables_update_he][MCS 2] pwr_auto_resp_he [46]
+[cl8000][cl_power_tables_update_he][MCS 3] pwr_auto_resp_he [44]
+[cl8000][cl_power_tables_update_he][MCS 4] pwr_auto_resp_he [42]
+[cl8000][cl_power_tables_update_he][MCS 5] pwr_auto_resp_he [40]
+[cl8000][cl_power_tables_update_he][MCS 6] pwr_auto_resp_he [38]
+[cl8000][cl_power_tables_update_he][MCS 7] pwr_auto_resp_he [36]
+[cl8000][cl_power_tables_update_he][MCS 8] pwr_auto_resp_he [34]
+[cl8000][cl_power_tables_update_he][MCS 9] pwr_auto_resp_he [32]
+[cl8000][cl_power_tables_update_he][MCS 10] pwr_auto_resp_he [28]
+[cl8000][cl_power_tables_update_he][MCS 11] pwr_auto_resp_he [26]
 #######################Huawei board, how to#####################################
 # http://moon/wiki/index.php/Huawei_project
 #New Huawei board has no UART connection so it could be connected only via
@@ -1418,6 +1441,21 @@ wlancmd ctpbind 4 # wlan1_0
 wlancmd ctpbind 5 # wlan1_1
 ###############################add route for service multicast##################
 route add -net 224.0.0.0 netmask 240.0.0.0 dev br0
+#############################arno-iptables-firewall############################
+sudo dpkg-reconfigure arno-iptables-firewall
+# manage setup with debconf? yes
+# External network interfaces: p3p1
+# Is DHCP used on external interfaces? yes
+# Open external TCP-ports:
+22 111 2049 4045 80 53 69 3389
+# Open external UDP-ports:
+111 2049 4045 80 53 69 3389 27015
+# Should the machine be pingable from the outside world? Yes
+# Internal network interfaces: p2p1
+# Internal subnets: 192.168.100.0/24
+# Do you want to enable NAT: Yes
+# Internal networks with access to external networks: 192.168.100.0/24
+# Should the firewall be (re)started now? Yes
 ##################################################################################
 hostapd -B -P /tmp/hostapd-wlan1_0.pid /tmp/hostapd-wlan1_0.conf -t -f /tmp/hostapd-wlan1_0.log -d
 ################################################################################
@@ -4725,6 +4763,11 @@ https://www.shellhacks.com/ru/ssh-login-without-password/
 #on client:
 ssh-keygen
 ssh-copy-id -i ~/.ssh/id_rsa.pub UserName@RemoteServer
+#ssh-copy-id -i ~/.ssh/id_rsa.pub alexander@172.168.110.142
+#ssh-copy-id -i ~/.ssh/id_rsa.pub alexander2@10.168.209.1
+
+##########saved keys##############
+~/.ssh/authorized_keys
 #####################optional, saving key for ssh-agent#########################
 ssh-add
 #########################wireshark build########################################
@@ -5468,3 +5511,13 @@ PCIe2: pcie@3600000 Root Complex: x2 gen3
 lspci -s 0002:01:00.0 -vvv
 ..
 LnkSta: Speed 8GT/s, Width x2, TrErr- Train- SlotClk+ DLActive- BWMgmt- ABWMgmt-
+########################qucik rm -rf ############################
+rm_rf()
+{
+	if [ "$1" != "" ]; then
+		mkdir empty_dir
+		rsync -a --delete empty_dir/ $1
+		rm -rf empty_dir
+		rm -rf $1
+	fi
+}
