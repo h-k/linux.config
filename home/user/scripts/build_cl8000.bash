@@ -50,7 +50,7 @@ sync_sources() {
 	local src="$2"
 	local dst="$3"
 
-	rsync -ar --progress --exclude=.repo --exclude=.svn --exclude=.git --exclude=.cscope --delete --delete-excluded -e ssh $ssh_src $dst &>/dev/null
+	rsync -ar --progress --exclude=.repo --exclude=.svn --exclude=.git --exclude=.cscope --delete --delete-excluded -e ssh $ssh_src $dst 1>/dev/null
 }
 
 #param 1 - dir for deleting
@@ -65,6 +65,7 @@ rm_rf()
 }
 
 build() {
+	SECONDS=0
 	local src="$1"
 	local PLATFORM="$2"
 	local _PWD=$PWD
@@ -124,13 +125,12 @@ main() {
 	done
 
 	if [ -z "$ssh_src" ] ; then
-		#ssh_src=alexander@172.168.110.230:/home/alexander/repo/celeno-swdb-CL8000-hp/8.0.x
-		ssh_src=alexander@172.168.110.230
+		ssh_src=alexander2@172.168.110.142
 	fi
 	echo "SYNC          : $ssh_src"
 
 	if [ -z "$remote_src" ] ; then
-		remote_src=/home/alexander/repo/celeno-swdb-CL8000-hp/8.0.x
+		remote_src=/home/alexander2/repo/celeno-swdb-CL8000-hp/8.0.x
 	fi
 	echo "REMOTE_SRC    : $remote_src"
 
@@ -151,17 +151,17 @@ main() {
 	fi
 	echo "PLATFORM      : $plat"
 
-	sync_sources "$ssh_src:$remote_src" $src $dst
+	sync_sources "${ssh_src}:${remote_src}" $src $dst
 
 	build $src $plat
 
-	scp cl8000.tar.bz2 alexander@172.168.110.230:/tftpboot/cl8000.tar.bz2 1>/dev/null
+	scp cl8000.tar.bz2 ${ssh_src}:/tftpboot/cl8000.tar.bz2 1>/dev/null
 
 	dat=`date`
-	echo "packman: $dat cl8000: compilation DONE." > notify.txt
+	echo "local lxc hk6030-hk: $dat cl8000: compilation in $SECONDS sec DONE." > notify.txt
 	cat ./notify.txt
 
-	scp ./notify.txt alexander@172.168.110.230:/tmp/notify.txt 1>/dev/null
+	scp ./notify.txt ${ssh_src}:/tmp/notify.txt 1>/dev/null
 
 	rm -rf ./notify.txt 1>/dev/null
 }

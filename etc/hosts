@@ -1,20 +1,35 @@
 127.0.0.1	localhost
 127.0.1.1	alexander
 
-# The following lines are desirable for IPv6 capable hosts
-::1     localhost ip6-localhost ip6-loopback
+::1 ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
+ff02::3 ip6-allhosts
 
-192.168.110.253 moon
-192.168.110.252 moon2 cernd
+192.168.110.253 moon MoonMoon.celeno.com
+192.168.110.252 moon2 cernd Moon2 Moon2.celeno.com
 192.168.110.33  jupiter
 192.168.110.38  dc2.celeno.com
 192.168.110.74 reset-pwd-pc.celeno.com
+192.168.110.250 titan.celeno.com
 
 172.168.110.107 beta-server
 172.168.110.115 gamma-server
 172.168.110.102 devel
-172.168.110.122 beta
+172.168.110.86  beta
 172.168.110.123 gamma
 172.168.110.93  packman
+192.168.110.249 coverity-svr
+172.25.90.78 svr1 svr1.celeno.com
+
+172.25.90.170   Mercury Mercury.celeno.com
+192.168.110.250 titan titan.celeno.com
+172.25.90.76    test-titan test-titan.celeno.com
+172.25.50.102   Coverity-svr Coverity-svr.celeno.com
+172.18.2.221    pluto pluto.celeno.com
+172.25.90.61    Jupiter Jupiter.celeno.com
+192.168.110.37  dc1 dc1.celeno.com
+172.25.90.151   aws-dc3 aws-dc3.celeno.com
+172.25.90.151   aws-dc4 aws-dc4.celeno.com

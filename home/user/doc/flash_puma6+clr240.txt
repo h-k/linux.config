@@ -397,9 +397,11 @@ disconnect.00:09:b5:c7:aa:26.1.2 # type disassoc, reason 2
 disconnect.00:09:b5:c7:aa:26.0.1 # type unknown, reason 1
 disconnect.00:09:b5:c7:aa:26.2.9
 client_remove.00:09:b5:c7:aa:26
-wlan.fc.type_subtype == 10 #   disassoc
-wlan.fc.type_subtype == 11 #   auth
-wlan.fc.type_subtype == 12 #   deauth
+wlan.fc.type_subtype == 10 # disassoc
+wlan.fc.type_subtype == 11 # auth
+wlan.fc.type_subtype == 12 # deauth
+wlan.fc.type_subtype == 0  # assoc request
+wlan.fc.type_subtype == 1  # assoc response
 ########################################sample_client###########################
 sample_client
 init
@@ -1335,6 +1337,14 @@ iwcl wlan0_0 cecli bss_isolation -b.1
 iwcl wlan0_0 cecli bss_isolation -c.0
 iwcl wlan0_0 cecli bss_isolation -c.1
 
+######################################repeater#####################################################
+ce_bss_num=2
+ce_iface_type=3,2,0,0,0,0,0,0 # 0 -- Disabled|2 -- STA|3 -- AP|7 -- MESH|
+ws_ssid=A
+ws_auth_mode=WPA2PSK
+ws_key=12345678
+ws_identity=testusr
+###################################
 # user space iwcl source code, commands list
 celeno-swdb-CL8000-hp/8.0.x/utils/iwcl/cecli.c
 kernel/bp-v5.8.18/drivers/net/wireless/celeno/cl8000/cl_vendor_cmd.c:cl_vendor_cecli_handler
@@ -1456,6 +1466,9 @@ sudo dpkg-reconfigure arno-iptables-firewall
 # Do you want to enable NAT: Yes
 # Internal networks with access to external networks: 192.168.100.0/24
 # Should the firewall be (re)started now? Yes
+
+sudo service arno-iptables-firewall stop
+sudo service arno-iptables-firewall restart
 ##################################################################################
 hostapd -B -P /tmp/hostapd-wlan1_0.pid /tmp/hostapd-wlan1_0.conf -t -f /tmp/hostapd-wlan1_0.log -d
 ################################################################################
@@ -3206,6 +3219,8 @@ sudo /sbin/wpa_supplicant -d -i wlan0 -c /etc/wpa_supplicant.conf
 #cd wlantest
 #make
 sudo ifconfig wlan1 down && sudo iwconfig wlan1 mode monitor && sudo ifconfig wlan1 up && sudo iwconfig wlan1 channel 36
+sudo rfkill unblock wifi ; sudo rfkill unblock all
+sudo chmod +x /usr/bin/dumpcap
 sudo ./wlantest -cd -i wlan1 -p 12345678
 sudo ./wlantest_cli
 #inject disassoc Unprotected STA <BSSID> <STA MAC>
@@ -3516,6 +3531,9 @@ git status
 git commit
 ########## Auto fix whitespaces ################################################
 git rebase --whitespace=fix HEAD~1
+#############git rebase several patches######################
+git rebase -i HEAD~2
+git rebase --continue
 ##########git cache your credentials ###########################################
 git config --global credential.helper 'cache --timeout 7200'
 ################################################################################
@@ -5521,3 +5539,159 @@ rm_rf()
 		rm -rf $1
 	fi
 }
+###################hostapd src################################################
+struct ieee802_11_elems # Parsed Information Elements
+struct ieee802_11_elems {
+	const u8 *ssid;
+	const u8 *supp_rates;
+	const u8 *ds_params;
+	const u8 *challenge;
+	const u8 *erp_info;
+	const u8 *ext_supp_rates;
+	const u8 *wpa_ie;
+	const u8 *rsn_ie;
+	const u8 *rsnxe;
+	const u8 *wmm; /* WMM Information or Parameter Element */
+	const u8 *wmm_tspec;
+	const u8 *wps_ie;
+	const u8 *supp_channels;
+	const u8 *mdie;
+	const u8 *ftie;
+	const u8 *timeout_int;
+	const u8 *ht_capabilities;
+	const u8 *ht_operation;
+	const u8 *mesh_config;
+	const u8 *mesh_id;
+	const u8 *peer_mgmt;
+	const u8 *vht_capabilities;
+	const u8 *vht_operation;
+	const u8 *vht_opmode_notif;
+	const u8 *vendor_ht_cap;
+	const u8 *vendor_vht;
+	const u8 *p2p;
+	const u8 *wfd;
+	const u8 *link_id;
+	const u8 *interworking;
+	const u8 *qos_map_set;
+	const u8 *hs20;
+	const u8 *ext_capab;
+	const u8 *bss_max_idle_period;
+	const u8 *ssid_list;
+	const u8 *osen;
+	const u8 *mbo;
+	const u8 *ampe;
+	const u8 *mic;
+	const u8 *pref_freq_list;
+	const u8 *supp_op_classes;
+	const u8 *rrm_enabled;
+	const u8 *cag_number;
+	const u8 *ap_csn;
+	const u8 *fils_indic;
+	const u8 *dils;
+	const u8 *assoc_delay_info;
+	const u8 *fils_req_params;
+	const u8 *fils_key_confirm;
+	const u8 *fils_session;
+	const u8 *fils_hlp;
+	const u8 *fils_ip_addr_assign;
+	const u8 *key_delivery;
+	const u8 *wrapped_data;
+	const u8 *fils_pk;
+	const u8 *fils_nonce;
+	const u8 *owe_dh;
+	const u8 *power_capab;
+	const u8 *roaming_cons_sel;
+	const u8 *password_id;
+	const u8 *oci;
+	const u8 *multi_ap;
+	const u8 *he_capabilities;
+	const u8 *he_operation;
+	const u8 *short_ssid_list;
+	const u8 *he_6ghz_band_cap;
+	const u8 *sae_pk;
+	const u8 *s1g_capab;
+
+	u8 ssid_len;
+	u8 supp_rates_len;
+	u8 challenge_len;
+	u8 ext_supp_rates_len;
+	u8 wpa_ie_len;
+	u8 rsn_ie_len;
+	u8 rsnxe_len;
+	u8 wmm_len; /* 7 = WMM Information; 24 = WMM Parameter */
+	u8 wmm_tspec_len;
+	u8 wps_ie_len;
+	u8 supp_channels_len;
+	u8 mdie_len;
+	u8 ftie_len;
+	u8 mesh_config_len;
+	u8 mesh_id_len;
+	u8 peer_mgmt_len;
+	u8 vendor_ht_cap_len;
+	u8 vendor_vht_len;
+	u8 p2p_len;
+	u8 wfd_len;
+	u8 interworking_len;
+	u8 qos_map_set_len;
+	u8 hs20_len;
+	u8 ext_capab_len;
+	u8 ssid_list_len;
+	u8 osen_len;
+	u8 mbo_len;
+	u8 ampe_len;
+	u8 mic_len;
+ 	u8 pref_freq_list_len;
+	u8 supp_op_classes_len;
+	u8 rrm_enabled_len;
+	u8 cag_number_len;
+	u8 fils_indic_len;
+	u8 dils_len;
+	u8 fils_req_params_len;
+	u8 fils_key_confirm_len;
+	u8 fils_hlp_len;
+	u8 fils_ip_addr_assign_len;
+	u8 key_delivery_len;
+	u8 wrapped_data_len;
+	u8 fils_pk_len;
+	u8 owe_dh_len;
+	u8 power_capab_len;
+	u8 roaming_cons_sel_len;
+	u8 password_id_len;
+	u8 oci_len;
+	u8 multi_ap_len;
+	u8 he_capabilities_len;
+	u8 he_operation_len;
+	u8 short_ssid_list_len;
+	u8 sae_pk_len;
+
+	struct mb_ies_info mb_ies;
+	struct frag_ies_info frag_ies;
+};
+ieee802_11_parse_elems # parse management frames
+ieee802_11_parse_extension # parse ext. tags
+utils/hostap/src/ap/beacon.c:
+hostapd_gen_probe_resp # format probe response
+ieee802_11_set_beacon  # beacon format
+	ieee802_11_build_ap_params
+		hostapd_eid_he_capab
+		hostapd_eid_he_operation
+        hostapd_build_ap_extra_ies # Informational Elements beacon, proberesp, assocresp
+utils/hostap/hostapd/config_file.c: hostapd_config_fill() # config parser
+hostapd_config_defaults_bss # set default Informational Elements for bss
+
+add sta flow:
+add_associated_sta
+hostapd_sta_add # hostapd sta add {ht_capab, vht_capab, he_capab}
+wpa_driver_nl80211_sta_add
+kernel:
+ nl80211_new_station
+ rdev_add_station
+ ieee80211_add_station
+   sta_apply_parameters
+   sta_info_insert_rcu
+   sta_info_insert_finish
+     sta_info_insert_drv_state
+     drv_sta_state / cl_ops_sta_state
+     drv_sta_add / cl_sta_add, cl_sta_add_to_lut
+            cl_sta_add_to_firmware
+             cl_msg_tx_sta_add

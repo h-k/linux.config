@@ -1,5 +1,5 @@
 sudo apt-get install gawk texlive-latex-extra pgf \
-latex-xcolor latex-beamer git git-svn subversion libc6-dev-i386 g++ bison \
+latex-xcolor latex-beamer git git-svn subversion libc6-dev-i386 g++ bison libreadline-dev\
 flex zlib1g:i386 gettext gperf libncurses5 texinfo fakeroot build-essential \
 zlib1g-dev libncurses5-dev lib32ncurses5-dev doxygen mc libnl-3-dev libnl-genl-3-dev\
 libpam0g:i386 libstdc++5 libstdc++5:i386 libstdc++6 libstdc++6:i386 wget diffstat unzip gcc-multilib   \
