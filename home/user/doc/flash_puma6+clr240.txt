@@ -1287,6 +1287,15 @@ export clr_rev_rpc_server_ip_address=192.168.254.254
 export clr_cfg_dir=/nvram
 export clr_install_dir=/tmp/cl242
 ########################CL8000, HK6030##########################################
+# http://moon/wiki/index.php/HK6030#Flash_the_image_to_the_HK6030_board
+setenv ethact FM1@DTSEC3
+setenv ipaddr 192.168.100.55
+setenv serverip 192.168.100.30
+tftp a0000000 Celeno_B2_firmware_ls1046ardb_uboot_qspiboot.img
+sf probe 0:0 && sf erase 0 +1000000 && sf write 0xa0000000 0 1000000
+nand erase 0 0x4000000 && nand write a0000000 0 $filesize
+# After completion, power cycle the board
+# имедж тут: /cernd/sw/_SDK_HK6030/B2/Celeno_B2_firmware_ls1046ardb_uboot_qspiboot.img
 ######################### repo/git #############################################
 https://titan.celeno.com/gerrit/admin/repos/celeno-swdb-CL8000-hp
 git clone "https://titan.celeno.com/gerrit/celeno-swdb-CL8000-hp" && (cd "celeno-swdb-CL8000-hp" && mkdir -p .git/hooks && curl -Lo `git rev-parse --git-dir`/hooks/commit-msg https://titan.celeno.com/gerrit/tools/hooks/commit-msg; chmod +x `git rev-parse --git-dir`/hooks/commit-msg)
@@ -4329,16 +4338,28 @@ cd ${HOME}/ccache/cl8000/ ; \
 for i in $( (cd /usr/bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
-########################ccache for HK6030, on PC v.1##################################
+########################ccache for HK6030, on PC v.1################################################
 mkdir -p ${HOME}/ccache/cl8000/ ; \
 cd ${HOME}/ccache/cl8000/ ; \
-for i in $( (cd /home/developer/flexbuild_lsdk1812/build/rfs/rootfs_buildroot_LS_arm64_tiny/host/opt/ext-toolchain/bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
+for i in $( (cd /home/developer/work/flexbuild_lsdk1812/build/rfs/rootfs_buildroot_LS_arm64_tiny/host/bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+########################ccache for HK6030, on PC v.1.B2#############################################
+mkdir -p ${HOME}/ccache/cl8000/ ; \
+cd ${HOME}/ccache/cl8000/ ; \
+for i in $( (cd /home/developer/work/clean_flexbuild_lsdk1812/flexbuild_lsdk1812/build/rfs/rootfs_buildroot_LS_arm64_tiny/host/opt/ext-toolchain/bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+#############
+mkdir -p ${HOME}/ccache/cl8000/ ; \
+cd ${HOME}/ccache/cl8000/ ; \
+for i in $( (cd /home/developer/work/clean_flexbuild_lsdk1812/flexbuild_lsdk1812/build/rfs/rootfs_buildroot_LS_arm64_tiny/host/bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
 ########################ccache for HK6030, on PC v.2##################################
 mkdir -p ${HOME}/ccache/cl8000/ ; \
 cd ${HOME}/ccache/cl8000/ ; \
-for i in $( (cd /home/developer/flexbuild_lsdk1812/aarch64_bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
+for i in $( (cd /home/developer/work/flexbuild_lsdk1812/aarch64_bin/ ; ls aarch64-linux-gnu-* ) ) ; do \
 echo $i; ln -s /usr/bin/ccache $i ; \
 done
 ##Host Package CL8000 ##########################
@@ -5671,15 +5692,46 @@ ieee802_11_parse_elems # parse management frames
 ieee802_11_parse_extension # parse ext. tags
 utils/hostap/src/ap/beacon.c:
 hostapd_gen_probe_resp # format probe response
+	hostapd_eid_supported_op_classes
+	hostapd_eid_ht_capabilities
+	hostapd_eid_ht_operation
+		hostapd_ht_operation_update
+	hostapd_eid_ext_capab
+	hostapd_eid_time_adv
+	hostapd_eid_time_zone
+	hostapd_eid_interworking
+	hostapd_eid_adv_proto
+	hostapd_eid_roaming_consortium
+#ifdef CONFIG_IEEE80211AC
+	hostapd_eid_vht_capabilities
+	hostapd_eid_vht_operation
+#endif
+#ifdef CONFIG_IEEE80211AX
+	hostapd_eid_he_capab
+	hostapd_eid_he_operation
+	hostapd_eid_spatial_reuse
+	hostapd_eid_he_mu_edca_parameter_set
+	hostapd_eid_he_6ghz_band_cap
+	hostapd_eid_cca
+#endif
 ieee802_11_set_beacon  # beacon format
 	ieee802_11_build_ap_params
 		hostapd_eid_he_capab
 		hostapd_eid_he_operation
         hostapd_build_ap_extra_ies # Informational Elements beacon, proberesp, assocresp
-utils/hostap/hostapd/config_file.c: hostapd_config_fill() # config parser
-hostapd_config_defaults_bss # set default Informational Elements for bss
-
-add sta flow:
+######################probe request, probe response##############################
+utils/hostap/src/ap/beacon.c: handle_probe_req
+			       hostapd_gen_probe_resp
+			       hostapd_drv_send_mlme/driver_nl80211_send_mlme
+			                             wpa_driver_nl80211_send_mlme
+			                             nl80211_send_frame_cmd
+kernel/bp-v5.10.4/net/wireless/nl80211.c:           nl80211_tx_mgmt
+kernel/bp-v5.10.4/net/wireless/mlme.c:	      cfg80211_mlme_mgmt_tx
+######################set default Informational Elements for bss#########################
+hostapd_config_defaults_bss
+##########################hostapd config option parser##############################################
+utils/hostap/hostapd/config_file.c: hostapd_config_fill()
+#########################add sta flow:###############################################################
 add_associated_sta
 hostapd_sta_add # hostapd sta add {ht_capab, vht_capab, he_capab}
 wpa_driver_nl80211_sta_add
@@ -5695,3 +5747,29 @@ kernel:
      drv_sta_add / cl_sta_add, cl_sta_add_to_lut
             cl_sta_add_to_firmware
              cl_msg_tx_sta_add
+######################### TX PATH, assoc response #####################################
+kernel/bp-v5.10.4/net/mac80211/tx.c:                       ieee80211_tx_frags
+kernel/bp-v5.10.4/net/mac80211/driver-ops.h:               drv_tx
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl/cl_ops.c: cl_ops_tx
+                                                             cl_tx_single
+################################check frame types##################################################
+struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)skb->data;
+__le16 fc = mgmt->frame_control;
+
+if (ieee80211_is_probe_req(fc))
+	printk("[%s] probe_resp da [%pM]\n", __func__, mgmt->da);
+
+if (ieee80211_is_assoc_resp(fc))
+	printk("[%s] assoc_resp da [%pM]\n", __func__, mgmt->da);
+################for AX200#######################################
+sudo iw wlp5so set freq 5180 80 5210  # channel 36, 80 MHz.
+sudo iw wlp5so set channel 36 80Mhz
+sudo iw wlp5so set freq 5200 80 5210  # channel 40, 80 MHz
+sudo iw wlp5so set freq 2412 # channel 1, 20 MHz.
+####################################AX200 Windows client###########################################
+paffles-supplicant-minion [AX200]
+OS: Windows 10
+IP: 172.168.110.94
+username: QA_PC
+password: celeno
+###################

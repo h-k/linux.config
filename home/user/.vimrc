@@ -1,10 +1,11 @@
 syntax on
 set number
 colorscheme mrkn256 " wombat256mod
-set colorcolumn=81
+set colorcolumn=101
 set list
 set nowrap
 set ruler
+set history=10000
 " set listchars=eol:↲,tab:→→,trail:·,nbsp:↔
 set listchars=tab:>.,trail:.,extends:#,nbsp:.
 
