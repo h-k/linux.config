@@ -1303,6 +1303,13 @@ git clone "https://titan.celeno.com/gerrit/celeno-swdb-CL8000-hp" && (cd "celeno
 
 lxc start hk6030-hk
 lxc exec hk6030-hk -- sudo -i -u developer
+#####Error: Failed preparing container for start: Failed to start device "loop15":###########
+#####The required device path doesn't exist and the major and minor settings are not specified###
+mknod /dev/loop15 b 7 15
+mknod /dev/loop16 b 7 16
+mknod /dev/loop17 b 7 17
+mknod /dev/loop18 b 7 18
+
 ###### inside container
 sudo chmod a+w /dev/stdout
 cd scripts
@@ -1380,6 +1387,22 @@ kernel/bp-v5.8.18/drivers/net/wireless/celeno/cl8000/cl_cecli.c:cl_cecli_acs/cl_
 [cl8000][cl_power_tables_update_he][MCS 9] pwr_auto_resp_he [32]
 [cl8000][cl_power_tables_update_he][MCS 10] pwr_auto_resp_he [28]
 [cl8000][cl_power_tables_update_he][MCS 11] pwr_auto_resp_he [26]
+###########################CL8000-238, 40 Mhz HE BW issue###############################
+wlan.ext_tag.he_phy_cap.chan_width_set.40_80_in_5ghz (20 - 0; 40 - 1; 80 - 1)
+&&
+wlan.vht.op.channelwidth  (20 - 0; 40 - 0; 80 - 1)
+########################CL8000 how to create review request for svn review board###################
+New review request -> Create from a local change -> Select
+Выбираем наш патч
+В качестве base directory вводим:
+/target/branches/CL8000/hp/8.0.x
+И нажимаем OK
+Откроется draft
+Где надо будет прописать
+1. Summary
+2. Description
+3. Testing done
+Справа, там где Reviewers, выбрать ревьюверов
 #######################Huawei board, how to#####################################
 # http://moon/wiki/index.php/Huawei_project
 #New Huawei board has no UART connection so it could be connected only via
@@ -4889,6 +4912,12 @@ struct cl_vif *netdev_to_vif(struct net_device *dev)
 }
 
 struct cl_vif *cl_vif = netdev_to_vif(skb->dev);
+
+struct sta_info *stainfo;
+struct ieee80211_sta *ieee_sta = &stainfo->sta;
+
+struct ieee80211_sta *ieee_sta;
+struct sta_info *stainfo = container_of(ieee_sta, struct sta_info, sta);
 ################################################################################
 cl_tx_amsdu_set
 
@@ -5690,6 +5719,7 @@ struct ieee802_11_elems {
 };
 ieee802_11_parse_elems # parse management frames
 ieee802_11_parse_extension # parse ext. tags
+####generate probe response######################
 utils/hostap/src/ap/beacon.c:
 hostapd_gen_probe_resp # format probe response
 	hostapd_eid_supported_op_classes
@@ -5715,7 +5745,9 @@ hostapd_gen_probe_resp # format probe response
 	hostapd_eid_cca
 #endif
 ieee802_11_set_beacon  # beacon format
-	ieee802_11_build_ap_params
+				/hostapd_switch_channel
+	ieee802_11_set_beacon     /hostapd_fill_csa_settings
+	ieee802_11_build_ap_params/hostapd_build_beacon_data
 		hostapd_eid_he_capab
 		hostapd_eid_he_operation
         hostapd_build_ap_extra_ies # Informational Elements beacon, proberesp, assocresp
@@ -5727,6 +5759,12 @@ utils/hostap/src/ap/beacon.c: handle_probe_req
 			                             nl80211_send_frame_cmd
 kernel/bp-v5.10.4/net/wireless/nl80211.c:           nl80211_tx_mgmt
 kernel/bp-v5.10.4/net/wireless/mlme.c:	      cfg80211_mlme_mgmt_tx
+kernel/bp-v5.10.4/net/wireless/rdev-ops.h:          rdev_mgmt_tx
+kernel/bp-v5.10.4/net/mac80211/offchannel.c:        ieee80211_mgmt_tx
+kernel/bp-v5.10.4/net/mac80211/ieee80211_i.h:       ieee80211_tx_skb
+						      ieee80211_tx_skb_tid
+kernel/bp-v5.10.4/net/mac80211/tx.c:		      __ieee80211_tx_skb_tid_band
+							ieee80211_xmit
 ######################set default Informational Elements for bss#########################
 hostapd_config_defaults_bss
 ##########################hostapd config option parser##############################################
@@ -5747,11 +5785,82 @@ kernel:
      drv_sta_add / cl_sta_add, cl_sta_add_to_lut
             cl_sta_add_to_firmware
              cl_msg_tx_sta_add
-######################### TX PATH, assoc response #####################################
+     cfg80211_new_sta # notify hostapd
+     nl80211_send_station(msg, NL80211_CMD_NEW_STATION) # # notify hostapd
+############# del station flow##########################
+		    /sta_info_destroy_addr
+cl_sta_disassociate/__sta_info_destroy
+cfg80211_del_sta   /__sta_info_destroy_part2
+kernel/bp-v5.10.4/net/wireless/nl80211.c: cfg80211_del_sta_sinfo
+nl80211_del_station_event: nl80211_del_station_event
+######################### tx flow, TX PATH, assoc response #####################################
 kernel/bp-v5.10.4/net/mac80211/tx.c:                       ieee80211_tx_frags
 kernel/bp-v5.10.4/net/mac80211/driver-ops.h:               drv_tx
 kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl/cl_ops.c: cl_ops_tx
                                                              cl_tx_single
+                                                             cl_tx_push
+                                                             cl_drv_ops_pkt_fw_send
+                                                             cl_tx_pci_pkt_fw_send
+                                                             cl_enhanced_tim_set_tx_single
+							# Tx normal frame/mgmt
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:  	       txl_start_all_transmissions
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:	       txl_start_tx_flow
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:	       ce_tx_path_start
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_frame.c:             txl_frame_push
+							       txl_frame_push_int
+							       co_list_push_back_list
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c: 	       txl_tx_active_chains_get # set Tx capability (HT, VHT, HE)
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_trigger_frame.c:     tb_policy_table_update
+							       # set downlink TX capability for sta
+mac_sw_src/lmac/nxlmacip/src/mm/mm_task.c:		       mm_update_rate_dl_handler
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_msg_tx.c: cl_msg_tx_update_rate_dl
+
+                                                             # trigger frame flow
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_bsrp.c:cl_bsrp_send_su
+							       cl_bsrp_send_mu
+or
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_tf.c:  cl_tf_send
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_msg_tx.c: cl_msg_tx_tf
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_trigger_frame.c:     tf_config_and_start
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_trigger_frame.c:     txl_trigger_frame_init_and_start
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_frame.c:             txl_frame_push
+
+#######################set channel flow#############################################################
+########################regular/normal channel switch via hostapd
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_acs.c: cl_acs_cli_switch_channel
+							       cl_acs_trigger_channel_switch
+kernel/bp-v5.10.4/net/wireless/nl80211.c:		       cfg80211_ch_switch
+							       nl80211_ch_switch (NL80211_CMD_CHANNEL_SWITCH)
+utils/hostap/src/drivers/driver_nl80211_event.c:	case NL80211_CMD_CHANNEL_SWITCH:
+							       mlme_event_do_channel_switch
+utils/hostap/src/ap/drv_callbacks.c:			       wpa_supplicant_event(bss->ctx, EVENT_DO_CHANNEL_SWITCH, &data);
+							       hostapd_event_do_channel_switch
+utils/hostap/src/ap/hostapd.c:			       hostapd_do_channel_switch
+							       for (i = 0; i < iface->num_bss; i++) {
+									ret = hostapd_switch_channel(iface->bss[i], &settings);
+utils/hostap/src/ap/ap_drv_ops.h:     		       hostapd_drv_switch_channel
+utils/hostap/src/drivers/driver_nl80211.c:		       nl80211_switch_channel
+								ret = set_beacon_data(msg, &settings->beacon_after);
+								ret = set_beacon_data(msg, &settings->beacon_csa);
+								ret = send_and_recv_msgs(drv, msg, NULL, NULL, NULL, NULL); (NL80211_CMD_CHANNEL_SWITCH)
+kernel/bp-v5.10.4/net/wireless/nl80211.c:		       nl80211_channel_switch
+								err = nl80211_parse_beacon(rdev, info->attrs, &params.beacon_after);
+								err = nl80211_parse_beacon(rdev, csa_attrs, &params.beacon_csa);
+kernel/bp-v5.10.4/net/wireless/rdev-ops.h:		       rdev_channel_switch
+kernel/bp-v5.10.4/net/mac80211/cfg.c:			       ieee80211_channel_switch
+								__ieee80211_channel_switch
+								 ieee80211_set_csa_beacon
+								  ieee80211_assign_beacon
+								   ieee80211_set_probe_resp # set probe_resp
+								   rcu_assign_pointer(sdata->u.ap.beacon, new); # set beacon
+							        sdata->vif.csa_active = true;
+								cfg80211_ch_switch_started_notify(NL80211_CMD_CH_SWITCH_STARTED_NOTIFY)
+								case NL80211_CMD_CH_SWITCH_STARTED_NOTIFY:
+utils/hostap/src/drivers/driver_nl80211_event.c:			mlme_event_ch_switch
+kernel/bp-v5.10.4/net/mac80211/main.c:		       ieee80211_bss_info_change_notify
+kernel/bp-v5.10.4/net/mac80211/driver-ops.h:			drv_bss_info_changed
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_ops.c:		cl_ops_bss_info_changed
+kernel/bp-v5.10.4/net/mac80211/driver-ops.h:			drv_channel_switch_beacon
 ################################check frame types##################################################
 struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)skb->data;
 __le16 fc = mgmt->frame_control;
@@ -5772,4 +5881,24 @@ OS: Windows 10
 IP: 172.168.110.94
 username: QA_PC
 password: celeno
-###################
+###################chown dir recursively############################################################
+chown -R user /home/user
+##########################ubuntu GUI, VM trics##############################################
+# disable GUI
+sudo systemctl set-default multi-user
+# enable GUI
+sudo systemctl set-default graphical
+
+# delete GUI
+sudo apt-get purge ubuntu-desktop
+sudo apt autoremove
+
+#######################shrink vdi disk################################################
+sudo apt install zerofree
+# boot in recovery mode
+## Drop to root-shell prompt
+df
+zerofree -v /dev/sda1
+halt or poweroff
+##in HOST console use vboxmanage
+vboxmanage modifymedium ubuntu16.4_64b_1-disk001.vdi --compact
