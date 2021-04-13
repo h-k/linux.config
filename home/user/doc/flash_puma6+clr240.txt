@@ -1299,16 +1299,18 @@ nand erase 0 0x4000000 && nand write a0000000 0 $filesize
 ######################### repo/git #############################################
 https://titan.celeno.com/gerrit/admin/repos/celeno-swdb-CL8000-hp
 git clone "https://titan.celeno.com/gerrit/celeno-swdb-CL8000-hp" && (cd "celeno-swdb-CL8000-hp" && mkdir -p .git/hooks && curl -Lo `git rev-parse --git-dir`/hooks/commit-msg https://titan.celeno.com/gerrit/tools/hooks/commit-msg; chmod +x `git rev-parse --git-dir`/hooks/commit-msg)
-###### inside packman server
-
+###################### Version `CURL_OPENSSL_3' not found##########
+sudo apt-get remove --auto-remove libcurl4-openssl-dev
+sudo apt-get install libcurl3 -y
+##### inside packman server
 lxc start hk6030-hk
 lxc exec hk6030-hk -- sudo -i -u developer
 #####Error: Failed preparing container for start: Failed to start device "loop15":###########
 #####The required device path doesn't exist and the major and minor settings are not specified###
-mknod /dev/loop15 b 7 15
-mknod /dev/loop16 b 7 16
-mknod /dev/loop17 b 7 17
-mknod /dev/loop18 b 7 18
+sudo mknod /dev/loop15 b 7 15
+sudo mknod /dev/loop16 b 7 16
+sudo mknod /dev/loop17 b 7 17
+sudo mknod /dev/loop18 b 7 18
 
 ###### inside container
 sudo chmod a+w /dev/stdout
@@ -1324,6 +1326,27 @@ export cl_install_dir=/cl8000
 export PATH=$cl_install_dir/bin:$cl_install_dir/scripts:$PATH
 export LD_LIBRARY_PATH=$cl_install_dir/lib:$LD_LIBRARY_PATH
 
+#####new version /nvram/exports####################
+export cl_cfg_dir="/nvram/cl8000"
+export cl_install_dir="/tmp/cl8k"
+export PATH=$cl_install_dir/bin:$cl_install_dir/scripts:$PATH
+export LD_LIBRARY_PATH=$cl_install_dir/lib:$LD_LIBRARY_PATH
+##/nvram/bash_aliases###############
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias ..='cd ..'
+alias a='ls -a'
+alias ll='ls -l'
+alias c='cat'
+alias v='vi'
+alias update='ce_host.sh stop; tftp -gl cl8k.tar.bz2 192.168.100.102 -b 20000 ; tar xf cl8k.tar.bz2 ; ce_host.sh start'
+alias restart='ce_host.sh restart'
+alias reconfig='ifconfig eth5 0.0.0.0 ; ifconfig br0 192.168.100.4'
+###
+cd /tmp
+tftp -gl cl8k.tar.bz2 192.168.100.102 -b 20000
+tar xf cl8k.tar.bz2
 ###### eth 0,1,2,3 1G ?
 ###### eth 4,5 10G ?
 ifconfig eth5 192.168.100.1 netmask 255.255.255.0 # eth 4,5 10G?
@@ -1333,10 +1356,20 @@ ifconfig eth5 192.168.100.1 netmask 255.255.255.0 # eth 4,5 10G?
 /nvram/cl8000/cl_tcv0.dat # 5G
 /nvram/cl8000/cl_tcv1.dat # 24G
 ####### multiple bss activation
-ha_ssid1=CL8000_AP_5G_1
-ha_ssid2=CL8000_AP_5G_2
-ce_bss_num=2                 
+## cl_tcv0.dat
+ce_multiple_bssid=1
+ce_bss_num=2
 ce_iface_type=3,3,0,0,0,0,0,0
+ha_auth_mode=WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK
+ha_encrypt_type=AES,AES,AES,AES,AES,AES,AES,AES
+ha_wpa_passphrase1=12345678
+ha_wpa_passphrase2=12345678
+ha_ssid1=PRI
+ha_ssid2=mul2
+ce_multiple_bssid=1
+## cl_chip0.dat
+ce_lam_enable=0
+ce_phys_mac_addr=00:1c:51:04:2f:00 (00 at the end of MAC )
 ###########
 5G: wlan0_0 ... wlan0_N
 24G: wlan1_0 ... wlan1_N
@@ -1391,6 +1424,81 @@ kernel/bp-v5.8.18/drivers/net/wireless/celeno/cl8000/cl_cecli.c:cl_cecli_acs/cl_
 wlan.ext_tag.he_phy_cap.chan_width_set.40_80_in_5ghz (20 - 0; 40 - 1; 80 - 1)
 &&
 wlan.vht.op.channelwidth  (20 - 0; 40 - 0; 80 - 1)
+##################### EDK32 ####################################################
+ptm_status
+[edk-4178@PALL1-SRV ~]$ ptm_status
+xe port  = PALL1-SRV:34665
+xe pid = 5291
+cl3000
+b0
+
+
+
+cl_protium.sh
+remote ptmRun pid 5291 is running.
+xe server port PALL1-SRV:34665 found
+####
+So that's good. The cl3000 b0 is the model you need
+###from term (VNC)
+ssh edk-user@edk-4178
+##################
+when worknig on EDK the model loads with 2 chips (chip0 and chip1)
+the default nvram configuration ($cl_install_dir/scripts/restore_defaults.sh all)
+will have chip0 set as AP (with 2 bands.. lmac0 as 5g and smac0 as 2.4g) and chip1 set as 2 stations (lmac1 as sta in 5g and smac1 as sta in 2.4g)
+
+
+if you want 2 sta in same band (e.g 5g) then edit nvram as follows:
+$cl_install_dir/scripts/nvram_set chip0 ce_tcv_enabled 1,0  (will leave only lmac0 (5g) in chip0)
+$cl_install_dir/scripts/nvram_set chip1 ce_tcv_enabled 1,1
+$cl_install_dir/scripts/nvram_set tcv0 ce_channel_bandwidth_step_b 2
+$cl_install_dir/scripts/nvram_set tcv2 ce_channel_bandwidth_step_b 2
+cp /nvram/cl8000/cl_tcv2.dat /nvram/cl8000/cl_tcv3.dat  (will set smac1 to also act as sta in 5g)
+
+after ch_host start you give the following commnads (if you get error prints its fine):
+
+sudo mem 0xfb7c5104 w 0x80
+sudo mem 0xde7c5104 w 0x80
+
+this will allow smac1 and lmac1 (our stations) to both be on same band
+and they should connect automatically (assuming nvram ssid settings are set correctly)
+#################
+###
+export cl_cfg_dir=/nvram/cl8000
+export cl_install_dir=/root/cl8000_fs
+export PATH=/root/cl8000_fs/bin:$PATH:$cl_install_dir/scripts
+export LD_LIBRARY_PATH=/root/cl8000_fs/lib
+
+Multi-BSSID nvram settings:
+/mnt/cl8000/scripts/nvram_set chip0 ce_tcv_enabled 1,0
+/mnt/cl8000/scripts/nvram_set chip1 ce_tcv_enabled 1,1
+/mnt/cl8000/scripts/nvram_set tcv0 ha_ssid1 CL8000_AP_5G_0
+/mnt/cl8000/scripts/nvram_set tcv0 ha_ssid2 CL8000_AP_5G_1
+/mnt/cl8000/scripts/nvram_set tcv0 ha_auth_mode "WPA2PSK,WPA2PSK,OPEN,OPEN,OPEN,OPEN,OPEN,OPEN"
+/mnt/cl8000/scripts/nvram_set tcv0 ha_encrypt_type "AES,AES,NONE,NONE,NONE,NONE,NONE,NONE"
+/mnt/cl8000/scripts/nvram_set tcv0 ce_bss_num 2
+/mnt/cl8000/scripts/nvram_set tcv0 ce_iface_type "3,3,0,0,0,0,0,0"
+/mnt/cl8000/scripts/nvram_set tcv0 ce_channel_bandwidth_step_b 2
+/mnt/cl8000/scripts/nvram_set tcv2 ce_channel_bandwidth_step_b 2
+/mnt/cl8000/scripts/nvram_set tcv2 ws_ssid CL8000_AP_5G_0
+cp /nvram/cl8000/cl_tcv2.dat /nvram/cl8000/cl_tcv3.dat
+/mnt/cl8000/scripts/nvram_set tcv3 ws_ssid CL8000_AP_5G_1
+/mnt/cl8000/scripts/nvram_set tcv0 ce_multiple_bssid 1
+/mnt/cl8000/scripts/nvram_set tcv2 ce_multiple_bssid 1
+/mnt/cl8000/scripts/nvram_set tcv3 ce_multiple_bssid 1
+/mnt/cl8000/scripts/nvram_set chip0 ce_lam_enable 0
+/mnt/cl8000/scripts/nvram_set chip1 ce_lam_enable 0
+/mnt/cl8000/scripts/nvram_set chip0 ce_phys_mac_addr 00:1c:51:a7:8c:70
+/mnt/cl8000/scripts/nvram_set chip1 ce_phys_mac_addr 00:1c:51:2a:09:50
+
+su root
+$ (password) Abc123
+###Use the export button (click on the button we created).
+##Launch the driver
+
+/mnt/cl8000/scripts/ce_host.sh start
+####dmesg could see in second terminal dmesg -wH###########
+#####after kernel panic, log#####
+tail -n 2000 /var/log/kern.log
 ########################CL8000 how to create review request for svn review board###################
 New review request -> Create from a local change -> Select
 Выбираем наш патч
@@ -1403,6 +1511,18 @@ New review request -> Create from a local change -> Select
 2. Description
 3. Testing done
 Справа, там где Reviewers, выбрать ревьюверов
+##############Xtensa CL8000###########################################
+##fw compilation error
+sudo apt-get install libxml2-utils
+###########license issues###############
+#Edit \etc\hosts
+172.25.90.78 svr1 svr1.celeno.com
+#Save and exit
+#Verify it by pinging svr1.celeno.com. reconnect VPN if it doesn’t work.
+#Update the license file .flexlmrc
+#The license file .flexlmrc in in your home folder.
+#Edit the file and change 27000@dc2.celeno.com to 27002@svr1.celeno.com
+#Compile again and verify it works.
 #######################Huawei board, how to#####################################
 # http://moon/wiki/index.php/Huawei_project
 #New Huawei board has no UART connection so it could be connected only via
@@ -1645,6 +1765,7 @@ nvram_set cl2400 ha_auth_mode "WPAPSKWPA2PSK;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;
 nvram_set cl2400 ha_encryp_type "TKIPAES;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
 nvram_set cl2400 ha_wpa_group_rekey "3600;0;0;0;0;0;0;0"
 nvram_set cl2400 ha_wps_state "2;0;0;0;0;0;0;0"
+##default ha_config_methods 680
 nvram_set cl2400 ha_config_methods 9864
 nvram_set cl2400 ha_wpa_passphrase1 12345678
 ce_host.sh update_hostapd
@@ -1687,6 +1808,8 @@ hostapd_cli -p /tmp/hostapd-wlan0_0 -i wlan0_0 reconfigure 1
 nvram_set cl2400_24g ha_auth_mode "SHARED;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;OPEN;"
 nvram_set cl2400_24g ha_encryp_type "WEP;NONE;NONE;NONE;NONE;NONE;NONE;NONE;"
 nvram_set cl2400_24g ce_wep_key0_1 1234567890123
+## WEP key WEP40 this is 5 byte
+# nvram_set cl2400_24g ce_wep_key0_1 12345
 nvram_set cl2400_24g ce_wep_key1_1 2234567890123
 nvram_set cl2400_24g ce_wep_key2_1 3234567890123
 nvram_set cl2400_24g ce_wep_key3_1 4234567890123
@@ -4388,6 +4511,17 @@ done
 ##Host Package CL8000 ##########################
 sed -i -e 's#^\s*DEF_CONF_CROSS_COMPILE.*$#DEF_CONF_CROSS_COMPILE = /home/alexander/ccache/cl8000/aarch64-linux-gnu-#' src/celeno.mk
 export CCACHE_PATH=/usr/bin/:$PATH
+################################ccache Xtensa CL8000#########################
+mkdir -p ${HOME}/ccache/xtensa_cl8000/install/tools/RG-2017.8-linux/XtensaTools/bin/ ; \
+cd ${HOME}/ccache/xtensa_cl8000/install/tools/RG-2017.8-linux/XtensaTools/bin/ ; \
+for i in $( (cd /home/trego/cl2400/Xtensa/XtDevTools/install/tools/RG-2017.8-linux/XtensaTools/bin/ ; ls * ) ) ; do \
+echo $i; ln -s /usr/bin/ccache $i ; \
+done
+############CCACHE_PATH Xtensa CL8000 ###########
+### bin path:
+### /home/trego/cl2400/Xtensa/XtDevTools/install/tools/RG-2017.8-linux/XtensaTools/bin
+sed -i -e 's#^\s*XT_DEV_TOOLS=.*$#XT_DEV_TOOLS=/home/user/ccache/xtensa_cl8000/#' /home/user/repo/8.0.x/mac_sw_src/lmac/MakefileXt
+export CCACHE_PATH=/usr/bin/:$PATH
 ###################################ADD cgiweb to Yocto##########################
 ###Copy folder
 platformdb/CBN_P6_YOCTO_CL2330_CL242/__common__/Yocto/* to
@@ -4834,28 +4968,32 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub UserName@RemoteServer
 ssh-add
 #########################wireshark build########################################
 https://github.com/wireshark/wireshark.git
-sudo apt install qt5-default -y
-sudo apt install qttools5-dev-tools -y
-sudo apt install qttools5-dev -y
-sudo apt install qtmultimedia5-dev -y
-sudo apt install libqt5svg5-dev -y
+sudo apt install qt5-default qttools5-dev-tools qttools5-dev qtmultimedia5-dev libqt5svg5-dev
+sudo apt-get install glib2.0 libgcrypt20-dev libc-ares-dev flex libpcap0.8-dev
+
+
 
 cd wireshark
 mkdir build
 cd build
+cmake ../
 ################################gui wireshark###################################
 cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=TRUE -DENABLE_KERBEROS:BOOL=FALSE ../
 ################################without gui wireshark###########################
 cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=FALSE -DENABLE_KERBEROS:BOOL=FALSE ../
 make
+#################### for .deb package generate###
+sudo apt-get install debhelper dh-virtualenv ubuntu-dev-tools
+sudo apt-get install python3-ply xsltproc dh-python docbook-xsl libxml2-utils libparse-yapp-perl libgnutls28-dev libkrb5-dev liblua5.2-dev libsmi2-dev libmaxminddb-dev libsystemd-dev libnl-genl-3-dev libnl-route-3-dev asciidoctor libsbc-dev libnghttp2-dev libssh-gcrypt-dev liblz4-dev libsnappy-dev libzstd-dev libspandsp-dev libxml2-dev libbrotli-dev libspeexdsp-dev
+dpkg-buildpackage -us -uc -rfakeroot -jauto
 ############################cl2400 structs######################################
 struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(sw_txhdr->skb);
 struct cl_vif *cl_vif = (struct cl_vif *)tx_info->control.vif->drv_priv;
 
 struct ieee80211_sub_if_data *sdata = dev->priv;
-struct cl_vif *clvif = (struct cl_vif *)(dev->priv)->vif.drv_priv);
+struct cl_vif *cl_vif = (struct cl_vif *)(dev->priv)->vif.drv_priv);
 #or
-struct cl_vif *clvif = (struct cl_vif *)(sdata->vif.drv_priv);
+struct cl_vif *cl_vif = (struct cl_vif *)(sdata->vif.drv_priv);
 struct ieee80211_sub_if_data *sdata;
 struct ieee80211_local *local = sdata->local;
 
@@ -4863,7 +5001,64 @@ struct ieee80211_sub_if_data *local_to_sdata(struct ieee80211_local *local)
 {
 	return container_of(local, struct ieee80211_sub_if_data, local);
 }
-
+################CL8000 WEP################
+ha_auth_mode=SHARED,WPA2PSK,OPEN,OPEN,OPEN,OPEN,OPEN,OPEN
+ha_encrypt_type=WEP,AES,NONE,NONE,NONE,NONE,NONE,NONE
+ha_wep_default_key=1,1,1,1,1,1,1,1
+ha_wep_key0_1=12345
+########### configure the LCU to capture MPIF DATA################
+#For capturing MPIF DATA, change in NVARM the ce_ela_mode field from default to lcu_mac_0_wide_4MU_legacy.conf.
+cl_chip0.dat
+ce_ela_mode=lcu_mac_0_wide_4MU_legacy.conf
+####
+dmesg -D
+iwcl wlan0_0 cecli fw s.26
+iwcl wlan0_0 cecli fw s.27
+dmesg -c
+dmesg -E; dmesg -wH
+​ctrl z
+####gen log
+iwcl wlan0_0 cecli fw -b
+iwcl wlan0_0 cecli fw -s.1 # help
+[ 0] : DBG_PRINT_RESET
+[ 1] : DBG_PRINT_HELP
+[ 2] : DBG_PRINT_TX_STATS
+[ 3] : DBG_PRINT_RX_STATS
+[ 4] : DBG_PRINT_TXDESC_LIST
+[ 5] : DBG_PRINT_AGG_DESC
+[ 6] : DBG_PRINT_TX_TRACE_DUMP
+[ 7] : DBG_PRINT_TX_RATE_CTRL
+[ 8] : DBG_PRINT_FO_CALIB
+[ 9] : DBG_PRINT_TX_RETRY
+[10] : DBG_PRINT_TX_BCN_FLUSH
+[11] : DBG_PRINT_FW_TRACE
+[12] : DBG_PRINT_ENHANCED_TIM
+[13] : DBG_PRINT_TX_DELBA_STATS
+[14] : DBG_PRINT_RATE_LIMITER
+[15] : DBG_PRINT_POWER_SAVE_STATS
+[16] : DBG_PRINT_BF_CTRL_ACTIVE
+[17] : DBG_PRINT_BF_CTRL_PASSIVE
+[18] : DBG_PRINT_PERIODIC_TX
+[19] : DBG_PRINT_MU_GRP_STATS
+[20] : DBG_PRINT_INT_FRAME_STATS
+[21] : DBG_PRINT_BMU_STATS
+[22] : DBG_PRINT_RX_TRACE_DUMP
+[23] : DBG_PRINT_RD_RW_IDX
+[24] : DBG_PRINT_OLYMPUS_REG_DUMP
+[25] : DBG_PRINT_TX_POWER_MEMORY
+[26] : DBG_PRINT_TX_POWER_MACHW_REGS
+[27] : DBG_PRINT_TX_POWER_TABLES
+[28] : DBG_PRINT_DBG_REGS_INFO
+[29] : DBG_PRINT_RICU_REGS_DUMP
+[30] : DBG_PRINT_RXM_STATUS
+[31] : DBG_PRINT_TXM_STATUS
+[32] : DBG_PRINT_VALID_BITMAP
+[33] : DBG_PRINT_TRIGGER_FLOW_INFO
+iwcl wlan0_0 cecli fw -s.2 # fw tx_stats
+###log in ce_dump_tcv0_1.tbz###
+###################CL80000, is band 5g#############
+cl_band_is_5g(cl_hw)
+#############
 struct ieee80211_hw *hw;
 struct cl_hw *cl_hw = hw->priv;
 struct ieee80211_vif *vif;
@@ -4876,11 +5071,17 @@ struct cfg80211_registered_device *rdev = wiphy_to_dev(wiphy);
 struct ethhdr *ehdr = eth_hdr(skb);
 struct cl_hw *cl_hw = sdata->local->hw.priv;
 struct cl_vif *cl_vif = (struct cl_vif *)sdata->vif.drv_priv;
+struct ieee80211_vif *vif = sw_txhdr->cl_vif->vif;
+struct ieee80211_vif *vif = cl_vif->vif;
+struct ieee80211_sub_if_data *sdata = vif_to_sdata(cl_vif->vif);
+struct ieee80211_sub_if_data *sdata = container_of(cl_vif, struct ieee80211_sub_if_data, drv_priv);
 struct ieee80211_vif *vif = &sdata->vif;
-struct ieee80211_sub_if_data *vif_to_sdata(struct ieee80211_vif *p)
+struct ieee80211_sub_if_data *vif_to_sdata(struct ieee80211_vif *vif)
 {
-	return container_of(p, struct ieee80211_sub_if_data, vif);
+	return container_of(vif, struct ieee80211_sub_if_data, vif);
 }
+struct ieee80211_sub_if_data *stata = container_of(pvif, struct ieee80211_sub_if_data, vif);
+
 
 struct sta_info *sta = sta_info_get(sdata, ehdr->h_source);
 struct cl_sta *cl_sta = (struct cl_sta *)sta->sta.drv_priv;
@@ -4918,6 +5119,18 @@ struct ieee80211_sta *ieee_sta = &stainfo->sta;
 
 struct ieee80211_sta *ieee_sta;
 struct sta_info *stainfo = container_of(ieee_sta, struct sta_info, sta);
+#############
+struct cl_vif *cl_vif;
+list_for_each_entry(cl_vif, &cl_hw->vif_db.head, list) {
+if (cl_vif->vif->type == NL80211_IFTYPE_AP ||
+    cl_vif->vif->type == NL80211_IFTYPE_MESH_POINT) {
+	struct net_device *dev = cl_vif->dev;
+	unsigned long flags = dev_get_flags(dev);
+	printk("[%s][dev %s] IFF_UP %s IFF_RUNNING %s\n",
+	__func__, cl_vif->dev->name, (flags & IFF_UP) ? "yes" : "no",
+	(flags & IFF_RUNNING) ? "yes" : "no");
+	}
+}
 ################################################################################
 cl_tx_amsdu_set
 
@@ -4975,7 +5188,9 @@ static void cl_agg_cfm_amsdu_free(struct cl_hw *cl_hw, struct cl_sw_txhdr *sw_tx
         kmem_cache_free(cl_hw->amsdu_txhdr_cache, amsdu_txhdr);
     }
 }
-
+###
+list_for_each_entry_rcu(sdata, &local->interfaces, list)
+##
 
 struct cl_sw_txhdr *sw_txhdr = list_first_entry(&agg_q->head, struct cl_sw_txhdr, cfm_list);
 struct sk_buff *skb = sw_txhdr->skb;
@@ -5388,6 +5603,7 @@ Note: In nested repository you should do a separate commit . E.g. 4.7.x_23_GA15 
 
 To produce the release commit:
 repo forall -c 'git pull --rebase' # update all repositories to fresh version
+repo forall -c 'git checkout master'
 # Change version file and commit to local repository with any message
 # Edit cl2400_package/src/celeno.mk
 git commit -a -m "version change"
@@ -5589,6 +5805,14 @@ rm_rf()
 		rm -rf $1
 	fi
 }
+##########CL8000, init driver flow################
+cl_pci_probe
+ieee80211_alloc_hw_nm # set AP capability
+cl_mac_addr_set_tcv0
+cl_prepare_hw
+nl80211_parse_mon_options
+nl80211_parse_mon_options
+nl80211_set_interface
 ###################hostapd src################################################
 struct ieee802_11_elems # Parsed Information Elements
 struct ieee802_11_elems {
@@ -5738,13 +5962,18 @@ hostapd_gen_probe_resp # format probe response
 #endif
 #ifdef CONFIG_IEEE80211AX
 	hostapd_eid_he_capab
+	 hostapd_ext_capab_byte # for each octet
 	hostapd_eid_he_operation
 	hostapd_eid_spatial_reuse
 	hostapd_eid_he_mu_edca_parameter_set
 	hostapd_eid_he_6ghz_band_cap
 	hostapd_eid_cca
 #endif
-ieee802_11_set_beacon  # beacon format
+
+ieee802_11_set_beacons
+ieee802_11_set_beacon # beacon format
+hostapd_drv_set_ap
+wpa_driver_nl80211_set_ap
 				/hostapd_switch_channel
 	ieee802_11_set_beacon     /hostapd_fill_csa_settings
 	ieee802_11_build_ap_params/hostapd_build_beacon_data
@@ -5770,6 +5999,8 @@ hostapd_config_defaults_bss
 ##########################hostapd config option parser##############################################
 utils/hostap/hostapd/config_file.c: hostapd_config_fill()
 #########################add sta flow:###############################################################
+handle_auth
+handle_assoc
 add_associated_sta
 hostapd_sta_add # hostapd sta add {ht_capab, vht_capab, he_capab}
 wpa_driver_nl80211_sta_add
@@ -5801,16 +6032,62 @@ kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl/cl_ops.c: cl_ops_tx
                                                              cl_tx_push
                                                              cl_drv_ops_pkt_fw_send
                                                              cl_tx_pci_pkt_fw_send
+                                                              ipc_host2xmac_trigger_set
+                                                              ipc_host_2_lmac_trigger_set
                                                              cl_enhanced_tim_set_tx_single
 							# Tx normal frame/mgmt
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:  	       txl_start_all_transmissions
-mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:	       txl_start_tx_flow
+##########################TX flo, ping#######################
+dev_queue_xmit
+ __dev_queue_xmit
+  sch_direct_xmit
+   dev_hard_start_xmit
+   dev_ops.ndo_start_xmit
+   cl_tx_start
+    _cl_tx_start
+    __cl_tx_start
+     ___cl_tx_start
+      ____cl_tx_start
+       _____cl_tx_start
+        cl_tx_fast_agg
+        _cl_tx_agg
+         cl_tx_push
+         cl_tx_pci_pkt_fw_send
+         lmac0 ipc_start_tx
+         lmac0 ipc_agg_dma_push
+         lmac0 ipc_emb_queue_dma_desc_push/ke_evt_schedule
+                                           ke_evt_hdlr[event].func == ke_evt_hdlr[KE_EVT_IPC_EMB_BA_TXDESC_AC1].ipc_emb_tx_evt
+         lmac0 ipc_emb_tx_evt
+         lmac0 txl_start_tx_flow
+         lmac0 ce_tx_path_start
+         lmac0 txl_transmit_prep/txl_transmit_prep_loop (max_prep_cnt txl_transmit_prep)
+         lmac0 txl_payload_transfer
+         lmac0 txl_hwdesc_config_pre
+         lmac0 txl_frame_exchange_done
+###################AMPDU Tx flow ?########################
+
+								mm_ba_add_tx_req_handler
+								ce_txq_queue_init
+###################single Tx flow########################
+CE_TXQ_NOT_BCN # access_category is bcn
+								ipc_emb_tx_evt
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:	       txl_start_tx_flow/txl_transmit_prep (is_bcn)
+								txl_prep_handle_non_amsdu_desc
+								 txl_payload_transfer
+								 txl_prep_handle_non_amsdu_desc: # put frame to co_list_push_back(&txl_cntrl_env_internal.ce_txlist[u8ce_session_idx].downloading
+								  ce_txl_bw_decision
+								  txl_frame_exchange_done
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:	       ce_tx_path_start
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_frame.c:             txl_frame_push
 							       txl_frame_push_int
-							       co_list_push_back_list
-mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c: 	       txl_tx_active_chains_get # set Tx capability (HT, VHT, HE)
+							       txl_int_frm_block_exchange_manage
+							       txl_frame_exchange_chain
+							        txl_cntrl_env_internal.chain_suspend_params[access_category].resume_first_thd = first_thd;
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_trigger_frame.c:     tb_policy_table_update
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c: 	         txl_tx_active_chains_get # set Tx capability (HT, VHT, HE)
+mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_trigger_frame.c:     tb_single_mpdu_prepare_and_chain
+
+
 							       # set downlink TX capability for sta
 mac_sw_src/lmac/nxlmacip/src/mm/mm_task.c:		       mm_update_rate_dl_handler
 kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_msg_tx.c: cl_msg_tx_update_rate_dl
@@ -5818,21 +6095,81 @@ kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_msg_tx.c: cl_msg_tx_update
                                                              # trigger frame flow
 kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_bsrp.c:cl_bsrp_send_su
 							       cl_bsrp_send_mu
-or
+################################or######################################
 kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_tf.c:  cl_tf_send
 kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_msg_tx.c: cl_msg_tx_tf
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_trigger_frame.c:     tf_config_and_start
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_trigger_frame.c:     txl_trigger_frame_init_and_start
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_frame.c:             txl_frame_push
 
-#######################set channel flow#############################################################
+
+								sta_mgmt_tx_rate_get
+
+###################WRS, sta list###################
+iwcl wlan0_0 cecli wrs -a
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_wrs/cl_wrs_sta.c:cl_wrs_sta_print_list
+#################WRS info###############
+cl_wrs_sta_info_set # set wrs sta capability
+cl_sta_loop
+cl_wrs_maintenance
+cl_wrs_sta_maintenance # main sta loop maintenance
+#########sta add/add capability##
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_sta.c:			cl_sta_add
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_sta.c:			_cl_sta_add
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_wrs/cl_wrs_api.c:	cl_wrs_api_sta_add
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_wrs/cl_wrs_sta.c:	cl_wrs_sta_add
+
+										/*for info: cl_wrs_ap_capab_modify_bw # update ap max_bw*/
+										struct cl_wrs_params *wrs_params = &wrs_sta->su_params;
+										cl_wrs_sta_info_set # set wrs_sta->max_rate_cap.bw
+										cl_wrs_sta_capabilities_set
+										 cl_supported_rates_he_cap
+										cl_wrs_tables_build
+										cl_wrs_sta_select_first_rate(cl_hw, wrs_db, wrs_sta, wrs_params);
+###################WRS rate flow###################
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_wrs/cl_wrs.c:	cl_wrs_tx_params_update
+									cl_wrs_adapter_tx_param_set
+mac_sw_src/lmac/nxlmacip/src/mm/mm_task.c:				mm_update_rate_dl_handler
+###############
+ce_txl_rate_control_get {
+uint8_t u8sta_idx = txdesc->d.e2w_natt_param.sta_index;
+
+}
+ce_tx_path_start
+ce_txl_pol_tbl_prepare
+ce_txl_rate_control_get
+uint8_t u8sta_idx = txdesc->d.e2w_natt_param.sta_index;
+  case CE_RATE_CTRL_ENTRY_STA:
+      txl_pt_rate_per_bw_set
+      txl_pt_he_rate_per_bw_set
+ce_txl_agg_close_prep
+################mac_sw_src TX flow###########################
+ipc_start_tx
+ipc_singles_dma_push
+ipc_emb_queue_dma_desc_push
+dma_push
+########################CL8000 lmac0, time measure#####################
+#include "reg_mac_hw.h"
+uint32_t last_bcn_end_time = mac_hw_monotonic_counter_2_lo_get();
+#####frame has sent#################
+								txl_transmit_trigger
+								txl_frame_exchange_done_selector
+								txl_frame_htp_exchange_done_handle
+								txl_frame_exchange_done
+								txl_payload_handle
+								txl_hwdesc_config_post
+
+
+
+#######################set channel flow (ACS, csa == 0)#############################################################
 ########################regular/normal channel switch via hostapd
 kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_acs.c: cl_acs_cli_switch_channel
 							       cl_acs_trigger_channel_switch
 kernel/bp-v5.10.4/net/wireless/nl80211.c:		       cfg80211_ch_switch
 							       nl80211_ch_switch (NL80211_CMD_CHANNEL_SWITCH)
-utils/hostap/src/drivers/driver_nl80211_event.c:	case NL80211_CMD_CHANNEL_SWITCH:
-							       mlme_event_do_channel_switch
+utils/hostap/src/drivers/driver_nl80211_event.c:	       do_process_drv_event
+								case NL80211_CMD_CHANNEL_SWITCH:
+								mlme_event_do_channel_switch
 utils/hostap/src/ap/drv_callbacks.c:			       wpa_supplicant_event(bss->ctx, EVENT_DO_CHANNEL_SWITCH, &data);
 							       hostapd_event_do_channel_switch
 utils/hostap/src/ap/hostapd.c:			       hostapd_do_channel_switch
@@ -5850,17 +6187,412 @@ kernel/bp-v5.10.4/net/wireless/rdev-ops.h:		       rdev_channel_switch
 kernel/bp-v5.10.4/net/mac80211/cfg.c:			       ieee80211_channel_switch
 								__ieee80211_channel_switch
 								 ieee80211_set_csa_beacon
-								  ieee80211_assign_beacon
-								   ieee80211_set_probe_resp # set probe_resp
-								   rcu_assign_pointer(sdata->u.ap.beacon, new); # set beacon
-							        sdata->vif.csa_active = true;
-								cfg80211_ch_switch_started_notify(NL80211_CMD_CH_SWITCH_STARTED_NOTIFY)
-								case NL80211_CMD_CH_SWITCH_STARTED_NOTIFY:
-utils/hostap/src/drivers/driver_nl80211_event.c:			mlme_event_ch_switch
-kernel/bp-v5.10.4/net/mac80211/main.c:		       ieee80211_bss_info_change_notify
-kernel/bp-v5.10.4/net/mac80211/driver-ops.h:			drv_bss_info_changed
-kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_ops.c:		cl_ops_bss_info_changed
-kernel/bp-v5.10.4/net/mac80211/driver-ops.h:			drv_channel_switch_beacon
+								 if (csa == 0)
+									 ieee80211_csa_finalize
+kernel/bp-v5.10.4/net/mac80211/cfg.c:					__ieee80211_csa_finalize
+										ieee80211_vif_use_reserved_context
+kernel/bp-v5.10.4/net/mac80211/chan.c:						ieee80211_vif_use_reserved_switch
+											 ieee80211_chsw_switch_hwconf
+											 drv_config
+										  cl_ops_config
+											   cl_ops_conf_change_channel
+
+kernel/bp-v5.10.4/net/wireless/nl80211.c:				cfg80211_ch_switch_notify
+									nl80211_ch_switch_notify(NL80211_CMD_CH_SWITCH_NOTIFY)
+utils/hostap/src/drivers/driver_nl80211_event.c:			do_process_drv_event
+									case NL80211_CMD_CH_SWITCH_NOTIFY:
+										mlme_event_ch_switch
+utils/hostap/src/ap/drv_callbacks.c:						hostapd_event_ch_switch
+kernel/bp-v5.10.4/net/mac80211/cfg.c:				 else
+									 ieee80211_bss_info_change_notify
+									  drv_bss_info_changed
+									  cl_ops_bss_info_changed
+####on each beacon
+kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl8k/cl_tx_pci.c:cl_tx_pci_single_cfm_handler
+kernel/bp-v5.10.4/net/mac80211/cfg.c:				ieee80211_csa_finish
+kernel/bp-v5.10.4/net/mac80211/cfg.c:				ieee80211_csa_finalize_work
+kernel/bp-v5.10.4/net/mac80211/cfg.c:				ieee80211_csa_finalize
+kernel/bp-v5.10.4/net/mac80211/cfg.c:				__ieee80211_csa_finalize
+kernel/bp-v5.10.4/net/mac80211/chan.c:			ieee80211_vif_use_reserved_context
+kernel/bp-v5.10.4/net/mac80211/chan.c:			ieee80211_vif_use_reserved_switch
+
+####################BANDWIDTH changed flow###############
+###width ieee80211 level
+enum nl80211_chan_width {
+	NL80211_CHAN_WIDTH_20_NOHT,
+	NL80211_CHAN_WIDTH_20,
+	NL80211_CHAN_WIDTH_40,
+	NL80211_CHAN_WIDTH_80,
+	NL80211_CHAN_WIDTH_80P80,
+	NL80211_CHAN_WIDTH_160,
+	NL80211_CHAN_WIDTH_5,
+	NL80211_CHAN_WIDTH_10,
+	NL80211_CHAN_WIDTH_1,
+	NL80211_CHAN_WIDTH_2,
+	NL80211_CHAN_WIDTH_4,
+	NL80211_CHAN_WIDTH_8,
+	NL80211_CHAN_WIDTH_16,
+};
+########width celeno lvl
+enum cl_channel_bw {
+	CHNL_BW_20,
+	CHNL_BW_40,
+	CHNL_BW_80,
+	CHNL_BW_160,
+
+	CHNL_BW_MAX,
+};
+####width celeno helpers###
+u8 width_to_bw(enum nl80211_chan_width width)
+{
+	if (width <= NL80211_CHAN_WIDTH_10)
+		return nl_width_to_phy_bw[width];
+
+	return NL80211_CHAN_WIDTH_20;
+}
+
+enum nl80211_chan_width bw_to_width(u8 bw)
+{
+	if (bw < CHNL_BW_MAX)
+		return phy_bw_to_nl_width[bw];
+
+	return CHNL_BW_20;
+}
+
+####################fw dump debug info######
+/sys/kernel/debug/ieee80211/phy0/cl/diags/dbg_dump
+##########
+[__ieee80211_channel_switch]
+[ieee80211_bss_info_change_notify]
+[drv_bss_info_changed]
+[cl_ops_bss_info_changed] changed 0x100
+[__ieee80211_channel_switch] -->ieee80211_bss_info_change_notify changed 0x100
+lmac0 [olympus_b_set_channel][1208]: phy-idx=0, band=1, bandwidth=1, prim20freq=5500.0, center1freq=5510.0
+[ieee80211_vif_use_reserved_switch] -->ieee80211_bss_info_change_notify changed 0x200000
+[ieee80211_bss_info_change_notify] -->drv_bss_info_changed changed 0x200000
+[drv_bss_info_changed] changed 0200000 cl_ops_bss_info_changed [cl8k]
+[cl_ops_bss_info_changed] BSS_CHANGED_BANDWIDTH info->chandef.width 2 max_bw 80 MHz
+[ieee80211_vif_use_reserved_switch] -->ieee80211_bss_info_change_notify changed 0x200000
+[ieee80211_bss_info_change_notify] -->drv_bss_info_changed changed 0x200000
+[drv_bss_info_changed] changed 0200000 cl_ops_bss_info_changed [cl8k]
+[cl_ops_bss_info_changed] changed 0x200000
+[cl_ops_bss_info_changed] BSS_CHANGED_BANDWIDTH info->chandef.width 2 max_bw 80 MHz
+[ieee80211_recalc_chanctx_chantype]
+[ieee80211_recalc_chanctx_chantype] -->ieee80211_change_chanctx
+[ieee80211_change_chanctx]
+[ieee80211_change_chanctx] cfg80211_chandef_identical ->ieee80211_recalc_chanctx_min_def return
+[drv_change_chanctx] change_chanctx           (null)
+[ieee80211_recalc_radar_chanctx]
+[ieee80211_chan_bw_change] -->rate_control_rate_update
+[cl_ops_sta_rc_update] changed 0x1
+[cl_ops_sta_rc_update] IEEE80211_RC_BW_CHANGED
+[cl_wrs_api_bw_changed] bw 1
+[cl_wrs_tx_params_update] -->cl_wrs_adapter_tx_param_set
+[cl_wrs_adapter_tx_param_set] -->cl_msg_tx_update_rate_dl op_mode RATE_OP_MODE_STA_SU bw 1 tx_params->mode 4
+[__ieee80211_csa_finalize] -->ieee80211_bss_info_change_notify changed 0x100
+[ieee80211_bss_info_change_notify] -->drv_bss_info_changed changed 0x100
+[drv_bss_info_changed] changed 0100 cl_ops_bss_info_changed [cl8k]
+[cl_ops_bss_info_changed] changed 0x100
+[__ieee80211_csa_finalize] -->ieee80211_bss_info_change_notify changed 0x100
+[ieee80211_bss_info_change_notify] -->drv_bss_info_changed changed 0x100
+[drv_bss_info_changed] changed 0100 cl_ops_bss_info_changed [cl8k]
+[cl_ops_bss_info_changed] changed 0x100
+[ieee80211_change_beacon] -->ieee80211_bss_info_change_notify changed 0x100
+[ieee80211_bss_info_change_notify] -->drv_bss_info_changed changed 0x100
+###########################WRS/set rates###################
+cl_wrs_adapter_tx_param_set
+if (set_su)
+	cl_msg_tx_update_rate_dl(cl_hw, sta_idx, rate_ctrl.word,
+				rate_ctrl_fallback.word, tx_params->bw,
+				 op_mode, wrs_params->group_id, mu_mimo_valid,
+				 ltf, ltf_fallback, rate_ctrl_he.word);
+
+##################`iw dev` flow############################################################
+utils/iw/phy.c:							handle_channels/handle_info (NL80211_ATTR_SPLIT_WIPHY_DUMP)
+kernel/bp-v5.10.4/net/wireless/nl80211.c:				nl80211_dump_wiphy_parse
+nl80211_send_iface
+rdev_get_channel
+   ieee80211_cfg_get_channel
+nl80211_send_chandef
+##############
+iw dev wlan0_0 set channel 120 80MHz
+iw dev wlan0_0 set channel 120 40MHz
+iw dev wlan0_0 set channel 120 # 20 MHz
+#################### set channel flow#########################
+nl80211_set_beacon
+rdev_change_beacon
+ieee80211_change_beacon
+ieee80211_set_beacon_cntdwn # set csa count
+ieee80211_set_after_csa_beacon # remove CSA beacon
+###########iw dev, set channel#########################
+iw dev wlan0_0 set channel 100 80Mhz
+utils/iw/phy.c: handle_chan
+##################hostapd_cli set channel#############################
+hostapd_cli -p /tmp/hostapd -i wlan0_0 # interactive mode
+chan_switch usage: <cs_count> <freq> [sec_channel_offset=] [center_freq1=] [center_freq2=] [bandwidth=] [blocktx] [ht|vht]
+hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 10 5180 ht vht he blocktx center_freq1=5210 sec_channel_offset=1 bandwidth=80 # 36 channel, 10 csa, 80 MHz
+
+hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 10 5180 ht vht he center_freq1=5210 sec_channel_offset=1 bandwidth=80 # 36 channel, 10 csa, 80 MHz
+hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 10 5180 ht vht he center_freq1=5190 sec_channel_offset=1 bandwidth=40 # 36 channel, 10 csa, 40 MHz
+hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 10 5180 ht vht he center_freq1=5180 bandwidth=20 # 36 channel, 10 csa, 40 MHz
+
+hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 10 5500 ht vht he center_freq1=5530 sec_channel_offset=1 bandwidth=80 # 100 channel, 10 csa, 80 MHz
+hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 0 5500 ht vht he center_freq1=5530 sec_channel_offset=1 bandwidth=80 # 100 channel, 0 csa, 80 MHz
+###flow#########
+hostapd_cli_cmd_chan_switch
+hostapd_ctrl_iface_receive_process
+hostapd_ctrl_iface_chan_switch
+#####################################beaconing#################
+cl_tx_bcns
+cl_tx_bcn
+cl_tx_beacon_get
+ieee80211_beacon_get
+ieee80211_beacon_get_tim
+__ieee80211_beacon_get
+  ieee80211_beacon_add_tim # add DTIM
+    __ieee80211_beacon_add_tim
+#######################hostapd auth flow#############################
+handle_auth
+send_auth_reply
+utils/hostap/src/ap/ieee802_11.c:				handle_assoc
+								send_assoc_resp
+								WLAN_FC_TYPE_MGMT, WLAN_FC_STYPE_ASSOC_RESP or WLAN_FC_STYPE_REASSOC_RESP
+								hostapd_drv_send_mlme
+								wpa_supplicant_event(EVENT_CH_SWITCH)
+utils/hostap/src/ap/drv_callbacks.c:				hostapd_event_ch_switch
+
+##################wireshark icmp rule##
+ip.proto == 1
+###################CL8000 RX flow###############
+                                   cl_irq_status
+                                   cl_irq_status_rxdesc
+                                   cl_rx_pci_desc_tasklet/cl_rx_pci_remote_tasklet_handler
+                                   _cl_rx_pci_desc_tasklet/cl_rx_pci_remote_cpu_sched
+                                   cl_rx_pci_start
+                                   _cl_rx_pci_start
+                                   cl_rx_push_queue/cl_rx_tasklet/cl_rx_post_recovery/cl_rx_resched_tasklet
+                                   cl_rx_tasklet
+                                   cl_rx_handle_skb
+                                   cl_rx_pass_to_mac
+                                   cl_rx_remote_cpu_mac
+cl_rx_handle_skb/cl_rx_pass_to_mac/cl_rx_remote_tasklet_mac/cl_rx_reorder_release_timeout/ieee80211_rx
+  cl_rx_skb_done
+   cl_rx_mgmt_check
+ ieee80211_rx_napi/ieee80211_tasklet_handler-->ieee80211_rx-->ieee80211_rx_napi
+  ieee80211_rx_list
+   __ieee80211_rx_handle_packet
+    ieee80211_prepare_and_rx_handle
+     ieee80211_invoke_rx_handlers/ieee80211_invoke_fast_rx
+     ieee80211_rx_h_check_dup     __ieee80211_rx_h_amsdu
+     ieee80211_rx_h_check         netif_receive_skb/__skb_queue_tail(rx->list, skb);
+     ieee80211_rx_reorder_ampdu
+     ieee80211_rx_handlers
+      ieee80211_rx_h_check_more_data);
+      ieee80211_rx_h_uapsd_and_pspoll);
+      ieee80211_rx_h_sta_process);
+      ieee80211_rx_h_decrypt);
+      ieee80211_rx_h_defragment);
+      ieee80211_rx_h_michael_mic_verify)
+      if (ieee80211_vif_is_mesh(&rx->sdata->vif))
+          ieee80211_rx_h_mesh_fwding
+      ieee80211_rx_h_amsdu
+      ieee80211_rx_h_data
+       __ieee80211_data_to_8023
+        ieee80211_data_to_8023
+         ieee80211_data_to_8023_exthdr // removed LLC, skb_push ethhdr
+       ieee80211_deliver_skb
+       if (skb) {
+           skb->protocol = eth_type_trans(skb, dev);
+           ieee80211_deliver_skb_to_local_stack(skb, rx);
+       }
+       if (xmit_skb) {
+           xmit_skb->protocol = htons(ETH_P_802_3);
+           skb_reset_network_header(xmit_skb);
+           skb_reset_mac_header(xmit_skb);
+           dev_queue_xmit(xmit_skb);
+       }
+      ieee80211_rx_h_ctrl
+      ieee80211_rx_h_mgmt_check
+      ieee80211_rx_h_action
+      ieee80211_rx_h_userspace_mgmt
+      ieee80211_rx_h_action_post_userspace
+      ieee80211_rx_h_action_return
+      ieee80211_rx_h_ext
+      ieee80211_rx_h_mgmt
+  drv_rx_finish == cl_ops_rx_finish
+   cl_rx_finish
+    cl_rx_netif
+     netif_receive_skb/cl_lite_path_rx_skb_deliver
+     __cl_tx_start      cl_lite_path_start_xmit
+      __cl_tx_start      __cl_tx_start/dev_queue_xmit
+       ___cl_tx_start
+        ____cl_tx_start
+         _____cl_tx_start ## to ethernet?
+
+
+ieee80211_subif_start_xmit_8023/ieee80211_tdls_td_ieee80211_print_eth_icmptx_handle
+ieee80211_subif_start_xmit
+__ieee80211_subif_start_xmit
+  if ieee80211_xmit_fast
+   ieee80211_amsdu_aggregate
+   ieee80211_xmit_fast_finish
+   ieee80211_tx_frags
+  else ieee80211_tx_stats
+       ieee80211_xmit
+ieee80211_xmit
+  ieee80211_tx_prepare
+  ieee80211_check_fast_xmit/ieee80211_tx_prep_agg
+ieee80211_tx
+  invoke_tx_handlers_early
+    ieee80211_tx_h_dynamic_ps
+    ieee80211_tx_h_check_assoc
+    ieee80211_tx_h_ps_buf
+      ieee80211_tx_h_unicast_ps_buf
+       if (unlikely((test_sta_flag(sta, WLAN_STA_PS_STA)..
+       return TX_QUEUED;
+      ieee80211_tx_h_multicast_ps_buf
+    ieee80211_tx_h_check_control_port_protocol
+    ieee80211_tx_h_select_key
+    ieee80211_tx_h_rate_ctrl
+  invoke_tx_handlers_late
+   ieee80211_tx_h_michael_mic_add
+   ieee80211_tx_h_sequence
+   ieee80211_tx_h_fragment
+   ieee80211_tx_h_stats
+   ieee80211_tx_h_encrypt
+   ieee80211_tx_h_calculate_duration
+  __ieee80211_tx
+   ieee80211_tx_frags
+###############LINUX ERROR CODES#################
+1	EPERM	Operation not permitted
+2	ENOENT	No such file or directory
+3	ESRCH	No such process
+4	EINTR	Interrupted system call
+5	EIO	I/O error
+6	ENXIO	No such device or address
+7	E2BIG	Argument list too long
+8	ENOEXEC	Exec format error
+9	EBADF	Bad file number
+10	ECHILD	No child processes
+11	EAGAIN	Try again
+12	ENOMEM	Out of memory
+13	EACCES	Permission denied
+14	EFAULT	Bad address
+15	ENOTBLK	Block device required
+16	EBUSY	Device or resource busy
+17	EEXIST	File exists
+18	EXDEV	Cross-device link
+19	ENODEV	No such device
+20	ENOTDIR	Not a directory
+21	EISDIR	Is a directory
+22	EINVAL	Invalid argument
+23	ENFILE	File table overflow
+24	EMFILE	Too many open files
+25	ENOTTY	Not a typewriter
+26	ETXTBSY	Text file busy
+27	EFBIG	File too large
+28	ENOSPC	No space left on device
+29	ESPIPE	Illegal seek
+30	EROFS	Read-only file system
+31	EMLINK	Too many links
+32	EPIPE	Broken pipe
+33	EDOM	Math argument out of domain of func
+34	ERANGE	Math result not representable
+35	EDEADLK	Resource deadlock would occur
+36	ENAMETOOLONG	File name too long
+37	ENOLCK	No record locks available
+38	ENOSYS	Function not implemented
+39	ENOTEMPTY	Directory not empty
+40	ELOOP	Too many symbolic links encountered
+42	ENOMSG	No message of desired type
+43	EIDRM	Identifier removed
+44	ECHRNG	Channel number out of range
+45	EL2NSYNC	Level 2 not synchronized
+46	EL3HLT	Level 3 halted
+47	EL3RST	Level 3 reset
+48	ELNRNG	Link number out of range
+49	EUNATCH	Protocol driver not attached
+50	ENOCSI	No CSI structure available
+51	EL2HLT	Level 2 halted
+52	EBADE	Invalid exchange
+53	EBADR	Invalid request descriptor
+54	EXFULL	Exchange full
+55	ENOANO	No anode
+56	EBADRQC	Invalid request code
+57	EBADSLT	Invalid slot
+59	EBFONT	Bad font file format
+60	ENOSTR	Device not a stream
+61	ENODATA	No data available
+62	ETIME	Timer expired
+63	ENOSR	Out of streams resources
+64	ENONET	Machine is not on the network
+65	ENOPKG	Package not installed
+66	EREMOTE	Object is remote
+67	ENOLINK	Link has been severed
+68	EADV	Advertise error
+69	ESRMNT	Srmount error
+70	ECOMM	Communication error on send
+71	EPROTO	Protocol error
+72	EMULTIHOP	Multihop attempted
+73	EDOTDOT	RFS specific error
+74	EBADMSG	Not a data message
+75	EOVERFLOW	Value too large for defined data type
+76	ENOTUNIQ	Name not unique on network
+77	EBADFD	File descriptor in bad state
+78	EREMCHG	Remote address changed
+79	ELIBACC	Can not access a needed shared library
+80	ELIBBAD	Accessing a corrupted shared library
+81	ELIBSCN	.lib section in a.out corrupted
+82	ELIBMAX	Attempting to link in too many shared libraries
+83	ELIBEXEC	Cannot exec a shared library directly
+84	EILSEQ	Illegal byte sequence
+85	ERESTART	Interrupted system call should be restarted
+86	ESTRPIPE	Streams pipe error
+87	EUSERS	Too many users
+88	ENOTSOCK	Socket operation on non-socket
+89	EDESTADDRREQ	Destination address required
+90	EMSGSIZE	Message too long
+91	EPROTOTYPE	Protocol wrong type for socket
+92	ENOPROTOOPT	Protocol not available
+93	EPROTONOSUPPORT	Protocol not supported
+94	ESOCKTNOSUPPORT	Socket type not supported
+95	EOPNOTSUPP	Operation not supported on transport endpoint
+96	EPFNOSUPPORT	Protocol family not supported
+97	EAFNOSUPPORT	Address family not supported by protocol
+98	EADDRINUSE	Address already in use
+99	EADDRNOTAVAIL	Cannot assign requested address
+100	ENETDOWN	Network is down
+101	ENETUNREACH	Network is unreachable
+102	ENETRESET	Network dropped connection because of reset
+103	ECONNABORTED	Software caused connection abort
+104	ECONNRESET	Connection reset by peer
+105	ENOBUFS	No buffer space available
+106	EISCONN	Transport endpoint is already connected
+107	ENOTCONN	Transport endpoint is not connected
+108	ESHUTDOWN	Cannot send after transport endpoint shutdown
+109	ETOOMANYREFS	Too many references: cannot splice
+110	ETIMEDOUT	Connection timed out
+111	ECONNREFUSED	Connection refused
+112	EHOSTDOWN	Host is down
+113	EHOSTUNREACH	No route to host
+114	EALREADY	Operation already in progress
+115	EINPROGRESS	Operation now in progress
+116	ESTALE	Stale NFS file handle
+117	EUCLEAN	Structure needs cleaning
+118	ENOTNAM	Not a XENIX named type file
+119	ENAVAIL	No XENIX semaphores available
+120	EISNAM	Is a named type file
+121	EREMOTEIO	Remote I/O error
+122	EDQUOT	Quota exceeded
+123	ENOMEDIUM	No medium found
+124	EMEDIUMTYPE	Wrong medium type
+125	ECANCELED	Operation Canceled
+126	ENOKEY	Required key not available
+127	EKEYEXPIRED	Key has expired
+128	EKEYREVOKED	Key has been revoked
+129	EKEYREJECTED	Key was rejected by service
+130	EOWNERDEAD	Owner died
+131	ENOTRECOVERABLE	State not recoverable
 ################################check frame types##################################################
 struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)skb->data;
 __le16 fc = mgmt->frame_control;
@@ -5875,6 +6607,14 @@ sudo iw wlp5so set freq 5180 80 5210  # channel 36, 80 MHz.
 sudo iw wlp5so set channel 36 80Mhz
 sudo iw wlp5so set freq 5200 80 5210  # channel 40, 80 MHz
 sudo iw wlp5so set freq 2412 # channel 1, 20 MHz.
+#######################hostapd compiltation#######################
+git clone git://w1.fi/hostap.git
+cd hostap/hostapd
+cp defconfig .config
+# uncomment CONFIG_LIBNL32=y in .config
+sudo apt-get install libssl-dev
+sudo apt-get install libnl-3-dev
+ln -s /lib/x86_64-linux-gnu/libnl-genl-3.so.200 /lib/x86_64-linux-gnu/libnl-genl-3.so
 ####################################AX200 Windows client###########################################
 paffles-supplicant-minion [AX200]
 OS: Windows 10
@@ -5902,3 +6642,9 @@ zerofree -v /dev/sda1
 halt or poweroff
 ##in HOST console use vboxmanage
 vboxmanage modifymedium ubuntu16.4_64b_1-disk001.vdi --compact
+##########################enable hardware virtualization##################
+BIOS: Advanced: Hyper-V, etc. enabled
+########on HOST##############
+vboxmanage list vms
+"xt_cl_8000" {7a425e2f-d896-487a-b189-4020de918b76}
+vboxmanage modifyvm xt_cl_8000 --nested-hw-virt on
