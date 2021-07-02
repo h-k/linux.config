@@ -8,3 +8,4 @@ visudo
 # Add next line for set timeout in 120 min
 Defaults	timestamp_timeout=120
 # timestamp_timeout=-1 for unlimited sudo
+alexander2 ALL=(ALL) NOPASSWD: ALL

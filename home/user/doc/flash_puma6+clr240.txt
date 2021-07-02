@@ -1087,6 +1087,7 @@ rmmod cfg80211 compat
 ##################static mac########################
 ce_phys_mac_addr=00:1c:51:9a:a4:06
 ce_phys_mac_addr=00:1c:51:8c:4a:d0
+ce_phys_mac_addr=00:1c:51:45:6c:00
 #################################static mac ComHem##############################
 iw wlan1_0 e2p get mac
 iw wlan1_0 e2p set mac <xx:xx:xx:xx:xx:xx>
@@ -1351,13 +1352,64 @@ tar xf cl8k.tar.bz2
 ###### eth 4,5 10G ?
 ifconfig eth5 192.168.100.1 netmask 255.255.255.0 # eth 4,5 10G?
 
+
+###################disable dhcpd
+create file /nvram/no_dhcpcd
+/nvram/cl8000/cl_chip0.dat:
+ce_iface_eth=eth5
+ce_iface_ip=192.168.100.4
+###########################docker compilation############################
+sudo docker images # ls images
+sudo docker container ls -a # ls status of cur conatiners
+####### run container, remove on exit
+sudo docker run --name test --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_1_x/:/home/developer/src  beta-server:5000/celeno/hk6030-b4-coredump
+sudo docker run --name test2 --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x/:/home/developer/src  beta-server:5000/celeno/hk6030-b4-coredump
+#################CL8000 xtensa docker#####################
+#############download conatiner####################
+sudo docker pull beta-server:5000/celeno/hk6030-xtensa
+###########run xtensa container
+sudo docker run --add-host=svr1.celeno.com:172.25.90.78 --name xtest --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_1_x:/home/developer/src beta-server:5000/celeno/hk6030-xtensa
+sudo docker run --add-host=svr1.celeno.com:172.25.90.78 --name xtest2 --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x:/home/developer/src beta-server:5000/celeno/hk6030-xtensa
+###############how to export assert messages############
+unzip lmacfw.bin
+####lmacfw.dbg
+unzip smacfw.bin
+####smacfw.dbg
+
+########## load lmac
+cl_fw_load_lmac
+cl_fw_load_operational
+cl_fw_load_other
+#############upstream branch, how to extract coredump#################
+# Preparations
+# Compile genvcd (it will allow to get .vcd trace):
+cd /home/alexander2/repo/celeno-swdb-CL8000-hp-8_1_x/tools/dump_analysis/genvcd/; make
+# Verify, that you have python with 3+ version and ctypes library:
+python -V
+Python 3.9.0
+python -c 'import ctypes; print("OK")'
+OK
+# If any error happens, please, update your python version to the 3+ and install ctypes, like:
+sudo apt-get install python3-ctypes
+# or
+sudo apt-get install python-ctypes
+
+export CL8K_REPO_PATH=/home/alexander2/repo/celeno-swdb-CL8000-hp-8_1_x
+# Extract dumps:######
+# If you wanna to have decoded dump:################
+${CL8K_REPO_PATH}/tools/dump_analysis/dumps_helper.sh -d
+# If you wanna group (by assert), decode and pack it:###############
+${CL8K_REPO_PATH}/tools/dump_analysis/dumps_helper.sh -g -d -p
+###########xtensa VM##########################
+ssh user@192.168.56.101
+passw:1234qwer
+
 ########## 5G : wlan0_0 ... wlan0_N ##############
 ########## 24G: wlan1_0 ... wlan1_N ###########
 /nvram/cl8000/cl_tcv0.dat # 5G
 /nvram/cl8000/cl_tcv1.dat # 24G
 ####### multiple bss activation
 ## cl_tcv0.dat
-ce_multiple_bssid=1
 ce_bss_num=2
 ce_iface_type=3,3,0,0,0,0,0,0
 ha_auth_mode=WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK,WPA2PSK
@@ -1370,6 +1422,11 @@ ce_multiple_bssid=1
 ## cl_chip0.dat
 ce_lam_enable=0
 ce_phys_mac_addr=00:1c:51:04:2f:00 (00 at the end of MAC )
+####cl_chip1.dat
+ce_lam_enable=0
+ce_phys_mac_addr=00:1c:51:04:4f:00
+#####disable recovery
+ci_fw_disable_recovery=1
 ###########
 5G: wlan0_0 ... wlan0_N
 24G: wlan1_0 ... wlan1_N
@@ -1385,7 +1442,23 @@ iwcl wlan0_0 cecli bss_isolation -b.1
 ####### ce_net_type
 iwcl wlan0_0 cecli bss_isolation -c.0
 iwcl wlan0_0 cecli bss_isolation -c.1
-
+##############mu_ofdma###########
+http://moon/wiki/index.php/HK6030#How_to_capture_MU_frames
+############Set MU OFDMA state
+iwcl wlan0_0 cecli mu_ofdma -e.2 # FORCE
+iwcl wlan0_0 cecli mu_ofdma -e.1 # NORMAL
+###add connected sta sta_idx=0 to group 1
+iwcl wlan0_0 cecli mu_ofdma -i.1.0
+###add connected sta sta_idx=1 to group 1
+iwcl wlan0_0 cecli mu_ofdma -i.1.1
+################ Set mixed bw mode enabled##########
+iwcl wlan0_0 cecli mu_ofdma -v.1
+#############
+iwcl wlan0_0 cecli mu_ofdma -l # show sta mu_ofdma stat
+#####enable stats#############
+iwcl wlan0_0 cecli stats -e.1
+#######show stats
+iwcl wlan0_0 cecli stats -t.0
 ######################################repeater#####################################################
 ce_bss_num=2
 ce_iface_type=3,2,0,0,0,0,0,0 # 0 -- Disabled|2 -- STA|3 -- AP|7 -- MESH|
@@ -1424,6 +1497,136 @@ kernel/bp-v5.8.18/drivers/net/wireless/celeno/cl8000/cl_cecli.c:cl_cecli_acs/cl_
 wlan.ext_tag.he_phy_cap.chan_width_set.40_80_in_5ghz (20 - 0; 40 - 1; 80 - 1)
 &&
 wlan.vht.op.channelwidth  (20 - 0; 40 - 0; 80 - 1)
+################### 6E init on new board ######################
+Steps for setting Device ID foe 6E chip:
+1) Connect only Albatross2 (6E chip) on the HK board and the middle slot –the remaining 2 slots must be empty without any other merlin/albatross2 boards connected to it
+2) Power up the board
+3) Check lspci  Should be 0x8000
+4) Start the driver in production
+cl_chip0.dat:
+ce_tcv_enabled=1,0
+ce_production_mode=1
+ci_calib_check_errors=0
+
+cl_tcv0.dat:
+ci_band_num=6
+ha_channel=1
+ce_wireless_mode=4
+ha_auth_mode=OPEN,WPA2PSK,OPEN,OPEN,OPEN,OPEN,OPEN,OPEN
+ha_encrypt_type=NONE,AES,NONE,NONE,NONE,NONE,NONE,NONE
+
+5) Type this command:
+iwcl wlan0_0 cecli otp -d.0x8086
+6) Reboot the board
+7) Check lspci  Should be 0x8086
+8) after new Device ID was verified you need to restore_defaults.sh all and start the driver in Production again
+9) set the eeprom values for Albatross2 stepB 8086
+iwcl wlan0_0 e2p set fem_lut 0 4 5 6 0
+iwcl wlan0_0 e2p set fem_lut 3 0 0 2 0
+iwcl wlan0_0 e2p set wiring_id 12
+iwcl wlan0_0 e2p set platform_id 0x00000900
+iwcl wlan0_0 e2p set pwr_table_id 2 2
+10) start driver in operational mode
+####STABLE REL HP 8.0.6.0.2.0 for switching device id##################
+
+#############################Co-located mode 5G/6G###############
+#Below are the guidelines for activating the system in co-located mode dual-chip.
+#Please note that:
+
+#   You must follow the guidelines step by step.
+#   The driver we’re using over Windows10 is a non-official debug driver that was provided by Intel for interop tests only
+#   This will only work for up to 2 hours and requires re-initiation of the driver in Ant.exe tool.
+#   We still have performance issues related to performance over this setup, expected max tput is not met – under investigation
+#   Guidelines how to activate dual chip setup and configure driver to co-located mode
+#   You will need to verify the 6E chip eeprom  first identifies as  8046 instead of 8000 – using lspci
+#   Physically install only Albatross2 board – connect to middle miniPCIe slot#2 (to be sure you are working on 6G).
+restore_defaults.sh all
+ce_host.sh prod
+iwcl wlan0_0 cecli otp -d.0x8046
+reboot
+#    Configure eeprom values for Albartoss2 stepB
+ce_host.sh prod
+iwcl wlan0_0 e2p set fem_lut 0 4 5 6 0
+iwcl wlan0_0 e2p set wiring_id 17
+iwcl wlan0_0 e2p set platform_id 0x00000900
+iwcl wlan0_0 e2p set pwr_table_id 2 2
+
+#  Connect the CL8080 Merlin (2.4/5G) over miniPCIe slot#1 see in lspci that:
+[root@LSDK tmp]245 lspci
+0000:00:00.0 PCI bridge: Freescale Semiconductor Inc Device 81c0 (rev 10)
+0000:01:00.0 Ethernet controller: Device 1d69:8000 (rev 01) Chip0 wifi-6 Merlin
+0001:00:00.0 PCI bridge: Freescale Semiconductor Inc Device 81c0 (rev 10)
+0002:00:00.0 PCI bridge: Freescale Semiconductor Inc Device 81c0 (rev 10)
+0002:01:00.0 Ethernet controller: Device 1d69:8046 (rev 01) Chip1 wifi-6E Albatross2
+
+    restore_defaults.sh all
+#    Configure NVRAM parameters to Co-locate:
+#        Note that the Albatross2 is now chip1 and Merlin is chip0
+#Make sure ce_tcv_enabled=1,0 for both cl_chip*.dat
+#Make sure ci_band_num=5 in cl_tcv0.dat and ci_band_num=6 in cl_tcv2.dat
+#    to enable co locate feature (5G will publish its 6G neighbor) set:
+ha_rnr_beacon=1,0,0,0,0,0,0,0                  // only in 5g (cl_tcv0.dat)
+ha_he_co_locate=1                                        // both cl_tcv0.dat and cl_tcv2.dat
+#    you can verify you see Reduced Neighbor Report IE (element ID 201) in the 5G beacon/probe resp
+
+    ce_host.sh prod
+Verify that you have the following interfaces up:
+Interface wlan0_0
+        ifindex 22
+        wdev 0x1
+        addr 00:1c:51:04:2f:11
+        ssid CL8000_AP_5G_RvR_4th
+        type AP
+        wiphy 0
+        channel 36 (5180 MHz), width: 80 MHz, center1: 5210 MHz
+        txpower 27.00 dBm
+
+Interface wlan2_0
+        ifindex 23
+        wdev 0x200000001
+        addr 00:1c:51:c8:ae:b1
+        ssid CL8000_AP_6G_RvR_4th
+        type AP
+        wiphy 2
+        channel 1 (5955 MHz), width: 80 MHz, center1: 5985 MHz
+        txpower 27.00 dBm
+
+
+    Verify eeprom values for fems and power table for each chip (please note that there are different values to each board – Merlin and Albatross2)
+    ce_host.sh start
+    Install AX210 Driver on Windows10 PC:
+L:\_Users\asaf\_AX210
+    Install Temp driver for Intel_AX210: Netwtw10.zip
+2.      Copy 22.20.0.6_PV_PHWFW02595_WW50'20 to C:\
+3.      Extract PHWFW02595_22.20.0.6Tools.zip c:\ax210
+4.      Open CMD as administrator
+5.       cd ‘c:\ax210\OEM Tools\ANT’
+6.      Enter: Ant.exe –SetMcc US
+The above will enable you to work with 6GHz for 2 hours
+    See if you have the 6GHz SSID in the windows and try to connect
+
+####recovery wrong device_id, for example 0x80c6
+cl_chip_get_device_id
+{
+	u16 device_id = chip->pci_dev->device;
+
+	/* If device-id is default, set it accoridng to phy-dev. */
+	if (device_id == 0x8000 || device_id == 0x8001 || device_id == 0x80c6)
+		device_id = (chip->conf->ci_phy_dev == PHY_DEV_ATHOS) ? 0x8086 : 0x8080;
+
+	return device_id;
+}
+
+static const struct pci_device_id cl_pci_id_table[] = {
+{ PCI_DEVICE(CL_VENDOR_ID, 0x8046) },
+{ PCI_DEVICE(CL_VENDOR_ID, 0x8066) },
+{ PCI_DEVICE(CL_VENDOR_ID, 0x8086) },
+{ PCI_DEVICE(CL_VENDOR_ID, 0x80C6) },
+{ },
+
+
+### cecli for changing device_id
+cl_otp_cli()
 ##################### EDK32 ####################################################
 ptm_status
 [edk-4178@PALL1-SRV ~]$ ptm_status
@@ -2729,7 +2932,9 @@ lxc exec yocto-6-1-5-hk -- sudo -i -u developer
 lxc stop yocto-6-1-5-hk
 ###########################################################
 ssh alexander@gamma-server
-#lxc copy xtensa xtensa-hk
+lxc copy xtensa xtensa-hk
+# lxc copy without snapshots
+lxc copy --instance-only xtensa xtensa-hk
 
 lxc list
 lxc start xtensa-hk
@@ -2760,7 +2965,19 @@ cd ~/repo/4.7.x_23_GA15/firmware/B0
 scp alexander@packman:/home/alexander/repo/4.7.x_23_GA15/lmacfw.bin lmacfw.bin
 ################printk in firmware##############################################
 CE_DEBUG_LOG_NO_FILTER("\n");
-CE_DEBUG_LOG_NO_FILTER("[bf_ctrl_sta_add] CE_HW_VERSION = %d\n", CE_HW_VERSION); # 1
+CE_DEBUG_LOG_NO_FILTER("[bf_ctrl_sta_add] CE_HW_VERSION = %d\n", CE_HW_VERSION); #
+#####  FW 5G or 2.4G
+if(is_ofdm_rate_band(phy_ops.get_band(0)))
+{
+    // 5Ghz & 6Ghz
+    *p_rate_ctrl = DEFAULT_OFDM_RATE;
+}
+else
+{
+    // 2.4GHz
+        *p_rate_ctrl = DEFAULT_CCK_RATE;
+}
+
 ####################BRCM3390 flashing the board#################################
 10. How to update brcm board to latest SDK image:
 
@@ -3360,6 +3577,12 @@ network={
         ieee80211w=2
 }
 
+#####################raspberri Pi 4 Model B, wpa_supplicant
+/sbin/wpa_supplicant -u -s -O /run/wpa_supplicant
+wpa_supplicant -c /etc/wpa_supplicant/wpa_supplicant.conf -iwlan0 -Dnl80211,wext
+#############enable ssh
+## On PC: mount /boot partition of SD card with raspberri Pi 4 Model
+touch ssh
 #########build wpa_supplicant with PMF################
 sudo apt-get install libnl-genl-3-dev
 sudo apt-get install libpcap-dev
@@ -4977,14 +5200,26 @@ cd wireshark
 mkdir build
 cd build
 cmake ../
-################################gui wireshark###################################
+### error
+# Command 'cmake' not found, but can be installed with:
+# sudo apt  install cmake
+#  cmake : Depends: libcurl4 (>= 7.16.2) but it is not going to be installed
+# E: Unable to correct problems, you have held broken packages.
+sudo apt-get remove --auto-remove libcurl4-openssl-dev
+sudo apt install libcurl4
+sudo apt  install cmake
+################################gui wireshark###############################################
 cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=TRUE -DENABLE_KERBEROS:BOOL=FALSE ../
+################################gui wireshark, since ver 3.5.0 #############################
+cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=TRUE -DHAVE_KERBEROS:BOOL=FALSE ../
 ################################without gui wireshark###########################
 cmake -DBUILD_sdjournal:BOOL=FALSE -DBUILD_wireshark:BOOL=FALSE -DENABLE_KERBEROS:BOOL=FALSE ../
+################################build#####################
 make
 #################### for .deb package generate###
 sudo apt-get install debhelper dh-virtualenv ubuntu-dev-tools
 sudo apt-get install python3-ply xsltproc dh-python docbook-xsl libxml2-utils libparse-yapp-perl libgnutls28-dev libkrb5-dev liblua5.2-dev libsmi2-dev libmaxminddb-dev libsystemd-dev libnl-genl-3-dev libnl-route-3-dev asciidoctor libsbc-dev libnghttp2-dev libssh-gcrypt-dev liblz4-dev libsnappy-dev libzstd-dev libspandsp-dev libxml2-dev libbrotli-dev libspeexdsp-dev
+###compile packages
 dpkg-buildpackage -us -uc -rfakeroot -jauto
 ############################cl2400 structs######################################
 struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(sw_txhdr->skb);
@@ -5010,6 +5245,8 @@ ha_wep_key0_1=12345
 #For capturing MPIF DATA, change in NVARM the ce_ela_mode field from default to lcu_mac_0_wide_4MU_legacy.conf.
 cl_chip0.dat
 ce_ela_mode=lcu_mac_0_wide_4MU_legacy.conf
+## stop driver from reloading after the assert:
+ce_fw_watchdog_mode=0
 ####
 dmesg -D
 iwcl wlan0_0 cecli fw s.26
@@ -5017,8 +5254,8 @@ iwcl wlan0_0 cecli fw s.27
 dmesg -c
 dmesg -E; dmesg -wH
 ​ctrl z
-####gen log
-iwcl wlan0_0 cecli fw -b
+####CL8000 gen log, fw debug###########################
+iwcl wlan0_0 cecli fw -b # ASSERT_REC FW
 iwcl wlan0_0 cecli fw -s.1 # help
 [ 0] : DBG_PRINT_RESET
 [ 1] : DBG_PRINT_HELP
@@ -5056,6 +5293,8 @@ iwcl wlan0_0 cecli fw -s.1 # help
 [33] : DBG_PRINT_TRIGGER_FLOW_INFO
 iwcl wlan0_0 cecli fw -s.2 # fw tx_stats
 ###log in ce_dump_tcv0_1.tbz###
+################### read eeprom###########################
+ iwcl wlan0_0 e2p get table
 ###################CL80000, is band 5g#############
 cl_band_is_5g(cl_hw)
 #############
@@ -5119,6 +5358,11 @@ struct ieee80211_sta *ieee_sta = &stainfo->sta;
 
 struct ieee80211_sta *ieee_sta;
 struct sta_info *stainfo = container_of(ieee_sta, struct sta_info, sta);
+##############
+struct ieee80211_hw *hw;
+struct cl_hw *cl_hw = hw->priv;
+struct ieee80211_hw *hw = container_of(cl_hw, ,priv);
+struct ieee80211_local *local = hw_to_local(hw);
 #############
 struct cl_vif *cl_vif;
 list_for_each_entry(cl_vif, &cl_hw->vif_db.head, list) {
@@ -5131,6 +5375,9 @@ if (cl_vif->vif->type == NL80211_IFTYPE_AP ||
 	(flags & IFF_RUNNING) ? "yes" : "no");
 	}
 }
+
+
+struct cl_vif *cl_vif = (struct cl_vif *)vif->drv_priv;
 ################################################################################
 cl_tx_amsdu_set
 
@@ -5795,6 +6042,22 @@ PCIe2: pcie@3600000 Root Complex: x2 gen3
 lspci -s 0002:01:00.0 -vvv
 ..
 LnkSta: Speed 8GT/s, Width x2, TrErr- Train- SlotClk+ DLActive- BWMgmt- ABWMgmt-
+################HK6030, write new image to board
+http://moon/wiki/index.php/HK6030
+################Flash the image to the HK6030 board (B4_coredump)##################
+#     Place firmware_ls1046ardb_uboot_qspiboot.img in your tftp directory
+#    Stop the board in its uboot (hit any key).
+#    Connect ethernet cable to eth0 (down-left corner)
+
+NOTE: as in some other boards uboot, each Enter pressed will execute the previous command again.
+Please press Enter only once after each of the below commands and do nothing but wait for its completion before proceeding to the next command.
+    setenv ethact FM1@DTSEC3
+    setenv ipaddr <choose board ip address in your tftp server subnet>
+    setenv serverip <your tftp server ip>
+    tftp a0000000 Celeno_B4_firmware_ls1046ardb_uboot_qspiboot.img
+    sf probe 0:0 && sf erase 0 +1000000 && sf write 0xa0000000 0 1000000
+    nand erase 0 0x4000000 && nand write a0000000 0 $filesize
+    After completion, power cycle the board
 ########################qucik rm -rf ############################
 rm_rf()
 {
@@ -5970,6 +6233,7 @@ hostapd_gen_probe_resp # format probe response
 	hostapd_eid_cca
 #endif
 
+handle_assoc
 ieee802_11_set_beacons
 ieee802_11_set_beacon # beacon format
 hostapd_drv_set_ap
@@ -6071,6 +6335,7 @@ dev_queue_xmit
 ###################single Tx flow########################
 CE_TXQ_NOT_BCN # access_category is bcn
 								ipc_emb_tx_evt
+								CE_txl_update_txdesc
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:	       txl_start_tx_flow/txl_transmit_prep (is_bcn)
 								txl_prep_handle_non_amsdu_desc
 								 txl_payload_transfer
@@ -6148,7 +6413,10 @@ ipc_start_tx
 ipc_singles_dma_push
 ipc_emb_queue_dma_desc_push
 dma_push
+############################AP: Support for 6GHz band, patch series####################
+https://patchwork.ozlabs.org/project/hostap/cover/20190619124916.14150-1-andrei.otcheretianski@intel.com/
 ########################CL8000 lmac0, time measure#####################
+
 #include "reg_mac_hw.h"
 uint32_t last_bcn_end_time = mac_hw_monotonic_counter_2_lo_get();
 #####frame has sent#################
@@ -6259,9 +6527,101 @@ enum nl80211_chan_width bw_to_width(u8 bw)
 	return CHNL_BW_20;
 }
 
-####################fw dump debug info######
-/sys/kernel/debug/ieee80211/phy0/cl/diags/dbg_dump
-##########
+############# print ssid in hostapd  ##################
+wpa_ssid_txt(bss->ssid.ssid, bss->ssid.ssid_len)
+##########BANDWIDTH changed flow, same channel, cfg80211_ch_switch#################
+kernel cfg80211_ch_switch
+       nl80211_ch_switch:NL80211_CMD_CHANNEL_SWITCH
+hostapd
+       mlme_event_do_channel_switch:NL80211_CMD_CHANNEL_SWITCH
+       wpa_supplicant_event: EVENT_DO_CHANNEL_SWITCH
+       hostapd_event_do_channel_switch
+       hostapd_do_channel_switch
+        hostapd_check_freq_params
+        hostapd_switch_channel (per bss)
+         hostapd_fill_csa_settings
+          ieee80211_freq_to_channel_ext
+          hostapd_change_config_freq (ccabc68d12 Convert 160 MHz channel width to new style as interop workaround.)
+           hostapd_set_oper_centr_freq_seg0_idx(conf, seg0);
+           hostapd_set_oper_centr_freq_seg1_idx(conf, seg1);
+          hostapd_build_beacon_data
+           ieee802_11_build_ap_params
+           hostapd_build_ap_extra_ies
+           /* copy the extra ies: beacon_extra, proberesp_extra, assocresp_extra */
+          hostapd_change_config_freq
+           hostapd_set_oper_centr_freq_seg0_idx(conf, seg0);
+           hostapd_set_oper_centr_freq_seg1_idx(conf, seg1);
+          hostapd_build_beacon_data
+         hostapd_drv_switch_channel/nl80211_switch_channel NL80211_CMD_CHANNEL_SWITCH
+          nl80211_put_freq_params
+          send_and_recv_msgs(drv, msg, NULL, NULL, NULL, NULL)
+
+
+wpa_supplicant_event: EVENT_CH_SWITCH
+                      hostapd_event_ch_switch
+                       ieee802_11_set_beacon
+                        ieee802_11_build_ap_params
+                         hostapd_drv_set_ap/wpa_driver_nl80211_set_ap
+                          nl80211_set_channel NL80211_CMD_SET_CHANNEL
+                           nl80211_put_freq_params
+
+
+############# 6GHz channels#############
+#####channel num
+2    1    5    9    13   17   21   25   29   33   37   41   45   49   53   57   61   65   69   73
+####freq
+5935 5955 5975 5995 6015 6035 6055 6075 6095 6115 6135 6155 6175 6195 6215 6235 6255 6275 6295 6315
+#####channel num
+77   81   85   89   93   97   101  105  109  113  117  121  125  129  133       141  145
+####freq
+6335 6355 6375 6395 6415 6435 6455 6475 6495 6515 6535 6555 6575 6595 6615 6635 6655 6675 6695 6715
+#####channel num
+157  161            173  177  181  185  189  193  197  201  205  209  213  217  221  225  229  233
+####freq
+6735 6755 6775 6795 6815 6835 6855 6875 6895 6915 6935 6955 6975 6995 7015 7035 7055 7075 7095 7115
+
+center_idx_to_bw_6ghz
+bw=2 (80 MHz)
+  7 (5985 Mhz),  23 (6065 Mgz),  39 (6145 Mhz),  55 (6225 Mhz),  71 (6305 Mhz),  87 (6385 Mhz), 103 (6465 Mhz),
+119 (6545 Mhz), 135 (6625 Mhz), 151 (6705 Mhz), 167 (6785 Mhz), 183 (6865 Mhz), 199 (6945 Mhz), 215 (7025 Mhz), 231 (7105 Mhz)
+
+bw=3 (160 MHz)
+15(6025Mhz), 47(6185 MHz), 79(6345 MHz), 111(6505 MHz), 143(6665 MHz), 175(6825 MHz), 207(6985 MHz)
+
+###########################channels, 5G#######################
+
+nl80211: Mode IEEE 802.11a: 5180 5200 5220 5240 5260 5280 5300 5320 5500 5520 5540 5560 5580 5600
+# channel num               124
+                            5620 5640 5660 5680 5700 5720 5745 5765 5785 5805 5825
+## center_segment0 106
+## center_segment1 114 cf1=5570 MHz
+####set channel by hostapd on start AP, channel 124##########################
+hostapd:
+    setup_interface2
+     hostapd_setup_interface_complete
+      hostapd_setup_interface_complete_sync
+       hostapd_set_freq
+        hostapd_set_freq_params
+         i802_set_freq
+          nl80211_set_channel
+       hostapd_setup_bss
+        ieee802_11_set_beacon
+         ieee802_11_build_ap_params
+          hostapd_eid_he_capab
+         hostapd_drv_set_ap/wpa_driver_nl80211_set_ap:NL80211_CMD_SET_BEACON
+          send_and_recv_msgs_owner
+          nl80211_set_channel
+          bss->bandwidth = params->freq->bandwidth
+nl80211: Set freq 5620 (ht_enabled=1, vht_enabled=1, he_enabled=1, bandwidth=160 MHz, cf1=5570 MHz, cf2=0 MHz)
+  * freq=5620
+  * he_enabled=1
+  * vht_enabled=1
+  * ht_enabled=1
+  * bandwidth=160
+  * channel_width=5
+  * center_freq1=5570
+  * center_freq2=0
+#####################
 [__ieee80211_channel_switch]
 [ieee80211_bss_info_change_notify]
 [drv_bss_info_changed]
@@ -6299,6 +6659,8 @@ lmac0 [olympus_b_set_channel][1208]: phy-idx=0, band=1, bandwidth=1, prim20freq=
 [cl_ops_bss_info_changed] changed 0x100
 [ieee80211_change_beacon] -->ieee80211_bss_info_change_notify changed 0x100
 [ieee80211_bss_info_change_notify] -->drv_bss_info_changed changed 0x100
+####################fw dump debug info######
+/sys/kernel/debug/ieee80211/phy0/cl/diags/dbg_dump
 ###########################WRS/set rates###################
 cl_wrs_adapter_tx_param_set
 if (set_su)
@@ -6325,7 +6687,10 @@ ieee80211_change_beacon
 ieee80211_set_beacon_cntdwn # set csa count
 ieee80211_set_after_csa_beacon # remove CSA beacon
 ###########iw dev, set channel#########################
-iw dev wlan0_0 set channel 100 80Mhz
+iw dev wlan0_0 set channel 124 80Mhz
+iw dev wlan0_0 set channel 124 HT20
+iw dev wlan0_0 set channel 124 HT40+
+iw dev wlan0_0 set channel 124 160Mhz
 utils/iw/phy.c: handle_chan
 ##################hostapd_cli set channel#############################
 hostapd_cli -p /tmp/hostapd -i wlan0_0 # interactive mode
@@ -6338,6 +6703,11 @@ hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 10 5180 ht vht he center_freq
 
 hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 10 5500 ht vht he center_freq1=5530 sec_channel_offset=1 bandwidth=80 # 100 channel, 10 csa, 80 MHz
 hostapd_cli -p /tmp/hostapd -i wlan0_0 chan_switch 0 5500 ht vht he center_freq1=5530 sec_channel_offset=1 bandwidth=80 # 100 channel, 0 csa, 80 MHz
+hostapd_cli -p /tmp/hostapd -i wlan1_0 chan_switch 1 2412 ht vht he center_freq1=2412 bandwidth=20 # channel 1, 20 Mhz, csa 1
+hostapd_cli -p /tmp/hostapd -i wlan1_0 chan_switch 1 2412 ht vht he center_freq1=2412 sec_channel_offset=1 bandwidth=40
+# ubuntu
+sudo hostapd_cli -p /var/run/hostapd -iwlan1_0 chan_switch 1 2412 2412 # channel 1, 20 Mhz, csa 1
+
 ###flow#########
 hostapd_cli_cmd_chan_switch
 hostapd_ctrl_iface_receive_process
@@ -6363,6 +6733,15 @@ utils/hostap/src/ap/drv_callbacks.c:				hostapd_event_ch_switch
 
 ##################wireshark icmp rule##
 ip.proto == 1
+##################wireshark iface pre-capture filter
+#Capture WLAN traffic without Beacons:
+link[0] != 0x80
+#Capture WLAN traffic without Probe Requests:
+link[0] != 0x40
+#Capture WLAN traffic without Probe Response:
+link[0] != 0x50
+##########or
+(wlan type mgt) or (wlan type ctl)) and (not wlan type mgt subtype beacon)
 ###################CL8000 RX flow###############
                                    cl_irq_status
                                    cl_irq_status_rxdesc
