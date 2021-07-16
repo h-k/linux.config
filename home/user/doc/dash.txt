@@ -1,3 +1,5 @@
 sudo dpkg-reconfigure dash
 
-coomit 1, branch dev
+commit 1, branch dev
+
+commit 2, branch dev-dash
