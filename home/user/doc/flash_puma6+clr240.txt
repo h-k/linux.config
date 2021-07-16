@@ -1358,18 +1358,57 @@ create file /nvram/no_dhcpcd
 /nvram/cl8000/cl_chip0.dat:
 ce_iface_eth=eth5
 ce_iface_ip=192.168.100.4
+###################
+#How to download the docker image?
+#1.Edit the daemon.json file, whose default location is /etc/docker/daemon.json on Linux.
+{   "insecure-registries" : ["beta-server:5000"] }
+{   "bip"                 : "172.100.0.1/24" }
+#2.Restart Docker for the changes to take effect.
+sudo service docker restart
+#3.Download docker image.
+sudo docker pull beta-server:5000/celeno/docker_image_name
+#Example:
+sudo docker pull beta-server:5000/celeno/hk6030-b4
 ###########################docker compilation############################
 sudo docker images # ls images
 sudo docker container ls -a # ls status of cur conatiners
 ####### run container, remove on exit
-sudo docker run --name test --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_1_x/:/home/developer/src  beta-server:5000/celeno/hk6030-b4-coredump
-sudo docker run --name test2 --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x/:/home/developer/src  beta-server:5000/celeno/hk6030-b4-coredump
+sudo docker run --name test_8.1.x_coredump --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_1_x/:/home/developer/src  beta-server:5000/celeno/hk6030-b4-coredump
+sudo docker run --name test_8.0.x_coredump --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x/:/home/developer/src  beta-server:5000/celeno/hk6030-b4-coredump
+sudo docker run --name test_8.0.x --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x/:/home/developer/src  beta-server:5000/celeno/hk6030-b4
+
+# + aliases, + /opt/toolchains/aarch64-musl-1.2.2-gcc-10.2.0-binutils-2.36-gdb-7.12.1-2/bin/aarch64-linux-musl-
+#
+sudo docker run --name test_8.1.x_coredump --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_1_x/:/home/developer/repo  hk6030-b4-coredump-musl
+sudo docker run --name test_8.0.x_coredump --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x/:/home/developer/repo  hk6030-b4-coredump-musl
 #################CL8000 xtensa docker#####################
 #############download conatiner####################
 sudo docker pull beta-server:5000/celeno/hk6030-xtensa
 ###########run xtensa container
-sudo docker run --add-host=svr1.celeno.com:172.25.90.78 --name xtest --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_1_x:/home/developer/src beta-server:5000/celeno/hk6030-xtensa
-sudo docker run --add-host=svr1.celeno.com:172.25.90.78 --name xtest2 --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x:/home/developer/src beta-server:5000/celeno/hk6030-xtensa
+sudo docker run --add-host=svr1.celeno.com:172.25.90.78 --network=host --name xtest2 --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x:/home/developer/src hk6030-xtensa
+sudo docker run --network=host --name xtest2 --rm -it -v /home/alexander2/repo/celeno-swdb-CL8000-hp-8_0_x:/home/developer/src hk6030-xtensa
+############################Automatation 8.1.x #####################
+scp cl8k_host_pkg-8.1.3.0.2.0-HK6030.tar.bz2 celeno@172.168.110.3:/home/celeno/
+sudo cp -a cl8k_host_pkg-8.1.3.0.2.0-HK6030.tar.bz2 /tftpboot/
+~/automation/paffles$ sudo bash paffles.sh --mode=custom --target=scenarios/leonid.khomenko/stability_hk6030_AX200_5g.py --action=start
+ls runs/
+ftp://cernd/_Users/viktor.barna/paffles_automation_docs_09.07.21/paffles_userguide_0.3.1_r4.pdf
+################CL8000, DELTA, remote board#########
+tftp -g 192.168.1.100 -r cl8k.tar.bz2
+tar -jxf cl8k.tar.bz2
+################DSP/FW/DRIVER communication#######
+nxrefip/phy/phy_dsp_calib_ifc.h
+
+iqc_request_mac
+iqc_response_mac
+
+Calibration:
+phy_olympus_c.c
+OLYMPUS_C_RFIC_SW_VERSION 19 ?
+
+iwcl wlan0_0 cecli calib ?
+iwcl wlan0_0 cecli calib -i
+iwcl wlan0_0 cecli calib -c.1
 ###############how to export assert messages############
 unzip lmacfw.bin
 ####lmacfw.dbg
@@ -1628,6 +1667,12 @@ static const struct pci_device_id cl_pci_id_table[] = {
 ### cecli for changing device_id
 cl_otp_cli()
 ##################### EDK32 ####################################################
+lxc start EDK32
+lxc exec EDK32 -- sudo -i -u developer
+lxc stop EDK32
+##################### FW compilation ####################
+sudo docker run --network=host --name xtest_edk32 --rm -it -v /home/alexander2/repo/celeno-swdb-CL6000-6.0.x:/home/developer/src hk6030-xtensa
+##########
 ptm_status
 [edk-4178@PALL1-SRV ~]$ ptm_status
 xe port  = PALL1-SRV:34665
@@ -1726,6 +1771,7 @@ sudo apt-get install libxml2-utils
 #The license file .flexlmrc in in your home folder.
 #Edit the file and change 27000@dc2.celeno.com to 27002@svr1.celeno.com
 #Compile again and verify it works.
+
 #######################Huawei board, how to#####################################
 # http://moon/wiki/index.php/Huawei_project
 #New Huawei board has no UART connection so it could be connected only via
@@ -6301,6 +6347,12 @@ kernel/bp-v5.10.4/drivers/net/wireless/celeno/cl/cl_ops.c: cl_ops_tx
                                                              cl_enhanced_tim_set_tx_single
 							# Tx normal frame/mgmt
 mac_sw_src/lmac/nxlmacip/src/tx/txl/txl_cntrl.c:  	       txl_start_all_transmissions
+##########################Tx flow, mgmt##########
+cl_tx_fast_single/cl_ops_tx_single
+cl_tx_single
+cl_tx_send
+cl_tx_push
+cl_tx_pci_pkt_fw_send
 ##########################TX flo, ping#######################
 dev_queue_xmit
  __dev_queue_xmit
